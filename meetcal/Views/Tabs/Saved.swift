@@ -11,59 +11,45 @@ struct SavedView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                VStack {
-                    HStack {
-                        Button {
-                        
-                        } label: {
-                            Image(systemName: "plus")
-                            Text("Create Session")
-                        }
-                        .frame(width: 180, height: 40)
-                        .foregroundStyle(.black)
-                        .background(.white)
-                        .cornerRadius(5)
-
-                        
-                        Button {
-                        
-                        } label: {
-                            Image(systemName: "calendar")
-                            Text("Add to Calendar")
-                        }
-                        .frame(width: 180, height: 40)
-                        .foregroundStyle(.black)
-                        .background(.white)
-                        .cornerRadius(5)
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        ButtonComponent(image: "plus", action: {}, title: "Create Session")
+                        ButtonComponent(image: "calendar", action: {}, title: "Add to Calendar")
                     }
-                    
                     HStack {
-                        Button {
-                        
-                        } label: {
-                            Image(systemName: "bookmark")
-                            Text("Saved Warmups")
-                        }
-                        .frame(width: 370, height: 40)
-                        .foregroundStyle(.black)
-                        .background(.white)
-                        .cornerRadius(5)
-                        .padding(.bottom, 20)
+                        ButtonComponent(image: "bookmark", action: {}, title: "Saved Warmups")
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
-                .padding(.vertical, 20)
-                .background(.gray.opacity(0.2))
-                
+                .padding(.vertical, 12)
+                .padding(.horizontal)
+
                 Divider()
                 
                 List {
                     Section {
                         Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+                        Text("element")
+
+                
                     }
                 }
+                .padding(.top, -8)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Saved")
             .navigationBarTitleDisplayMode(.inline)
         }

@@ -13,10 +13,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack{
             List {
-                Section {
+                Section("Settings") {
                     NavigationLink(destination: ScheduleView()) {
-                        Text("My Profile & Settings")
+                        Text("My Profile")
                     }
+                    Toggle("Dark Mode", isOn: $darkMode)
+                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                 }
                 
                 Section("Competition Information") {
@@ -43,12 +45,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section{
-                    Toggle("Dark Mode", isOn: $darkMode)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                }
-                
-                Section {
+                Section("Danger Zone") {
                     Button("Reset Saved Sessions", role: .destructive) {
                         
                     }
@@ -59,7 +56,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Info")
             .navigationBarTitleDisplayMode(.inline)
-            .padding(.top, -40)
+            .padding(.top, -10)
         }
     }
 }

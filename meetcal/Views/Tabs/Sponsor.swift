@@ -9,8 +9,76 @@ import SwiftUI
 
 struct SponsorView: View {
     var body: some View {
-        VStack{
-            Text("Hello World")
+        NavigationStack{
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        Text("Support the business that support weightlifting.")
+                            .multilineTextAlignment(.center)
+                        Text("For the community, but the community.")
+                            .multilineTextAlignment(.center)
+                            .padding(.top, -15)
+                        
+                        Divider()
+                        
+                        SponsorCard(title: "The Art of Barbell", caption: "Capture The Moments That Matter Most", code: "Use code MEETCAL for 20% off!", image: "theartofbarbell")
+                        SponsorCard(title: "War Games", caption: "Better Coaches, Better Athletes", code: "Use code MEETCAL20 for 20% off!", image: "wg-ad")
+                        SponsorCard(title: "Power & Grace Performance", caption: "Data-Driven Programming, Nation-Wide", code: "Team Support, and Coaching Education", image: "powergrace")
+                        
+                        Divider()
+                        
+                        Text("Intested in partnering with us? Contact us at: ")
+                        Link("maddisen@meetcal.app", destination: URL(string: "mailto:maddisen@meetcal.app")!)
+                    }
+                    .padding()
+                    .navigationTitle("Partners")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .background(Color(.systemGroupedBackground))
+                }
+            }
         }
     }
+}
+
+struct SponsorCard: View {
+    let title: String
+    let caption: String
+    let code: String
+    let image: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(image)
+                .resizable()
+                .frame(height: 200)
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: .infinity)
+            
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(.system(size: 18))
+                        .bold()
+                    Text(caption)
+                        .font(.system(size: 16))
+                    Text(code)
+                        .font(.system(size: 16))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+            }
+            .padding(.horizontal)
+            .padding(.top, 5)
+            .padding(.bottom, 10)
+        }
+        .background(.white)
+        .cornerRadius(12)
+    }
+}
+
+#Preview {
+    SponsorView()
 }

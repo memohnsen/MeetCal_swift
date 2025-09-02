@@ -10,7 +10,35 @@ import SwiftUI
 struct StartListView: View {
     @State private var searchText: String = ""
     
-    let athletes: [String] = ["Alex", "Amber", "Ashlie"]
+    var body: some View {
+        NavigationStack {
+            VStack {
+                VStack {
+                    HStack {
+                        ButtonComponent(image: "line.3.horizontal.decrease", action: {}, title: "Filter")
+                        ButtonComponent(image: "square.and.arrow.down", action: {}, title: "Save")
+                    }
+                    .padding()
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, -10)
+                
+                Divider()
+                
+                DropdownView(searchText: $searchText)
+                    .searchable(text: $searchText, prompt: "Search for an athlete")
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Start List")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+struct DropdownView: View {
+    @Binding var searchText: String
+    
+    let athletes: [String] = ["Alexander Nordstrom", "Amber Hapken", "Ashlie Pankonin"]
     
     var filteredAthletes: [String] {
         if searchText.isEmpty { return athletes }
@@ -18,49 +46,86 @@ struct StartListView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack {
-                VStack {
-                    HStack {
-                        Button {
-                        
-                        } label: {
-                            Image(systemName: "line.3.horizontal.decrease")
-                            Text("Filter")
+        List {
+            ForEach(filteredAthletes, id: \.self) {
+                DisclosureGroup($0) {
+                    VStack(spacing: 20) {
+                        HStack {
+                            Text("Session:")
+                            Spacer()
+                            Text("Session 24 | Red Platform")
+                                .bold()
                         }
-                        .frame(width: 180, height: 40)
-                        .foregroundStyle(.black)
-                        .background(.white)
-                        .cornerRadius(5)
-
-                        
-                        Button {
-                        
-                        } label: {
-                            Image(systemName: "square.and.arrow.down")
-                            Text("Save")
+                        HStack {
+                            Text("Date & Time:")
+                            Spacer()
+                            Text("Sep 10 | 8:30 PM PDT")
+                                .bold()
                         }
-                        .frame(width: 180, height: 40)
-                        .foregroundStyle(.black)
-                        .background(.white)
-                        .cornerRadius(5)
+                        HStack {
+                            Text("Club:")
+                            Spacer()
+                            Text("POWER & GRACE PERFORMANCE.")
+                                .bold()
+                        }
+                        HStack {
+                            Text("Weight Class:")
+                            Spacer()
+                            Text("88kg")
+                                .bold()
+                        }
+                        HStack {
+                            Text("Age:")
+                            Spacer()
+                            Text("40")
+                                .bold()
+                        }
+                        HStack {
+                            Text("Entry Total:")
+                            Spacer()
+                            Text("230kg")
+                                .bold()
+                        }
+                        
+                        Divider()
+                        
+                        HStack {
+                            VStack {
+                                Text("Bests From The Last Year")
+                                    .padding(.bottom, 10)
+                                
+                                HStack {
+                                    Spacer()
+                                    VStack {
+                                        Text("Snatch")
+                                        Text("120")
+                                            .bold()
+                                    }
+                                    Spacer()
+                                    VStack {
+                                        Text("CJ")
+                                        Text("160")
+                                            .bold()
+                                    }
+                                    Spacer()
+                                    VStack {
+                                        Text("Total")
+                                        Text("280")
+                                            .bold()
+                                    }
+                                    Spacer()
+                                }
+                                
+                                HStack {
+                                    Text("See All Meet Results")
+                                    Image(systemName: "chevron.right")
+                                }
+                                .padding(.top, 10)
+                            }
+                        }
                     }
-                    .padding(.bottom, 5)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 20)
-                .padding(.vertical, 20)
-                .background(.gray.opacity(0.2))
-                
-                Divider()
-                
-                List(filteredAthletes, id: \.self) { athlete in
-                    Text(athlete)
-                }
-                .searchable(text: $searchText, prompt: "Search for an athlete")
             }
-            .navigationTitle("Start List")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
