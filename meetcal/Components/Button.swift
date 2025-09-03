@@ -18,7 +18,7 @@ struct ButtonComponent: View {
             Text(title)
         }
         .frame(maxWidth: .infinity, minHeight: 40)
-        .foregroundStyle(.black)
+        .secondaryText()
         .background(.white)
         .cornerRadius(10)
         .overlay(

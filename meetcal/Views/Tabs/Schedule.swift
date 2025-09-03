@@ -20,7 +20,7 @@ struct Session: Identifiable {
 }
 
 struct ScheduleView: View {
-    @State private var meets: [String] = ["Virus Weightlifting Series 2", "Masters Worlds"]
+    @State private var meets: [String] = ["Virus Weightlifting Series 2", "Masters Worlds", "AO Finals", "National Championships", "Carolina WSO Championships"]
     @State private var selectedMeet: String = ""
     
     var body: some View {
@@ -60,21 +60,32 @@ struct SessionElementsView: View {
             .init(platform: "Red", weightClass: "60kg"),
             .init(platform: "Blue", weightClass: "71kg")
         ]),
+        Session(id: 3, date: "8/9/2025", groups: [
+            .init(platform: "Red", weightClass: "60kg"),
+            .init(platform: "Blue", weightClass: "71kg")
+        ]),
+        Session(id: 4, date: "8/9/2025", groups: [
+            .init(platform: "Red", weightClass: "60kg"),
+            .init(platform: "Blue", weightClass: "71kg")
+        ]),
+        Session(id: 5, date: "8/9/2025", groups: [
+            .init(platform: "Red", weightClass: "60kg"),
+            .init(platform: "Blue", weightClass: "71kg")
+        ]),
+        Session(id: 6, date: "8/9/2025", groups: [
+            .init(platform: "Red", weightClass: "60kg"),
+            .init(platform: "Blue", weightClass: "71kg")
+        ]),
     ]
     
     var body: some View {
         List {
             ForEach(sessions) { session in
-                Section(header: Text("Session \(session.id)")) {
+                Section(header: Text("Session \(session.id)").foregroundStyle(.black)) {
                     ForEach(session.groups) { group in
                         NavigationLink(destination: ScheduleView()) {
                             HStack {
-                                Text(group.platform)
-                                    .frame(width: 40, height: 40)
-                                    .padding(.horizontal, 10)
-                                    .background(group.platform == "Red" ? .red : .blue)
-                                    .foregroundStyle(.white)
-                                    .cornerRadius(10)
+                                Platform(text: group.platform)
                                 
                                 VStack(alignment: .leading) {
                                     Text(group.weightClass)
@@ -83,6 +94,7 @@ struct SessionElementsView: View {
                                         .padding(.vertical, 2)
                                 }
                                 .padding(.leading, 10)
+                                .secondaryText()
                             }
                         }
                     }

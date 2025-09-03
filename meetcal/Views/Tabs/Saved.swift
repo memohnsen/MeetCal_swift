@@ -28,7 +28,6 @@ struct SavedView: View {
                     
                     SavedElementsView()
                 }
-                .background(Color(.systemGroupedBackground))
                 .navigationTitle("Saved")
                 .navigationBarTitleDisplayMode(.inline)
             }
@@ -53,13 +52,11 @@ struct Saved: Identifiable {
 
 struct SavedElementsView: View {
     let sessions: [Saved] = [
-        Saved(id: 2, date: "8/9/2025", savedSession: [
-            .init(platform: "Red", weightClass: "88kg", weighInTime: "10:00 AM", startTime: "12:00 PM", athleteName: "Alexander Nordstrom"),
-            .init(platform: "Blue", weightClass: "94kg", weighInTime: "10:00 AM", startTime: "12:00 PM", athleteName: "")
+        Saved(id: 2, date: "September 9, 2025", savedSession: [
+            .init(platform: "Red", weightClass: "88kg", weighInTime: "10:00 AM EST", startTime: "12:00 PM EST", athleteName: "Alexander Nordstrom")
         ]),
-        Saved(id: 1, date: "8/9/2025", savedSession: [
-            .init(platform: "Red", weightClass: "60kg", weighInTime: "8:00 AM", startTime: "10:00 AM", athleteName: "Amber Hapken"),
-            .init(platform: "Blue", weightClass: "71kg", weighInTime: "8:00 AM", startTime: "10:00 AM", athleteName: "")
+        Saved(id: 1, date: "September 9, 2025", savedSession: [
+            .init(platform: "Blue", weightClass: "60kg", weighInTime: "8:00 AM EST", startTime: "10:00 AM EST", athleteName: "Amber Hapken")
         ]),
     ]
     
@@ -69,36 +66,54 @@ struct SavedElementsView: View {
                 .padding(.vertical, 8)
             
             ForEach(sessions) { session in
-                Section(header: Text("Session \(session.id) | \(session.date)")) {
-                    ForEach(session.savedSession) { group in
-                        NavigationLink(destination: ScheduleView()) {
-                            VStack(alignment: .leading) {
-                                HStack {
-                                    Text("Weigh-In: \(group.weighInTime)")
-                                    Text("Start: \(group.startTime)")
-                                }
+                ForEach(session.savedSession) { group in
+                    NavigationLink(destination: ScheduleView()) {
+                        VStack(alignment: .leading) {
+                            Text("Session \(session.id) • \(session.date)")
+                                .padding(.bottom, 6)
+                                .font(.headline)
+                                .bold()
+                            
+                            HStack {
+                                Text("Weigh-In: \(group.weighInTime)")
+                                Text("Start: \(group.startTime)")
+                            }
+                            .padding(.bottom, 6)
+                            .font(.system(size: 14))
+                            .secondaryText()
+                            
+                            HStack {
+                                Platform(text: group.platform)
+                            
+                                Text(group.weightClass)
+                                    .padding(.leading, 8)
+                                    .secondaryText()
+                            }
+                            .padding(.bottom, 6)
+                            
+                            if let name = group.athleteName {
+                                Divider()
                                 
-                                HStack {
-                                    Text(group.platform)
-                                        .frame(width: 40, height: 40)
-                                        .padding(.horizontal, 10)
-                                        .background(group.platform == "Red" ? .red : .blue)
-                                        .foregroundStyle(.white)
-                                        .cornerRadius(10)
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(group.weightClass)
-                                            .padding(.vertical, 2)
-                                        Text("Start: 9:00am PDT")
-                                            .padding(.vertical, 2)
-                                    }
-                                    .padding(.leading, 10)
-                                }
+                                Text("Athlete:")
+                                    .secondaryText()
+                                    .padding(.vertical, 6)
+                                
+                                Text(name)
+                                    .bold()
+                                    .padding(.bottom, 6)
                             }
                         }
+                        .padding()
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
+            .frame(height: 230)
+            .background(.white)
+            .cornerRadius(12)
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+            .foregroundStyle(.black)
         }
     }
 }
@@ -106,3 +121,4 @@ struct SavedElementsView: View {
 #Preview {
     SavedView()
 }
+

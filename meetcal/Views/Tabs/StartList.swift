@@ -52,68 +52,89 @@ struct DropdownView: View {
                     VStack(spacing: 20) {
                         HStack {
                             Text("Session:")
+                                .foregroundStyle(Color(red: 102/255, green: 102/255, blue: 102/255))
+
                             Spacer()
-                            Text("Session 24 | Red Platform")
-                                .bold()
+                            NavigationLink(destination: ScheduleView()) {
+                                Spacer()
+                                Spacer()
+                                Spacer()
+                                Spacer()
+                                Spacer()
+                                Text("Session 24 • Red Platform")
+                                    .foregroundStyle(.blue)
+                            }
                         }
                         HStack {
                             Text("Date & Time:")
+                                .secondaryText()
+                            
                             Spacer()
-                            Text("Sep 10 | 8:30 PM PDT")
-                                .bold()
+                            Text("Sep 10 • 8:30 PM PDT")
                         }
                         HStack {
                             Text("Club:")
+                                .secondaryText()
+                            
                             Spacer()
                             Text("POWER & GRACE PERFORMANCE.")
-                                .bold()
                         }
                         HStack {
                             Text("Weight Class:")
+                                .secondaryText()
+                            
                             Spacer()
                             Text("88kg")
-                                .bold()
                         }
                         HStack {
                             Text("Age:")
+                                .secondaryText()
+                            
                             Spacer()
                             Text("40")
-                                .bold()
                         }
                         HStack {
                             Text("Entry Total:")
+                                .secondaryText()
+                            
                             Spacer()
                             Text("230kg")
-                                .bold()
                         }
-                        
-                        Divider()
-                        
+                                                
                         HStack {
                             VStack {
+                                Divider()
+                                    .padding(.vertical, 6)
+                                
                                 Text("Bests From The Last Year")
                                     .padding(.bottom, 10)
+                                    .secondaryText()
                                 
                                 HStack {
-                                    Spacer()
                                     VStack {
                                         Text("Snatch")
+                                            .secondaryText()
                                         Text("120")
                                             .bold()
                                     }
-                                    Spacer()
+                                    .padding(.leading, 5)
+                                    
                                     VStack {
                                         Text("CJ")
+                                            .secondaryText()
                                         Text("160")
                                             .bold()
                                     }
-                                    Spacer()
+                                    .padding(.horizontal, 20)
+                                    
                                     VStack {
                                         Text("Total")
+                                            .secondaryText()
                                         Text("280")
                                             .bold()
                                     }
-                                    Spacer()
+                                    .padding(.trailing, 5)
+
                                 }
                                 
                                 HStack {
@@ -121,9 +142,11 @@ struct DropdownView: View {
                                     Image(systemName: "chevron.right")
                                 }
                                 .padding(.top, 10)
+                                .foregroundStyle(.blue)
                             }
                         }
                     }
+                    .padding(.leading, -20)
                 }
             }
         }
