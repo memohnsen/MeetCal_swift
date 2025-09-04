@@ -14,8 +14,11 @@ struct SettingsView: View {
         NavigationStack{
             List {
                 Section("Settings") {
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: ProfileView()) {
                         Text("My Profile")
+                    }
+                    NavigationLink(destination: EventInfoView()) {
+                        Text("Event Info")
                     }
                     Toggle("Dark Mode", isOn: $darkMode)
                         .toggleStyle(SwitchToggleStyle(tint: .accentColor))

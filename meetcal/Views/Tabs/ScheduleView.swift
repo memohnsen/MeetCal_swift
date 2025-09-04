@@ -83,7 +83,7 @@ struct SessionElementsView: View {
             ForEach(sessions) { session in
                 Section(header: Text("Session \(session.id)").foregroundStyle(.black)) {
                     ForEach(session.groups) { group in
-                        NavigationLink(destination: ScheduleView()) {
+                        NavigationLink(destination: ScheduleDetailsView()) {
                             HStack {
                                 Platform(text: group.platform)
                                 
