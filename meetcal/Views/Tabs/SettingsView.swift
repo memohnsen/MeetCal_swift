@@ -25,19 +25,19 @@ struct SettingsView: View {
                 }
                 
                 Section("Competition Information") {
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: QualifyingTotalsView()) {
                         Text("Qualifying Totals")
                     }
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: StandardsView()) {
                         Text("A/B Standards")
                     }
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: InternationalRankingsView()) {
                         Text("International Rankings")
                     }
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: AmericanRecordsView()) {
                         Text("American Records")
                     }
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: WSORecordsView()) {
                         Text("WSO Records")
                     }
                     NavigationLink(destination: ScheduleView()) {

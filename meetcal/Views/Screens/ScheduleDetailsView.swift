@@ -120,7 +120,7 @@ struct BottomView: View {
             ForEach(athletes) {athlete in
                 Text(athlete.name)
                     .bold()
-                    .padding(.top, 4)
+                    .padding(.top, 8)
                 
                 ForEach(athlete.details) {details in
                     Text("Age: \(details.age) • Weight Class: \(details.weightClass)")
@@ -183,6 +183,7 @@ struct BottomView: View {
                             Text("See All Meet Results")
                             Image(systemName: "chevron.right")
                         }
+                        .padding(.vertical, 8)
                         Spacer()
                     }
                     

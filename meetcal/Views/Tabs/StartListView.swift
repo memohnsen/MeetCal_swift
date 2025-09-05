@@ -55,7 +55,7 @@ struct DropdownView: View {
                                 .foregroundStyle(Color(red: 102/255, green: 102/255, blue: 102/255))
 
                             Spacer()
-                            NavigationLink(destination: ScheduleView()) {
+                            NavigationLink(destination: ScheduleDetailsView()) {
                                 Spacer()
                                 Spacer()
                                 Spacer()
@@ -106,9 +106,8 @@ struct DropdownView: View {
                                 Divider()
                                     .padding(.vertical, 6)
                                 
-                                Text("Bests From The Last Year")
+                                Text("Best Lifts From The Last Year")
                                     .padding(.bottom, 10)
-                                    .secondaryText()
                                 
                                 HStack {
                                     VStack {
@@ -117,7 +116,8 @@ struct DropdownView: View {
                                         Text("120")
                                             .bold()
                                     }
-                                    .padding(.leading, 5)
+                                    
+                                    Spacer()
                                     
                                     VStack {
                                         Text("CJ")
@@ -125,7 +125,8 @@ struct DropdownView: View {
                                         Text("160")
                                             .bold()
                                     }
-                                    .padding(.horizontal, 20)
+                                    
+                                    Spacer()
                                     
                                     VStack {
                                         Text("Total")
@@ -133,9 +134,8 @@ struct DropdownView: View {
                                         Text("280")
                                             .bold()
                                     }
-                                    .padding(.trailing, 5)
-
                                 }
+                                .frame(width: 220)
                                 
                                 HStack {
                                     Text("See All Meet Results")

@@ -18,7 +18,7 @@ struct SponsorView: View {
                     VStack(spacing: 20) {
                         Text("Support the business that support weightlifting.")
                             .multilineTextAlignment(.center)
-                        Text("For the community, but the community.")
+                        Text("For the community, by the community.")
                             .multilineTextAlignment(.center)
                             .padding(.top, -15)
                         

@@ -20,31 +20,91 @@ struct Session: Identifiable {
 }
 
 struct ScheduleView: View {
+    @State private var showingMeetsOverlay: Bool = false
+    
     @State private var meets: [String] = ["Virus Weightlifting Series 2", "Masters Worlds", "AO Finals", "National Championships", "Carolina WSO Championships"]
     @State private var selectedMeet: String = ""
     
     var body: some View {
         NavigationStack{
             VStack {
-                HStack {
-                    Text("Selected Meet: ")
-                        .bold()
-                    Spacer()
-                    Picker(selectedMeet.isEmpty ? "Select Your Meet" : selectedMeet, selection: $selectedMeet) {
-                        ForEach(meets, id: \.self) {
-                            Text($0)
+                ZStack {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Selected Meet")
+                                .bold()
+                                .padding(.bottom, 0.5)
+                            Text(!selectedMeet.isEmpty ? selectedMeet : meets[0])
                         }
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .secondaryText()
+                            .bold()
                     }
-                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(.white)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                    .onTapGesture {
+                        showingMeetsOverlay = true
+                    }
                 }
-                .padding(.horizontal, 20)
-                
+                .frame(height: 100)
+
                 SessionElementsView()
-                }
             }
-            .onAppear{
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        }
+        .onAppear{
+            if selectedMeet == "" {
                 selectedMeet = meets[0]
             }
+        }
+        .overlay(
+            Group {
+                if showingMeetsOverlay {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture { showingMeetsOverlay = false }
+
+                    VStack(spacing: 0) {
+                        Text("Select Your Meet")
+                            .font(.headline)
+                            .padding()
+                        Divider()
+                        
+                        ForEach(meets, id: \.self) { meet in
+                            HStack {
+                                Button(action: {
+                                    selectedMeet = meet
+                                    showingMeetsOverlay = false
+                                }) {
+                                    Text(meet)
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .foregroundStyle(meet == selectedMeet ? Color.blue : Color.black)
+                                }
+                                Spacer()
+                                if meet == selectedMeet {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                                Spacer()
+                            }
+                            .background(meet == selectedMeet ? Color.gray.opacity(0.1) : Color.white)
+                            
+                            Divider()
+                        }
+                    }
+                    .frame(maxWidth: 350)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .shadow(radius: 20)
+                    .padding(.horizontal, 30)
+                }
+            }
+        )
     }
 }
 

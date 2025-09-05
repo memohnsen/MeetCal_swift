@@ -67,7 +67,7 @@ struct SavedElementsView: View {
             
             ForEach(sessions) { session in
                 ForEach(session.savedSession) { group in
-                    NavigationLink(destination: ScheduleView()) {
+                    NavigationLink(destination: ScheduleDetailsView()) {
                         VStack(alignment: .leading) {
                             Text("Session \(session.id) • \(session.date)")
                                 .padding(.bottom, 6)
