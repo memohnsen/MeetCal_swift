@@ -93,11 +93,13 @@ struct ProfileView: View {
                         Divider()
                             .padding(.vertical, 8)
                         
-                        HStack {
-                            NavigationLink(destination: ScheduleView(), label: {Text("Leave A Review")})
-                                .foregroundStyle(.black)
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                        Link(destination: URL(string: "https://apps.apple.com/us/app/meetcal/id6741133286")!) {
+                            HStack {
+                                Text("Leave A Review")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                              }
+                            .foregroundStyle(.black)
                         }
                     }
                     .cardStyling()

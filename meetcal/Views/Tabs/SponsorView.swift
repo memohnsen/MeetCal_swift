@@ -24,9 +24,9 @@ struct SponsorView: View {
                         
                         Divider()
                         
-                        SponsorCard(title: "The Art of Barbell", caption: "Capture The Moments That Matter Most", code: "Use code MEETCAL for 20% off!", image: "theartofbarbell")
-                        SponsorCard(title: "War Games", caption: "Better Coaches, Better Athletes", code: "Use code MEETCAL20 for 20% off!", image: "wg-ad")
-                        SponsorCard(title: "Power & Grace Performance", caption: "Data-Driven Programming, Nation-Wide", code: "Team Support, and Coaching Education", image: "powergrace")
+                        SponsorCard(title: "The Art of Barbell", caption: "Capture The Moments That Matter Most", code: "Use code MEETCAL for 20% off!", image: "theartofbarbell", link: "https://nikkijeanphotography.pixieset.com/contact-form/cf_ZnYPcTFnBcJEyiV6tpsKab7NbOdQ")
+                        SponsorCard(title: "War Games", caption: "Better Coaches, Better Athletes", code: "Use code MEETCAL20 for 20% off!", image: "wg-ad", link: "https://wl-wargames.com")
+                        SponsorCard(title: "Power & Grace Performance", caption: "Data-Driven Programming, Nation-Wide", code: "Team Support, and Coaching Education", image: "powergrace", link: "https://powerandgraceperformance.com")
                         
                         Divider()
                         
@@ -48,34 +48,38 @@ struct SponsorCard: View {
     let caption: String
     let code: String
     let image: String
+    let link: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(image)
-                .resizable()
-                .frame(height: 200)
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity)
-            
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(title)
-                        .font(.system(size: 18))
-                        .bold()
-                    Text(caption)
-                        .font(.system(size: 16))
-                    Text(code)
-                        .font(.system(size: 16))
+        Link(destination: URL(string: link)!) {
+            VStack(alignment: .leading, spacing: 10) {
+                Image(image)
+                    .resizable()
+                    .frame(height: 200)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(title)
+                            .font(.system(size: 18))
+                            .bold()
+                        Text(caption)
+                            .font(.system(size: 16))
+                        Text(code)
+                            .font(.system(size: 16))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
                 }
-                Spacer()
-                Image(systemName: "chevron.right")
+                .padding(.horizontal)
+                .padding(.top, 5)
+                .padding(.bottom, 10)
+                .foregroundStyle(.black)
             }
-            .padding(.horizontal)
-            .padding(.top, 5)
-            .padding(.bottom, 10)
+            .background(.white)
+            .cornerRadius(12)
         }
-        .background(.white)
-        .cornerRadius(12)
     }
 }
 

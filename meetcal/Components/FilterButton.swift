@@ -10,16 +10,17 @@ import SwiftUI
 struct FilterButton: View {
     let filter1: String
     let filter2: String
-    let filter3: String
+    let filter3: String?
+    let action: () -> Void
     
     var body: some View {
             HStack {
                 Spacer()
                 
-                Button{
+                Button{ action()
                     
                 } label: {
-                    Text("\(filter1) • \(filter2) • \(filter3)")
+                    Text("\(filter1) • \(filter2) \((filter3 != nil) ? "• \(filter3 ?? "")" : "")")
                         .secondaryText()
                         .bold()
                     Image(systemName: "chevron.down")
@@ -37,5 +38,5 @@ struct FilterButton: View {
 }
 
 #Preview {
-    FilterButton(filter1: "Senior", filter2: "60kg", filter3: "Youth")
+    FilterButton(filter1: "Senior", filter2: "60kg", filter3: nil, action: {})
 }

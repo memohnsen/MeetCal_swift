@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		716D2C262E6CD23E00E4118D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 716D2C252E6CD23E00E4118D /* GoogleSignIn */; };
+		716D2C282E6CD23E00E4118D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 716D2C272E6CD23E00E4118D /* GoogleSignInSwift */; };
+		716D2C2B2E6CD24B00E4118D /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 716D2C2A2E6CD24B00E4118D /* PostHog */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7111C8512E663F700023BA6F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				716D2C2B2E6CD24B00E4118D /* PostHog in Frameworks */,
+				716D2C262E6CD23E00E4118D /* GoogleSignIn in Frameworks */,
+				716D2C282E6CD23E00E4118D /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +134,9 @@
 			);
 			name = meetcal;
 			packageProductDependencies = (
+				716D2C252E6CD23E00E4118D /* GoogleSignIn */,
+				716D2C272E6CD23E00E4118D /* GoogleSignInSwift */,
+				716D2C2A2E6CD24B00E4118D /* PostHog */,
 			);
 			productName = meetcal;
 			productReference = 7111C83F2E663F6F0023BA6F /* meetcal.app */;
@@ -208,6 +220,10 @@
 			);
 			mainGroup = 7111C8362E663F6F0023BA6F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				716D2C242E6CD23E00E4118D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				716D2C292E6CD24B00E4118D /* XCRemoteSwiftPackageReference "posthog-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7111C8402E663F6F0023BA6F /* Products */;
 			projectDirPath = "";
@@ -605,6 +621,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		716D2C242E6CD23E00E4118D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+		716D2C292E6CD24B00E4118D /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		716D2C252E6CD23E00E4118D /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 716D2C242E6CD23E00E4118D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		716D2C272E6CD23E00E4118D /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 716D2C242E6CD23E00E4118D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		716D2C2A2E6CD24B00E4118D /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 716D2C292E6CD24B00E4118D /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7111C8372E663F6F0023BA6F /* Project object */;
 }

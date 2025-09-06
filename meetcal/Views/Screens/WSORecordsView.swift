@@ -8,6 +8,19 @@
 import SwiftUI
 
 struct WSORecordsView: View {
+    @State private var isModalShowing: Bool = false
+        @State private var isModal1DropdownShowing: Bool = false
+        @State private var isModal2DropdownShowing: Bool = false
+        @State private var isModal3DropdownShowing: Bool = false
+        
+        @State var selectedGender: String = "Men"
+        @State var selectedAge: String = "Senior"
+        @State var selectedMeet: String = "Carolina"
+        
+        let genders: [String] = ["Men", "Women"]
+        let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
+        let meets: [String] = ["Carolina", "Florida", "Texas-Oklahoma"]
+    
     let amRecords = [
         Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
         Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
@@ -25,7 +38,7 @@ struct WSORecordsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: "Carolina", filter2: "60kg", filter3: "Men")
+                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
                     
                     Divider()
                         .padding(.top)
@@ -73,6 +86,19 @@ struct WSORecordsView: View {
             .navigationTitle("WSO Records")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .overlay(QualifyingRankingsRecordsFilter(
+                    isModalShowing: $isModalShowing,
+                    isModal1DropdownShowing: $isModal1DropdownShowing,
+                    isModal2DropdownShowing: $isModal2DropdownShowing,
+                    isModal3DropdownShowing: $isModal3DropdownShowing,
+                    selectedGender: $selectedGender,
+                    selectedAge: $selectedAge,
+                    selectedMeet: $selectedMeet,
+                    genders: genders,
+                    ageGroups: ageGroups,
+                    meets: meets,
+                    title: "WSO"
+                ))
     }
 }
 

@@ -15,7 +15,20 @@ struct QualifyingTotal: Hashable {
 }
 
 struct QualifyingTotalsView: View {
-    let qualifyingTotals = [
+    @State private var isModalShowing: Bool = false
+    @State private var isModal1DropdownShowing: Bool = false
+    @State private var isModal2DropdownShowing: Bool = false
+    @State private var isModal3DropdownShowing: Bool = false
+    
+    @State var selectedGender: String = "Men"
+    @State var selectedAge: String = "Senior"
+    @State var selectedMeet: String = "USAW Nationals"
+    
+    let genders: [String] = ["Men", "Women"]
+    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
+    let meets: [String] = ["USAW Nationals", "AO1", "AO2", "AOF", "USAMW Nationals", "IMWA Worlds", "IMWA Pan Ams"]
+    
+    let qualifyingTotals: [QualifyingTotal] = [
         QualifyingTotal(ageGroup: "Senior", weightClass: "60kg", total: "209kg"),
         QualifyingTotal(ageGroup: "Senior", weightClass: "65kg", total: "227kg"),
         QualifyingTotal(ageGroup: "Senior", weightClass: "71kg", total: "256kg"),
@@ -33,7 +46,7 @@ struct QualifyingTotalsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: "Senior", filter2: "60kg", filter3: "Men")
+                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
                     
                     Divider()
                         .padding(.top)
@@ -65,6 +78,19 @@ struct QualifyingTotalsView: View {
             .navigationTitle("Qualifying Totals")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .overlay(QualifyingRankingsRecordsFilter(
+            isModalShowing: $isModalShowing,
+            isModal1DropdownShowing: $isModal1DropdownShowing,
+            isModal2DropdownShowing: $isModal2DropdownShowing,
+            isModal3DropdownShowing: $isModal3DropdownShowing,
+            selectedGender: $selectedGender,
+            selectedAge: $selectedAge,
+            selectedMeet: $selectedMeet,
+            genders: genders,
+            ageGroups: ageGroups,
+            meets: meets,
+            title: "Meet"
+        ))
     }
 }
 

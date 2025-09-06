@@ -25,9 +25,17 @@ struct AmRecordsModal: Hashable {
 
 struct AmericanRecordsView: View {
     @State private var isModalShowing: Bool = false
-    @State private var federationDefault: String = "USAW"
-    @State private var weightClassDefault: String = "60kg"
-    @State private var genderDefault: String = "Men"
+    @State private var isModal1DropdownShowing: Bool = false
+    @State private var isModal2DropdownShowing: Bool = false
+    @State private var isModal3DropdownShowing: Bool = false
+    
+    @State var selectedGender: String = "Men"
+    @State var selectedAge: String = "Senior"
+    @State var selectedMeet: String = "USAW"
+    
+    let genders: [String] = ["Men", "Women"]
+    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
+    let meets: [String] = ["USAW", "USAMW"]
     
     let amRecordsModal: [AmRecordsModal] = [
         AmRecordsModal(federation: "USAW", weightClass: "60kg", gender: "Men"),
@@ -58,7 +66,7 @@ struct AmericanRecordsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: "USAW", filter2: "60kg", filter3: "Men")
+                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
                     
                     Divider()
                         .padding(.top)
@@ -106,44 +114,19 @@ struct AmericanRecordsView: View {
             .navigationTitle("American Records")
             .navigationBarTitleDisplayMode(.inline)
         }
-//        .overlay(
-//            Group {
-//                if isModalShowing {
-//                    Color.black.opacity(0.4)
-//                        .ignoresSafeArea()
-//                        .onTapGesture { isModalShowing = false }
-//
-//                    VStack(spacing: 0) {
-//                        ForEach(amRecordsModal, id: \.self) { options in
-//                            HStack {
-//                                Button(action: {
-//                                    showingMeetsOverlay = false
-//                                }) {
-//                                    Text(options)
-//                                        .padding()
-//                                        .frame(maxWidth: .infinity)
-//                                        .foregroundStyle(meet == selectedMeet ? Color.blue : Color.black)
-//                                }
-//                                Spacer()
-//                                if options == selectedMeet {
-//                                    Image(systemName: "checkmark")
-//                                        .foregroundStyle(.blue)
-//                                }
-//                                Spacer()
-//                            }
-//                            .background(meet == selectedMeet ? Color.gray.opacity(0.1) : Color.white)
-//                            
-//                            Divider()
-//                        }
-//                    }
-//                    .frame(maxWidth: 350)
-//                    .background(Color.white)
-//                    .cornerRadius(16)
-//                    .shadow(radius: 20)
-//                    .padding(.horizontal, 30)
-//                }
-//            }
-//        )
+        .overlay(QualifyingRankingsRecordsFilter(
+                    isModalShowing: $isModalShowing,
+                    isModal1DropdownShowing: $isModal1DropdownShowing,
+                    isModal2DropdownShowing: $isModal2DropdownShowing,
+                    isModal3DropdownShowing: $isModal3DropdownShowing,
+                    selectedGender: $selectedGender,
+                    selectedAge: $selectedAge,
+                    selectedMeet: $selectedMeet,
+                    genders: genders,
+                    ageGroups: ageGroups,
+                    meets: meets,
+                    title: "Federation"
+                ))
     }
 }
 

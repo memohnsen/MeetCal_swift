@@ -81,8 +81,9 @@ struct ScheduleView: View {
                                     showingMeetsOverlay = false
                                 }) {
                                     Text(meet)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.leading, 0)
                                         .padding()
-                                        .frame(maxWidth: .infinity)
                                         .foregroundStyle(meet == selectedMeet ? Color.blue : Color.black)
                                 }
                                 Spacer()

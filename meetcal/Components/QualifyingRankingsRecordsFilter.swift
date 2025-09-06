@@ -1,96 +1,25 @@
 //
-//  StandardsView.swift
+//  QualifyingRankingsRecordsFilter.swift
 //  meetcal
 //
-//  Created by Maddisen Mohnsen on 9/5/25.
+//  Created by Maddisen Mohnsen on 9/6/25.
 //
 
 import SwiftUI
 
-struct Standards: Hashable {
-    let id = UUID()
-    let ageGroup: String
-    let weightClass: String
-    let aStandard: String
-    let bStandard: String
-}
-
-struct StandardsView: View {
-    @State private var isModalShowing: Bool = false
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
-    
-    let standards = [
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg")
-    ]
-    
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
-                
-                VStack {
-                    FilterButton(filter1: selectedGender, filter2: selectedAge, filter3: nil, action: {isModalShowing = true})
-                    
-                    Divider()
-                        .padding(.top)
-                        .padding(.bottom, 2)
-                    
-                    
-                    VStack {
-                        List {
-                            HStack {
-                                Text("Weight Class")
-                                    .frame(width: 160, alignment: .leading)
-                                    .bold()
-                                Text("A")
-                                Spacer()
-                                Spacer()
-                                Text("B")
-                                Spacer()
-                            }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(standards, id: \.self) { total in
-                                HStack {
-                                    DataSectionView(weightClass: total.weightClass, data: total.aStandard, width: 160)
-                                    Text(total.bStandard)
-                                    Spacer()
-                                    Spacer()
-                                }
-                            }
-                        }
-                    }
-                    .padding(.top, -10)
-                    
-                    Spacer()
-                }
-            }
-            .navigationTitle("A/B Standards")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-        .overlay(StandardFilter(isModalShowing: $isModalShowing, selectedGender: $selectedGender, selectedAge: $selectedAge))
-    }
-}
-
-struct StandardFilter: View {
+struct QualifyingRankingsRecordsFilter: View {
     @Binding var isModalShowing: Bool
-    @State private var isModal1DropdownShowing: Bool = false
-    @State private var isModal2DropdownShowing: Bool = false
-    
+    @Binding var isModal1DropdownShowing: Bool
+    @Binding var isModal2DropdownShowing: Bool
+    @Binding var isModal3DropdownShowing: Bool
     @Binding var selectedGender: String
     @Binding var selectedAge: String
+    @Binding var selectedMeet: String
     
-    let genders: [String] = ["Men", "Women"]
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "Senior"]
+    var genders: [String]
+    var ageGroups: [String]
+    var meets: [String]
+    var title: String
     
     var body: some View {
         Group {
@@ -104,10 +33,10 @@ struct StandardFilter: View {
                 VStack(spacing: 0) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("Gender")
+                            Text(title)
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedGender.isEmpty ? "Men" : selectedGender)
+                            Text(selectedMeet)
                         }
                         Spacer()
                         Image(systemName: isModal1DropdownShowing ? "chevron.down" : "chevron.right")
@@ -123,11 +52,62 @@ struct StandardFilter: View {
                         VStack(alignment: .leading, spacing: 0) {
                             Divider()
                             
+                            ForEach(meets, id: \.self) { meet in
+                                HStack {
+                                    Button(action: {
+                                        selectedMeet = meet
+                                        isModal1DropdownShowing = false
+                                    }) {
+                                        Text(meet)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 0)
+                                            .padding()
+                                            .foregroundStyle(meet == selectedMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                    }
+
+
+                                    Spacer()
+                                    if meet == selectedMeet {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                    Spacer()
+                                }
+                                .background(meet == selectedMeet ? .gray.opacity(0.2) : .white)
+
+                                Divider()
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Gender")
+                                .secondaryText()
+                                .padding(.bottom, 0.5)
+                            Text(selectedGender.isEmpty ? "Men" : selectedGender)
+                        }
+                        Spacer()
+                        Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isModal2DropdownShowing.toggle()
+                    }
+                    
+                    if isModal2DropdownShowing {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Divider()
+                            
                             ForEach(genders, id: \.self) { gender in
                                 HStack {
                                     Button(action: {
                                         selectedGender = gender
-                                        isModal1DropdownShowing = false
+                                            isModal2DropdownShowing = false
                                     }) {
                                         Text(gender)
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -161,16 +141,16 @@ struct StandardFilter: View {
                             Text(selectedAge)
                         }
                         Spacer()
-                        Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
+                        Image(systemName: isModal3DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
                     .background(Color.white)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        isModal2DropdownShowing.toggle()
+                        isModal3DropdownShowing.toggle()
                     }
-
-                    if isModal2DropdownShowing {
+                    
+                    if isModal3DropdownShowing {
                         VStack(alignment: .leading, spacing: 0) {
                             Divider()
                             
@@ -178,7 +158,7 @@ struct StandardFilter: View {
                                 HStack {
                                     Button(action: {
                                         selectedAge = age
-                                        isModal2DropdownShowing = false
+                                        isModal3DropdownShowing = false
                                     }) {
                                         Text(age)
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -230,6 +210,3 @@ struct StandardFilter: View {
     }
 }
 
-#Preview {
-    StandardsView()
-}

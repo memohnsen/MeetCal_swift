@@ -40,12 +40,12 @@ struct SettingsView: View {
                     NavigationLink(destination: WSORecordsView()) {
                         Text("WSO Records")
                     }
-                    NavigationLink(destination: ScheduleView()) {
-                        Text("Adaptive Records")
-                    }
-                    NavigationLink(destination: ScheduleView()) {
-                        Text("Weightlifting Wrapped")
-                    }
+//                    NavigationLink(destination: ScheduleView()) {
+//                        Text("Adaptive Records")
+//                    }
+//                    NavigationLink(destination: ScheduleView()) {
+//                        Text("Weightlifting Wrapped")
+//                    }
                 }
                 
                 Section("Danger Zone") {
