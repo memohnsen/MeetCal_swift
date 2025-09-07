@@ -6,15 +6,11 @@
 //
 
 import SwiftUI
-
-struct QualifyingTotal: Hashable {
-    let id = UUID()
-    let ageGroup: String
-    let weightClass: String
-    let total: String
-}
+import Supabase
+import Combine
 
 struct QualifyingTotalsView: View {
+    @StateObject private var viewModel = QualifyingTotalModel()
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
@@ -27,17 +23,6 @@ struct QualifyingTotalsView: View {
     let genders: [String] = ["Men", "Women"]
     let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
     let meets: [String] = ["USAW Nationals", "AO1", "AO2", "AOF", "USAMW Nationals", "IMWA Worlds", "IMWA Pan Ams"]
-    
-    let qualifyingTotals: [QualifyingTotal] = [
-        QualifyingTotal(ageGroup: "Senior", weightClass: "60kg", total: "209kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "65kg", total: "227kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "71kg", total: "256kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "79kg", total: "272kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "88kg", total: "289kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "94kg", total: "300kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "110kg", total: "309kg"),
-        QualifyingTotal(ageGroup: "Senior", weightClass: "110+kg", total: "312kg")
-    ]
     
     var body: some View {
         NavigationStack {
@@ -65,14 +50,13 @@ struct QualifyingTotalsView: View {
                             .bold()
                             .secondaryText()
                             
-                            ForEach(qualifyingTotals, id: \.self) { total in
-                                DataSectionView(weightClass: total.weightClass, data: total.total, width: 200)
+                            ForEach(viewModel.totals, id: \.self) { total in
+                                DataSectionView(weightClass: total.weight_class, data: String("\(total.qualifying_total)kg"), width: 200)
                             }
                         }
                     }
                     .padding(.top, -10)
                     
-                    Spacer()
                 }
             }
             .navigationTitle("Qualifying Totals")
@@ -91,6 +75,18 @@ struct QualifyingTotalsView: View {
             meets: meets,
             title: "Meet"
         ))
+        .task {
+            await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet)
+        }
+        .onChange(of: selectedGender) { _ in
+            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        }
+        .onChange(of: selectedAge) { _ in
+            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        }
+        .onChange(of: selectedMeet) { _ in
+            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        }
     }
 }
 

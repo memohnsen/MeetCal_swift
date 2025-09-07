@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct DataSectionView: View {
-    let weightClass: String
+    let weightClass: String?
     let data: String
     let width: CGFloat
     
     var body: some View {
         HStack{
-            Text(weightClass)
+            Text(weightClass ?? "")
                 .frame(width: width, alignment: .leading)
             HStack {
                 Text(data)

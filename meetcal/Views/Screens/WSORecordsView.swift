@@ -6,30 +6,24 @@
 //
 
 import SwiftUI
+import Supabase
+import Combine
 
 struct WSORecordsView: View {
-    @State private var isModalShowing: Bool = false
-        @State private var isModal1DropdownShowing: Bool = false
-        @State private var isModal2DropdownShowing: Bool = false
-        @State private var isModal3DropdownShowing: Bool = false
-        
-        @State var selectedGender: String = "Men"
-        @State var selectedAge: String = "Senior"
-        @State var selectedMeet: String = "Carolina"
-        
-        let genders: [String] = ["Men", "Women"]
-        let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
-        let meets: [String] = ["Carolina", "Florida", "Texas-Oklahoma"]
+    @StateObject private var viewModel = WSOViewModel()
     
-    let amRecords = [
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg")
-    ]
+    @State private var isModalShowing: Bool = false
+    @State private var isModal1DropdownShowing: Bool = false
+    @State private var isModal2DropdownShowing: Bool = false
+    @State private var isModal3DropdownShowing: Bool = false
+    
+    @State var selectedGender: String = "Men"
+    @State var selectedAge: String = "Senior"
+    @State var selectedMeet: String = "Carolina"
+    
+    let genders: [String] = ["Men", "Women"]
+    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
+    let wso: [String] = ["Carolina", "Florida", "Texas-Oklahoma"]
     
     var body: some View {
         NavigationStack {
@@ -64,14 +58,14 @@ struct WSORecordsView: View {
                             .bold()
                             .secondaryText()
                             
-                            ForEach(amRecords, id: \.self) { record in
+                            ForEach(viewModel.wsoRecords, id: \.self) { record in
                                 HStack {
-                                    DataSectionView(weightClass: record.weightClass, data: record.snatchRecord, width: 120)
-                                    Text(record.cjRecord)
+                                    DataSectionView(weightClass: String("\(record.weight_class)kg"), data: String("\(record.snatch_record)kg"), width: 120)
+                                    Text("\(record.cj_record)kg")
                                     Spacer()
                                     Spacer()
                                     Spacer()
-                                    Text(record.totalRecord)
+                                    Text("\(record.total_record)kg")
                                     Spacer()
                                     Spacer()
                                 }
@@ -80,7 +74,6 @@ struct WSORecordsView: View {
                     }
                     .padding(.top, -10)
                     
-                    Spacer()
                 }
             }
             .navigationTitle("WSO Records")
@@ -96,9 +89,21 @@ struct WSORecordsView: View {
                     selectedMeet: $selectedMeet,
                     genders: genders,
                     ageGroups: ageGroups,
-                    meets: meets,
+                    meets: wso,
                     title: "WSO"
                 ))
+        .task {
+            await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet)
+        }
+        .onChange(of: selectedGender) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        }
+        .onChange(of: selectedAge) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        }
+        .onChange(of: selectedMeet) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        }
     }
 }
 

@@ -5,30 +5,15 @@
 //  Created by Maddisen Mohnsen on 9/5/25.
 //
 
+import Combine
 import SwiftUI
-
-struct Standards: Hashable {
-    let id = UUID()
-    let ageGroup: String
-    let weightClass: String
-    let aStandard: String
-    let bStandard: String
-}
+import Supabase
 
 struct StandardsView: View {
+    @StateObject private var viewModel = StandardsViewModel()
     @State private var isModalShowing: Bool = false
     @State var selectedGender: String = "Men"
     @State var selectedAge: String = "Senior"
-    
-    let standards = [
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg"),
-        Standards(ageGroup: "Senior", weightClass: "60kg", aStandard: "200kg", bStandard: "300kg")
-    ]
     
     var body: some View {
         NavigationStack {
@@ -45,39 +30,53 @@ struct StandardsView: View {
                     
                     
                     VStack {
-                        List {
-                            HStack {
-                                Text("Weight Class")
-                                    .frame(width: 160, alignment: .leading)
-                                    .bold()
-                                Text("A")
-                                Spacer()
-                                Spacer()
-                                Text("B")
-                                Spacer()
-                            }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(standards, id: \.self) { total in
+                        if viewModel.isLoading {
+                            ProgressView("Loading...")
+                        } else if let error = viewModel.error {
+                            Text("Failed to load: \(error.localizedDescription)").foregroundColor(.red)
+                        } else {
+                            List {
                                 HStack {
-                                    DataSectionView(weightClass: total.weightClass, data: total.aStandard, width: 160)
-                                    Text(total.bStandard)
+                                    Text("Weight Class")
+                                        .frame(width: 160, alignment: .leading)
+                                        .bold()
+                                    Text("A")
                                     Spacer()
                                     Spacer()
+                                    Text("B")
+                                    Spacer()
+                                }
+                                .bold()
+                                .secondaryText()
+                                
+                                ForEach(viewModel.standards) { total in
+                                    HStack {
+                                        DataSectionView(weightClass: total.weight_class, data: String("\(total.standard_a)kg"), width: 160)
+                                        Text("\(total.standard_b)kg")
+                                        Spacer()
+                                        Spacer()
+                                    }
                                 }
                             }
                         }
                     }
                     .padding(.top, -10)
                     
-                    Spacer()
                 }
             }
             .navigationTitle("A/B Standards")
             .navigationBarTitleDisplayMode(.inline)
         }
         .overlay(StandardFilter(isModalShowing: $isModalShowing, selectedGender: $selectedGender, selectedAge: $selectedAge))
+        .task {
+            await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge)
+        }
+        .onChange(of: selectedGender) { _ in
+            Task { await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge) }
+        }
+        .onChange(of: selectedAge) { _ in
+            Task { await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge) }
+        }
     }
 }
 

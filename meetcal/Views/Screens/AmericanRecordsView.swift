@@ -6,24 +6,12 @@
 //
 
 import SwiftUI
-
-struct Records: Hashable {
-    let id = UUID()
-    let ageGroup: String
-    let weightClass: String
-    let snatchRecord: String
-    let cjRecord: String
-    let totalRecord: String
-}
-
-struct AmRecordsModal: Hashable {
-    let id = UUID()
-    let federation: String
-    let weightClass: String
-    let gender: String
-}
+import Supabase
+import Combine
 
 struct AmericanRecordsView: View {
+    @StateObject private var viewModel = RecordsViewModel()
+
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
@@ -31,33 +19,11 @@ struct AmericanRecordsView: View {
     
     @State var selectedGender: String = "Men"
     @State var selectedAge: String = "Senior"
-    @State var selectedMeet: String = "USAW"
+    @State var selectedFederation: String = "USAW"
     
     let genders: [String] = ["Men", "Women"]
     let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
     let meets: [String] = ["USAW", "USAMW"]
-    
-    let amRecordsModal: [AmRecordsModal] = [
-        AmRecordsModal(federation: "USAW", weightClass: "60kg", gender: "Men"),
-        AmRecordsModal(federation: "USAW", weightClass: "65kg", gender: "Women"),
-        AmRecordsModal(federation: "USAW", weightClass: "77kg", gender: "Men"),
-        AmRecordsModal(federation: "USAW", weightClass: "88kg", gender: "Women"),
-        AmRecordsModal(federation: "USAMW", weightClass: "94kg", gender: "Men"),
-        AmRecordsModal(federation: "USAMW", weightClass: "86kg", gender: "Women"),
-        AmRecordsModal(federation: "USAMW", weightClass: "110kg", gender: "Men"),
-        AmRecordsModal(federation: "USAMW", weightClass: "48kg", gender: "Women"),
-
-    ]
-    
-    let amRecords = [
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg"),
-        Records(ageGroup: "Senior", weightClass: "60kg", snatchRecord: "160kg", cjRecord: "200kg", totalRecord: "360kg")
-    ]
     
     var body: some View {
         NavigationStack {
@@ -66,7 +32,7 @@ struct AmericanRecordsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
+                    FilterButton(filter1: selectedFederation, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
                     
                     Divider()
                         .padding(.top)
@@ -92,14 +58,14 @@ struct AmericanRecordsView: View {
                             .bold()
                             .secondaryText()
                             
-                            ForEach(amRecords, id: \.self) { record in
+                            ForEach(viewModel.records, id: \.self) { record in
                                 HStack {
-                                    DataSectionView(weightClass: record.weightClass, data: record.snatchRecord, width: 120)
-                                    Text(record.cjRecord)
+                                    DataSectionView(weightClass: record.weight_class, data: String("\(record.snatch_record)kg"), width: 120)
+                                    Text("\(record.cj_record)kg")
                                     Spacer()
                                     Spacer()
                                     Spacer()
-                                    Text(record.totalRecord)
+                                    Text("\(record.total_record)kg")
                                     Spacer()
                                     Spacer()
                                 }
@@ -108,7 +74,6 @@ struct AmericanRecordsView: View {
                     }
                     .padding(.top, -10)
                     
-                    Spacer()
                 }
             }
             .navigationTitle("American Records")
@@ -121,12 +86,24 @@ struct AmericanRecordsView: View {
                     isModal3DropdownShowing: $isModal3DropdownShowing,
                     selectedGender: $selectedGender,
                     selectedAge: $selectedAge,
-                    selectedMeet: $selectedMeet,
+                    selectedMeet: $selectedFederation,
                     genders: genders,
                     ageGroups: ageGroups,
                     meets: meets,
                     title: "Federation"
                 ))
+        .task {
+            await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation)
+        }
+        .onChange(of: selectedGender) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        }
+        .onChange(of: selectedAge) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        }
+        .onChange(of: selectedFederation) { _ in
+            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        }
     }
 }
 
