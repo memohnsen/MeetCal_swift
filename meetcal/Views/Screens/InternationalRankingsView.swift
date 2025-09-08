@@ -62,7 +62,10 @@ struct InternationalRankingsView: View {
     @State var selectedAge: String = "Senior"
     @State var selectedMeet: String = "2025 Worlds"
     
-    let genders: [String] = ["Men", "Women"]
+    @State var draftGender: String = "Men"
+    @State var draftAge: String = "Senior"
+    @State var draftMeet: String = "USAW Nationals"
+    
     let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "Senior"]
     let meets: [String] = ["2025 Worlds", "2025 Pan Ams"]
     
@@ -136,10 +139,13 @@ struct InternationalRankingsView: View {
             selectedGender: $selectedGender,
             selectedAge: $selectedAge,
             selectedMeet: $selectedMeet,
-            genders: genders,
+            draftGender: $draftGender,
+            draftAge: $draftAge,
+            draftMeet: $draftMeet,
             ageGroups: ageGroups,
             meets: meets,
-            title: "Meet"
+            title: "Meet",
+            onApply: {isModalShowing = false}
         ))
         .task {
             await viewModel.loadRankings(gender: selectedGender, ageCategory: selectedAge, meet: selectedMeet)

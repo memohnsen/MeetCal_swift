@@ -12,8 +12,10 @@ import Supabase
 struct StandardsView: View {
     @StateObject private var viewModel = StandardsViewModel()
     @State private var isModalShowing: Bool = false
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
+    @State var appliedGender: String = "Men"
+    @State var appliedAge: String = "Senior"
+    @State private var draftGender: String = "Men"
+    @State private var draftAge: String = "Senior"
     
     var body: some View {
         NavigationStack {
@@ -22,7 +24,15 @@ struct StandardsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedGender, filter2: selectedAge, filter3: nil, action: {isModalShowing = true})
+                    FilterButton(
+                        filter1: appliedGender,
+                        filter2: appliedAge,
+                        filter3: nil,
+                        action: {
+                            draftAge = appliedAge
+                            draftGender = appliedGender
+                            isModalShowing = true
+                        })
                     
                     Divider()
                         .padding(.top)
@@ -67,15 +77,34 @@ struct StandardsView: View {
             .navigationTitle("A/B Standards")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .overlay(StandardFilter(isModalShowing: $isModalShowing, selectedGender: $selectedGender, selectedAge: $selectedAge))
+        .overlay(StandardFilter(
+                isModalShowing: $isModalShowing,
+                appliedGender: $draftGender,
+                appliedAge: $draftAge,
+                ageGroups: viewModel.ageGroups,
+                onApply: {
+                    appliedGender = draftGender
+                    appliedAge = draftAge
+                    Task {
+                        await viewModel.loadAgeGroups(for: appliedGender)
+                        
+                        await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
+                    }
+                    isModalShowing = false
+                }
+        ))
         .task {
-            await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge)
+            await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
         }
-        .onChange(of: selectedGender) { _ in
-            Task { await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge) }
+        .task {
+            await viewModel.loadAgeGroups(for: appliedGender)
         }
-        .onChange(of: selectedAge) { _ in
-            Task { await viewModel.loadStandards(gender: selectedGender, ageCategory: selectedAge) }
+        .onChange(of: appliedGender) { _ in
+            Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
+            Task { await viewModel.loadAgeGroups(for: appliedGender) }
+        }
+        .onChange(of: appliedAge) { _ in
+            Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
         }
     }
 }
@@ -85,11 +114,12 @@ struct StandardFilter: View {
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
     
-    @Binding var selectedGender: String
-    @Binding var selectedAge: String
+    @Binding var appliedGender: String
+    @Binding var appliedAge: String
     
     let genders: [String] = ["Men", "Women"]
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "Senior"]
+    let ageGroups: [String]
+    let onApply: () -> Void
     
     var body: some View {
         Group {
@@ -98,6 +128,8 @@ struct StandardFilter: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         isModalShowing = false
+                        isModal1DropdownShowing = false
+                        isModal2DropdownShowing = false
                     }
                 
                 VStack(spacing: 0) {
@@ -106,7 +138,7 @@ struct StandardFilter: View {
                             Text("Gender")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedGender.isEmpty ? "Men" : selectedGender)
+                            Text(appliedGender.isEmpty ? "Men" : appliedGender)
                         }
                         Spacer()
                         Image(systemName: isModal1DropdownShowing ? "chevron.down" : "chevron.right")
@@ -125,25 +157,25 @@ struct StandardFilter: View {
                             ForEach(genders, id: \.self) { gender in
                                 HStack {
                                     Button(action: {
-                                        selectedGender = gender
+                                        appliedGender = gender
                                         isModal1DropdownShowing = false
                                     }) {
                                         Text(gender)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(gender == selectedGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(gender == appliedGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
                                     }
 
 
                                     Spacer()
-                                    if gender == selectedGender {
+                                    if gender == appliedGender {
                                         Image(systemName: "checkmark")
                                             .foregroundStyle(.blue)
                                     }
                                     Spacer()
                                 }
-                                .background(gender == selectedGender ? .gray.opacity(0.2) : .white)
+                                .background(gender == appliedGender ? .gray.opacity(0.2) : .white)
 
                                 Divider()
                             }
@@ -157,7 +189,7 @@ struct StandardFilter: View {
                             Text("Age Group")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedAge)
+                            Text(appliedAge)
                         }
                         Spacer()
                         Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
@@ -176,25 +208,25 @@ struct StandardFilter: View {
                             ForEach(ageGroups, id: \.self) { age in
                                 HStack {
                                     Button(action: {
-                                        selectedAge = age
+                                        appliedAge = age
                                         isModal2DropdownShowing = false
                                     }) {
                                         Text(age)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(age == selectedAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(age == appliedAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
                                     }
 
 
                                     Spacer()
-                                    if age == selectedAge {
+                                    if age == appliedAge {
                                         Image(systemName: "checkmark")
                                             .foregroundStyle(.blue)
                                     }
                                     Spacer()
                                 }
-                                .background(age == selectedAge ? .gray.opacity(0.2) : .white)
+                                .background(age == appliedAge ? .gray.opacity(0.2) : .white)
 
                                 Divider()
                             }
@@ -216,7 +248,7 @@ struct StandardFilter: View {
                     .padding()
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        isModalShowing = false
+                        onApply()
                     }
                 }
                 .frame(maxWidth: 350)

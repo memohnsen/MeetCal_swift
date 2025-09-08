@@ -16,13 +16,18 @@ struct QualifyingTotalsView: View {
     @State private var isModal2DropdownShowing: Bool = false
     @State private var isModal3DropdownShowing: Bool = false
     
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
-    @State var selectedMeet: String = "USAW Nationals"
+    @State var appliedGender: String = "Men"
+    @State var appliedAge: String = "Senior"
+    @State var appliedMeet: String = "USAW Nationals"
+    
+    @State var draftGender: String = "Men"
+    @State var draftAge: String = "Senior"
+    @State var draftMeet: String = "USAW Nationals"
     
     let genders: [String] = ["Men", "Women"]
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
-    let meets: [String] = ["USAW Nationals", "AO1", "AO2", "AOF", "USAMW Nationals", "IMWA Worlds", "IMWA Pan Ams"]
+    // age group will change based on meet query
+    var ageGroups: [String] { viewModel.ageGroups }
+    let meets: [String] = ["USAW Nationals", "Virus Series", "Virus Finals", "Master's Pan Ams", "IMWA Worlds"]
     
     var body: some View {
         NavigationStack {
@@ -31,7 +36,17 @@ struct QualifyingTotalsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
+                    FilterButton(
+                        filter1: appliedMeet,
+                        filter2: appliedGender,
+                        filter3: appliedAge,
+                        action: {
+                            draftAge = appliedAge
+                            draftMeet = appliedMeet
+                            draftGender = appliedGender
+                            isModalShowing = true
+                        }
+                    )
                     
                     Divider()
                         .padding(.top)
@@ -67,25 +82,46 @@ struct QualifyingTotalsView: View {
             isModal1DropdownShowing: $isModal1DropdownShowing,
             isModal2DropdownShowing: $isModal2DropdownShowing,
             isModal3DropdownShowing: $isModal3DropdownShowing,
-            selectedGender: $selectedGender,
-            selectedAge: $selectedAge,
-            selectedMeet: $selectedMeet,
-            genders: genders,
+            selectedGender: $appliedGender,
+            selectedAge: $appliedAge,
+            selectedMeet: $appliedMeet,
+            draftGender: $draftGender,
+            draftAge: $draftAge,
+            draftMeet: $draftMeet,
             ageGroups: ageGroups,
             meets: meets,
-            title: "Meet"
+            title: "Meet",
+            onApply: {
+                appliedGender = draftGender
+                appliedAge = draftAge
+                appliedMeet = draftMeet
+                Task {
+                    await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
+                    
+                    await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
+                }
+                isModalShowing = false
+            }
         ))
         .task {
-            await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet)
+            await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
         }
-        .onChange(of: selectedGender) { _ in
-            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        .task {
+            await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
         }
-        .onChange(of: selectedAge) { _ in
-            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        .onChange(of: appliedGender) { _ in
+            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
         }
-        .onChange(of: selectedMeet) { _ in
-            Task { await viewModel.loadTotals(gender: selectedGender, age_category: selectedAge, event_name: selectedMeet) }
+        .onChange(of: appliedAge) { _ in
+            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
+        }
+        .onChange(of: appliedMeet) { _ in
+            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
+        }
+        .onChange(of: draftMeet) {
+            Task { await viewModel.loadAgeGroup(for: draftGender, event_name: draftMeet)
+                draftAge = viewModel.ageGroups.first ?? "Senior"
+            }
         }
     }
 }

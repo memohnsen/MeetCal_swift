@@ -27,9 +27,14 @@ struct Standard: Identifiable, Hashable, Decodable, Sendable {
     }
 }
 
+private struct AgeRow: Decodable {
+    let age_category: String
+}
+
 @MainActor
 class StandardsViewModel: ObservableObject {
     @Published var standards: [Standard] = []
+    @Published var ageGroups: [String] = []
     @Published var isLoading = false
     @Published var error: Error?
 
@@ -58,6 +63,49 @@ class StandardsViewModel: ObservableObject {
             
         } catch {
             print("Error loading standards: \(error)")
+            self.error = error
+        }
+        isLoading = false
+    }
+    
+    func loadAgeGroups(for gender: String) async {
+        isLoading = true
+        error = nil
+        do {
+            let response = try await supabase
+                .from("standards")
+                .select("age_category")
+                .eq("gender", value: gender.lowercased())
+                .execute()
+            
+            let rows = try JSONDecoder().decode([AgeRow].self, from: response.data)
+            
+            //create unique set of items from column
+            let lower = rows.map{ $0.age_category.lowercased()}
+            let unique = Array(Set(lower))
+            
+            //sorting function
+            let order: [String] = ["u15", "youth", "junior", "senior"]
+            let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map{($1, $0)})
+            let ordered = unique.sorted{
+                let l = rank[$0] ?? Int.max
+                let r = rank[$1] ?? Int.max
+                
+                if l != r { return l < r}
+                
+                return $0 < $1
+            }
+            
+            self.ageGroups = ordered.map{
+                let upper = $0.uppercased()
+                if upper == "U13" || upper == "U15" || upper == "U17" {
+                    return upper
+                } else {
+                    return $0.capitalized
+                }
+            }
+        } catch {
+            print("Error: \(error)")
             self.error = error
         }
         isLoading = false

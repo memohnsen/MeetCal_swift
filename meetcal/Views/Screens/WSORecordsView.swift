@@ -21,7 +21,10 @@ struct WSORecordsView: View {
     @State var selectedAge: String = "Senior"
     @State var selectedMeet: String = "Carolina"
     
-    let genders: [String] = ["Men", "Women"]
+    @State var draftGender: String = "Men"
+    @State var draftAge: String = "Senior"
+    @State var draftWSO: String = "Carolina"
+    
     let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
     let wso: [String] = ["Carolina", "Florida", "Texas-Oklahoma"]
     
@@ -87,10 +90,13 @@ struct WSORecordsView: View {
                     selectedGender: $selectedGender,
                     selectedAge: $selectedAge,
                     selectedMeet: $selectedMeet,
-                    genders: genders,
+                    draftGender: $draftGender,
+                    draftAge: $draftAge,
+                    draftMeet: $draftWSO,
                     ageGroups: ageGroups,
                     meets: wso,
-                    title: "WSO"
+                    title: "WSO",
+                    onApply: {isModalShowing = false}
                 ))
         .task {
             await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet)

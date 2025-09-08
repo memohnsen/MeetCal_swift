@@ -12,14 +12,20 @@ struct QualifyingRankingsRecordsFilter: View {
     @Binding var isModal1DropdownShowing: Bool
     @Binding var isModal2DropdownShowing: Bool
     @Binding var isModal3DropdownShowing: Bool
+    
     @Binding var selectedGender: String
     @Binding var selectedAge: String
     @Binding var selectedMeet: String
     
-    var genders: [String]
+    @Binding var draftGender: String
+    @Binding var draftAge: String
+    @Binding var draftMeet: String
+    
+    let genders: [String] = ["Men", "Women"]
     var ageGroups: [String]
     var meets: [String]
     var title: String
+    var onApply: () -> Void
     
     var body: some View {
         Group {
@@ -28,6 +34,9 @@ struct QualifyingRankingsRecordsFilter: View {
                     .ignoresSafeArea()
                     .onTapGesture {
                         isModalShowing = false
+                        isModal1DropdownShowing = false
+                        isModal2DropdownShowing = false
+                        isModal3DropdownShowing = false
                     }
                 
                 VStack(spacing: 0) {
@@ -36,7 +45,7 @@ struct QualifyingRankingsRecordsFilter: View {
                             Text(title)
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedMeet)
+                            Text(draftMeet.isEmpty ? selectedMeet : draftMeet)
                         }
                         Spacer()
                         Image(systemName: isModal1DropdownShowing ? "chevron.down" : "chevron.right")
@@ -46,6 +55,8 @@ struct QualifyingRankingsRecordsFilter: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal1DropdownShowing.toggle()
+                        isModal2DropdownShowing = false
+                        isModal3DropdownShowing = false
                     }
                     
                     if isModal1DropdownShowing {
@@ -55,25 +66,25 @@ struct QualifyingRankingsRecordsFilter: View {
                             ForEach(meets, id: \.self) { meet in
                                 HStack {
                                     Button(action: {
-                                        selectedMeet = meet
+                                        draftMeet = meet
                                         isModal1DropdownShowing = false
                                     }) {
                                         Text(meet)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(meet == selectedMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
                                     }
 
 
                                     Spacer()
-                                    if meet == selectedMeet {
+                                    if meet == draftMeet {
                                         Image(systemName: "checkmark")
                                             .foregroundStyle(.blue)
                                     }
                                     Spacer()
                                 }
-                                .background(meet == selectedMeet ? .gray.opacity(0.2) : .white)
+                                .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
 
                                 Divider()
                             }
@@ -87,7 +98,7 @@ struct QualifyingRankingsRecordsFilter: View {
                             Text("Gender")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedGender.isEmpty ? "Men" : selectedGender)
+                            Text(draftGender.isEmpty ? selectedGender : draftGender)
                         }
                         Spacer()
                         Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
@@ -97,6 +108,8 @@ struct QualifyingRankingsRecordsFilter: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal2DropdownShowing.toggle()
+                        isModal1DropdownShowing = false
+                        isModal3DropdownShowing = false
                     }
                     
                     if isModal2DropdownShowing {
@@ -106,25 +119,25 @@ struct QualifyingRankingsRecordsFilter: View {
                             ForEach(genders, id: \.self) { gender in
                                 HStack {
                                     Button(action: {
-                                        selectedGender = gender
+                                        draftGender = gender
                                             isModal2DropdownShowing = false
                                     }) {
                                         Text(gender)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(gender == selectedGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
                                     }
 
 
                                     Spacer()
-                                    if gender == selectedGender {
+                                    if gender == draftGender {
                                         Image(systemName: "checkmark")
                                             .foregroundStyle(.blue)
                                     }
                                     Spacer()
                                 }
-                                .background(gender == selectedGender ? .gray.opacity(0.2) : .white)
+                                .background(gender == draftGender ? .gray.opacity(0.2) : .white)
 
                                 Divider()
                             }
@@ -138,7 +151,7 @@ struct QualifyingRankingsRecordsFilter: View {
                             Text("Age Group")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(selectedAge)
+                            Text(draftAge.isEmpty ? selectedAge : draftAge)
                         }
                         Spacer()
                         Image(systemName: isModal3DropdownShowing ? "chevron.down" : "chevron.right")
@@ -148,36 +161,40 @@ struct QualifyingRankingsRecordsFilter: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal3DropdownShowing.toggle()
+                        isModal1DropdownShowing = false
+                        isModal2DropdownShowing = false
                     }
                     
                     if isModal3DropdownShowing {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Divider()
-                            
-                            ForEach(ageGroups, id: \.self) { age in
-                                HStack {
-                                    Button(action: {
-                                        selectedAge = age
-                                        isModal3DropdownShowing = false
-                                    }) {
-                                        Text(age)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.leading, 0)
-                                            .padding()
-                                            .foregroundStyle(age == selectedAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
-                                    }
-
-
-                                    Spacer()
-                                    if age == selectedAge {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.blue)
-                                    }
-                                    Spacer()
-                                }
-                                .background(age == selectedAge ? .gray.opacity(0.2) : .white)
-
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
                                 Divider()
+                                
+                                ForEach(ageGroups, id: \.self) { age in
+                                    HStack {
+                                        Button(action: {
+                                            draftAge = age
+                                            isModal3DropdownShowing = false
+                                        }) {
+                                            Text(age)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 0)
+                                                .padding()
+                                                .foregroundStyle(age == draftAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                        }
+                                        
+                                        
+                                        Spacer()
+                                        if age == draftAge {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(.blue)
+                                        }
+                                        Spacer()
+                                    }
+                                    .background(age == draftAge ? .gray.opacity(0.2) : .white)
+                                    
+                                    Divider()
+                                }
                             }
                         }
                     }
@@ -197,7 +214,7 @@ struct QualifyingRankingsRecordsFilter: View {
                     .padding()
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        isModalShowing = false
+                        onApply()
                     }
                 }
                 .frame(maxWidth: 350)

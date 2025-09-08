@@ -17,11 +17,14 @@ struct AmericanRecordsView: View {
     @State private var isModal2DropdownShowing: Bool = false
     @State private var isModal3DropdownShowing: Bool = false
     
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
-    @State var selectedFederation: String = "USAW"
+    @State var appliedGender: String = "Men"
+    @State var appliedAge: String = "Senior"
+    @State var appliedFederation: String = "USAW"
     
-    let genders: [String] = ["Men", "Women"]
+    @State var draftGender: String = "Men"
+    @State var draftAge: String = "Senior"
+    @State var draftFederation: String = "USAW Nationals"
+    
     let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
     let meets: [String] = ["USAW", "USAMW"]
     
@@ -32,7 +35,16 @@ struct AmericanRecordsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedFederation, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
+                    FilterButton(
+                        filter1: appliedFederation,
+                        filter2: appliedGender,
+                        filter3: appliedAge,
+                        action: {
+                            draftAge = appliedAge
+                            draftFederation = appliedFederation
+                            draftGender = appliedGender
+                            isModalShowing = true
+                        })
                     
                     Divider()
                         .padding(.top)
@@ -84,25 +96,28 @@ struct AmericanRecordsView: View {
                     isModal1DropdownShowing: $isModal1DropdownShowing,
                     isModal2DropdownShowing: $isModal2DropdownShowing,
                     isModal3DropdownShowing: $isModal3DropdownShowing,
-                    selectedGender: $selectedGender,
-                    selectedAge: $selectedAge,
-                    selectedMeet: $selectedFederation,
-                    genders: genders,
+                    selectedGender: $appliedGender,
+                    selectedAge: $appliedAge,
+                    selectedMeet: $appliedFederation,
+                    draftGender: $draftGender,
+                    draftAge: $draftAge,
+                    draftMeet: $draftFederation,
                     ageGroups: ageGroups,
                     meets: meets,
-                    title: "Federation"
+                    title: "Federation",
+                    onApply: {isModalShowing = false}
                 ))
         .task {
-            await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation)
+            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation)
         }
-        .onChange(of: selectedGender) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        .onChange(of: appliedGender) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
         }
-        .onChange(of: selectedAge) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        .onChange(of: appliedAge) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
         }
-        .onChange(of: selectedFederation) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, federation: selectedFederation) }
+        .onChange(of: appliedFederation) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
         }
     }
 }
