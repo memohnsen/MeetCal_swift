@@ -17,16 +17,16 @@ struct WSORecordsView: View {
     @State private var isModal2DropdownShowing: Bool = false
     @State private var isModal3DropdownShowing: Bool = false
     
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
-    @State var selectedMeet: String = "Carolina"
+    @State var appliedGender: String = "Men"
+    @State var appliedAge: String = "Senior"
+    @State var appliedMeet: String = "Carolina"
     
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
     @State var draftWSO: String = "Carolina"
     
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
-    let wso: [String] = ["Carolina", "Florida", "Texas-Oklahoma"]
+    var ageGroups: [String] {viewModel.ageGroups}
+    var wso: [String] {viewModel.wso}
     
     var body: some View {
         NavigationStack {
@@ -35,7 +35,16 @@ struct WSORecordsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedMeet, filter2: selectedGender, filter3: selectedAge, action: {isModalShowing = true})
+                    FilterButton(
+                        filter1: appliedMeet,
+                        filter2: appliedGender,
+                        filter3: appliedAge,
+                        action: {
+                            draftAge = appliedAge
+                            draftWSO = appliedMeet
+                            draftGender = appliedGender
+                            isModalShowing = true
+                        })
                     
                     Divider()
                         .padding(.top)
@@ -87,28 +96,47 @@ struct WSORecordsView: View {
                     isModal1DropdownShowing: $isModal1DropdownShowing,
                     isModal2DropdownShowing: $isModal2DropdownShowing,
                     isModal3DropdownShowing: $isModal3DropdownShowing,
-                    selectedGender: $selectedGender,
-                    selectedAge: $selectedAge,
-                    selectedMeet: $selectedMeet,
+                    selectedGender: $appliedGender,
+                    selectedAge: $appliedAge,
+                    selectedMeet: $appliedMeet,
                     draftGender: $draftGender,
                     draftAge: $draftAge,
                     draftMeet: $draftWSO,
                     ageGroups: ageGroups,
                     meets: wso,
                     title: "WSO",
-                    onApply: {isModalShowing = false}
+                    onApply: {
+                        appliedAge = draftAge
+                        appliedMeet = draftWSO
+                        appliedGender = draftGender
+                        Task {
+                            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
+                            await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
+                            await viewModel.loadWSO()
+                        }
+                        isModalShowing = false
+                    }
                 ))
         .task {
-            await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet)
+            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
         }
-        .onChange(of: selectedGender) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        .task {
+            await viewModel.loadWSO()
         }
-        .onChange(of: selectedAge) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        .task{
+            await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
         }
-        .onChange(of: selectedMeet) { _ in
-            Task { await viewModel.loadRecords(gender: selectedGender, ageCategory: selectedAge, wso: selectedMeet) }
+        .onChange(of: appliedGender) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+        }
+        .onChange(of: appliedAge) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+        }
+        .onChange(of: appliedMeet) { _ in
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+        }
+        .onChange(of: draftWSO) {_ in
+            Task { await viewModel.loadAgeGroups(gender: draftGender, wso: draftWSO )}
         }
     }
 }

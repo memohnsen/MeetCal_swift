@@ -151,7 +151,7 @@ struct QualifyingRankingsRecordsFilter: View {
                             Text("Age Group")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(draftAge.isEmpty ? selectedAge : draftAge)
+                            Text(draftAge.isEmpty ? selectedAge.capitalized : draftAge.capitalized)
                         }
                         Spacer()
                         Image(systemName: isModal3DropdownShowing ? "chevron.down" : "chevron.right")
@@ -176,7 +176,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                             draftAge = age
                                             isModal3DropdownShowing = false
                                         }) {
-                                            Text(age)
+                                            Text(age.capitalized)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()

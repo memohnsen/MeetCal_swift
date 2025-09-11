@@ -14,26 +14,24 @@ struct FilterButton: View {
     let action: () -> Void
     
     var body: some View {
-            HStack {
-                Spacer()
-                
-                Button{ action()
-                    
-                } label: {
-                    Text("\(filter1) • \(filter2) \((filter3 != nil) ? "• \(filter3 ?? "")" : "")")
-                        .secondaryText()
-                        .bold()
-                    Image(systemName: "chevron.down")
-                        .secondaryText()
-                        .bold()
-                }
-                .foregroundStyle(.black)
-
-                Spacer()
-            }
-            .cardStyling()
-            .padding(.horizontal)
-            .padding(.top, 8)
+        HStack {
+            Spacer()
+           
+            Text("\(filter1) • \(filter2) \((filter3 != nil) ? "• \(filter3 ?? "")" : "")")
+                .secondaryText()
+                .bold()
+            Image(systemName: "chevron.down")
+                .secondaryText()
+                .bold()
+            
+            Spacer()
+        }
+        .cardStyling()
+        .padding(.horizontal)
+        .padding(.top, 8)
+        .onTapGesture {
+            action()
+        }
     }
 }
 

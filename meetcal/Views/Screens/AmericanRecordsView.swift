@@ -23,9 +23,9 @@ struct AmericanRecordsView: View {
     
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
-    @State var draftFederation: String = "USAW Nationals"
+    @State var draftFederation: String = "USAW"
     
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "University", "Senior", "Masters"]
+    var ageGroups: [String] {viewModel.ageGroups}
     let meets: [String] = ["USAW", "USAMW"]
     
     var body: some View {
@@ -105,19 +105,37 @@ struct AmericanRecordsView: View {
                     ageGroups: ageGroups,
                     meets: meets,
                     title: "Federation",
-                    onApply: {isModalShowing = false}
+                    onApply: {
+                        appliedAge = draftAge
+                        appliedGender = draftGender
+                        appliedFederation = draftFederation
+                        Task {
+                            await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
+                            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+                        }
+                        isModalShowing = false
+                    }
                 ))
         .task {
-            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation)
+            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+        }
+        .task {
+            await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
         }
         .onChange(of: appliedGender) { _ in
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
         }
         .onChange(of: appliedAge) { _ in
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
         }
         .onChange(of: appliedFederation) { _ in
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, federation: appliedFederation) }
+            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
+        }
+        .onChange(of: draftFederation) {
+            Task {
+                await viewModel.loadAgeGroup(for: draftGender, record_type: draftFederation)
+                draftAge = viewModel.ageGroups.first ?? draftAge
+            }
         }
     }
 }

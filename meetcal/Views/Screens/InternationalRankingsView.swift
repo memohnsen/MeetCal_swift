@@ -9,48 +9,6 @@ import SwiftUI
 import Supabase
 import Combine
 
-struct Rankings: Identifiable, Hashable, Decodable, Sendable {
-    let id: Int
-    let meet: String
-    let name: String
-    let weight_class: String
-    let total: Int
-    let percent_a: Float
-    let gender: String
-    let age_category: String
-}
-
-@MainActor
-class IntlRankingsViewModel: ObservableObject {
-    @Published var rankings: [Rankings] = []
-    @Published var isLoading: Bool = false
-    @Published var error: Error?
-    
-    func loadRankings(gender: String, ageCategory: String, meet: String) async {
-        isLoading = true
-        error = nil
-        do {
-            let response = try await supabase
-                .from("intl_rankings")
-                .select()
-                .eq("gender", value: gender)
-                .eq("age_category", value: ageCategory)
-                .eq("meet", value: meet)
-                .order("ranking")
-                .execute()
-            print(response)
-            let decoder = JSONDecoder()
-            let rankingsData = try decoder.decode([Rankings].self, from: response.data)
-            self.rankings = rankingsData
-            print(rankings)
-        } catch {
-            print("Error: \(error)")
-            self.error = error
-        }
-        isLoading = false
-    }
-}
-
 struct InternationalRankingsView: View {
     @StateObject private var viewModel = IntlRankingsViewModel()
     @State private var isModalShowing: Bool = false
@@ -58,16 +16,16 @@ struct InternationalRankingsView: View {
     @State private var isModal2DropdownShowing: Bool = false
     @State private var isModal3DropdownShowing: Bool = false
     
-    @State var selectedGender: String = "Men"
-    @State var selectedAge: String = "Senior"
-    @State var selectedMeet: String = "2025 Worlds"
+    @State var appliedGender: String = "Men"
+    @State var appliedAge: String = "Senior"
+    @State var appliedMeet: String = "2025 Worlds"
     
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
-    @State var draftMeet: String = "USAW Nationals"
+    @State var draftMeet: String = "2025 Worlds"
     
-    let ageGroups: [String] = ["U13", "U15", "U17", "Junior", "Senior"]
-    let meets: [String] = ["2025 Worlds", "2025 Pan Ams"]
+    var ageGroups: [String] {viewModel.ageGroups}
+    var meets: [String] {viewModel.meets}
     
     
     var body: some View {
@@ -77,7 +35,16 @@ struct InternationalRankingsView: View {
                     .ignoresSafeArea()
                 
                 VStack {
-                    FilterButton(filter1: selectedMeet, filter2: selectedAge, filter3: selectedGender, action: {isModalShowing = true})
+                    FilterButton(
+                        filter1: appliedMeet,
+                        filter2: appliedAge,
+                        filter3: appliedGender,
+                        action: {
+                            draftAge = appliedAge
+                            draftMeet = appliedMeet
+                            draftGender = appliedGender
+                            isModalShowing = true
+                        })
                     
                     Divider()
                         .padding(.top)
@@ -136,28 +103,50 @@ struct InternationalRankingsView: View {
             isModal1DropdownShowing: $isModal1DropdownShowing,
             isModal2DropdownShowing: $isModal2DropdownShowing,
             isModal3DropdownShowing: $isModal3DropdownShowing,
-            selectedGender: $selectedGender,
-            selectedAge: $selectedAge,
-            selectedMeet: $selectedMeet,
+            selectedGender: $appliedGender,
+            selectedAge: $appliedAge,
+            selectedMeet: $appliedMeet,
             draftGender: $draftGender,
             draftAge: $draftAge,
             draftMeet: $draftMeet,
             ageGroups: ageGroups,
             meets: meets,
             title: "Meet",
-            onApply: {isModalShowing = false}
+            onApply: {
+                appliedAge = draftAge
+                appliedMeet = draftMeet
+                appliedGender = draftGender
+                Task {
+                    await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)
+                    await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+                    await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
+                }
+                isModalShowing = false
+            }
         ))
         .task {
-            await viewModel.loadRankings(gender: selectedGender, ageCategory: selectedAge, meet: selectedMeet)
+            await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
         }
-        .onChange(of: selectedGender) { _ in
-            Task { await viewModel.loadRankings(gender: selectedGender, ageCategory: selectedAge, meet: selectedMeet) }
+        .task {
+            await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)
         }
-        .onChange(of: selectedAge) { _ in
-            Task { await viewModel.loadRankings(gender: selectedGender, ageCategory: selectedAge, meet: selectedMeet) }
+        .task {
+            await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
         }
-        .onChange(of: selectedMeet) { _ in
-            Task { await viewModel.loadRankings(gender: selectedGender, ageCategory: selectedAge, meet: selectedMeet) }
+        .onChange(of: appliedGender) { _ in
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+        }
+        .onChange(of: appliedAge) { _ in
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+        }
+        .onChange(of: appliedMeet) { _ in
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+        }
+        .onChange(of: draftMeet) {_ in
+            Task {
+                await viewModel.loadAgeGroups(meet: draftMeet, gender: draftGender)
+                draftAge = viewModel.ageGroups.first ?? draftAge
+            }
         }
     }
 }
