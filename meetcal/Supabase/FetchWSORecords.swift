@@ -90,8 +90,9 @@ class WSOViewModel: ObservableObject {
             
             let row = try JSONDecoder().decode([MeetRow].self, from: response.data)
             let unique = Array(Set(row.map { $0.wso }))
+            let sorted = unique.sorted()
             
-            self.wso = unique
+            self.wso = sorted
         } catch {
             print("Error: \(error)")
             self.error = error
@@ -114,25 +115,19 @@ class WSOViewModel: ObservableObject {
             let unique = Array(Set( row.map { $0.age_category }))
             
             let order: [String] = [
-                "U13", "U15", "U17", "Junior", "University", "Senior", "Masters",
-                "Masters 30", "Masters 35", "Masters 40", "Masters 45", "Masters 50",
-                "Masters 55", "Masters 60", "Masters 65", "Masters 70", "Masters 75",
-                "Masters 80", "Masters 85",
-                "Masters 35-39", "Masters 40-44", "Masters 45-49", "Masters 50-54",
-                "Masters 55-59", "Masters 60-64", "Masters 65-69", "Masters 70-74",
-                "Masters 75-79", "Masters 80-84", "Masters 85-89"
+                "U11", "U13", "U15", "U17", "Youth", "Junior", "University", "Senior", "Masters", "Masters 30", "Masters 35", "Masters 40", "Masters 45", "Masters 50", "Masters 55", "Masters 60", "Masters 65", "Masters 70", "Masters 75", "Masters 80", "Masters 85", "Masters 35-39", "Masters 40-44", "Masters 45-49", "Masters 50-54", "Masters 55-59", "Masters 60-64", "Masters 65-69", "Masters 70-74", "Masters 75-79", "Masters 80-84", "Masters 85-89"
             ]
             let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
             let ordered = unique.sorted {
-                let l = rank[$0.lowercased()] ?? Int.max
-                let r = rank[$1.lowercased()] ?? Int.max
+                let l = rank[$0] ?? Int.max
+                let r = rank[$1] ?? Int.max
                 
                 if l != r { return l < r }
                 
                 return $0 < $1
             }
             
-            self.ageGroups = unique
+            self.ageGroups = ordered
         } catch {
             print("error: \(error)")
             self.error = error

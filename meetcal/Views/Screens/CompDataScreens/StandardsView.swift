@@ -231,6 +231,7 @@ struct StandardFilter: View {
                                 Divider()
                             }
                         }
+                        .frame(maxHeight: 240)
                     }
                     
                     Divider()

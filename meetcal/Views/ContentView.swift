@@ -25,11 +25,7 @@ struct ContentView: View {
                 }
             SponsorView()
                 .tabItem{
-                    Label("Sponsor", systemImage: "star.fill")
-                }
-            SettingsView()
-                .tabItem{
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label("Sponsors", systemImage: "star.fill")
                 }
         }
     }

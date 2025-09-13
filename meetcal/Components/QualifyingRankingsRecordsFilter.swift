@@ -60,33 +60,67 @@ struct QualifyingRankingsRecordsFilter: View {
                     }
                     
                     if isModal1DropdownShowing {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Divider()
-                            
-                            ForEach(meets, id: \.self) { meet in
-                                HStack {
-                                    Button(action: {
-                                        draftMeet = meet
-                                        isModal1DropdownShowing = false
-                                    }) {
-                                        Text(meet)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.leading, 0)
-                                            .padding()
-                                            .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                        if meets.count > 6 {
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Divider()
+                                    
+                                    ForEach(meets, id: \.self) { meet in
+                                        HStack {
+                                            Button(action: {
+                                                draftMeet = meet
+                                                isModal1DropdownShowing = false
+                                            }) {
+                                                Text(meet)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 0)
+                                                    .padding()
+                                                    .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            }
+                                            
+                                            
+                                            Spacer()
+                                            if meet == draftMeet {
+                                                Image(systemName: "checkmark")
+                                                    .foregroundStyle(.blue)
+                                            }
+                                            Spacer()
+                                        }
+                                        .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
+                                        
+                                        Divider()
                                     }
-
-
-                                    Spacer()
-                                    if meet == draftMeet {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.blue)
-                                    }
-                                    Spacer()
                                 }
-                                .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
-
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 0) {
                                 Divider()
+                                
+                                ForEach(meets, id: \.self) { meet in
+                                    HStack {
+                                        Button(action: {
+                                            draftMeet = meet
+                                            isModal1DropdownShowing = false
+                                        }) {
+                                            Text(meet)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 0)
+                                                .padding()
+                                                .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                        }
+                                        
+                                        
+                                        Spacer()
+                                        if meet == draftMeet {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(.blue)
+                                        }
+                                        Spacer()
+                                    }
+                                    .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
+                                    
+                                    Divider()
+                                }
                             }
                         }
                     }
@@ -113,33 +147,67 @@ struct QualifyingRankingsRecordsFilter: View {
                     }
                     
                     if isModal2DropdownShowing {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Divider()
-                            
-                            ForEach(genders, id: \.self) { gender in
-                                HStack {
-                                    Button(action: {
-                                        draftGender = gender
-                                            isModal2DropdownShowing = false
-                                    }) {
-                                        Text(gender)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.leading, 0)
-                                            .padding()
-                                            .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                        if genders.count > 6 {
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Divider()
+                                    
+                                    ForEach(genders, id: \.self) { gender in
+                                        HStack {
+                                            Button(action: {
+                                                draftGender = gender
+                                                isModal2DropdownShowing = false
+                                            }) {
+                                                Text(gender)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 0)
+                                                    .padding()
+                                                    .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            }
+                                            
+                                            
+                                            Spacer()
+                                            if gender == draftGender {
+                                                Image(systemName: "checkmark")
+                                                    .foregroundStyle(.blue)
+                                            }
+                                            Spacer()
+                                        }
+                                        .background(gender == draftGender ? .gray.opacity(0.2) : .white)
+                                        
+                                        Divider()
                                     }
-
-
-                                    Spacer()
-                                    if gender == draftGender {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.blue)
-                                    }
-                                    Spacer()
                                 }
-                                .background(gender == draftGender ? .gray.opacity(0.2) : .white)
-
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 0) {
                                 Divider()
+                                
+                                ForEach(genders, id: \.self) { gender in
+                                    HStack {
+                                        Button(action: {
+                                            draftGender = gender
+                                            isModal2DropdownShowing = false
+                                        }) {
+                                            Text(gender)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 0)
+                                                .padding()
+                                                .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                        }
+                                        
+                                        
+                                        Spacer()
+                                        if gender == draftGender {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(.blue)
+                                        }
+                                        Spacer()
+                                    }
+                                    .background(gender == draftGender ? .gray.opacity(0.2) : .white)
+                                    
+                                    Divider()
+                                }
                             }
                         }
                     }
@@ -166,7 +234,39 @@ struct QualifyingRankingsRecordsFilter: View {
                     }
                     
                     if isModal3DropdownShowing {
-                        ScrollView {
+                        if ageGroups.count > 6 {
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Divider()
+                                    
+                                    ForEach(ageGroups, id: \.self) { age in
+                                        HStack {
+                                            Button(action: {
+                                                draftAge = age
+                                                isModal3DropdownShowing = false
+                                            }) {
+                                                Text(age.capitalized)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 0)
+                                                    .padding()
+                                                    .foregroundStyle(age == draftAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            }
+                                            
+                                            
+                                            Spacer()
+                                            if age == draftAge {
+                                                Image(systemName: "checkmark")
+                                                    .foregroundStyle(.blue)
+                                            }
+                                            Spacer()
+                                        }
+                                        .background(age == draftAge ? .gray.opacity(0.2) : .white)
+                                        
+                                        Divider()
+                                    }
+                                }
+                            }
+                        } else {
                             VStack(alignment: .leading, spacing: 0) {
                                 Divider()
                                 
