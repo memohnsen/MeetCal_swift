@@ -13,7 +13,9 @@ private struct MeetsRow: Decodable {
     let name: String
 }
 
-private struct ScheduleRow: Decodable {
+struct ScheduleRow: Decodable {
+    let id: Int
+    let date: Date
     let session_id: Int
     let weight_class: String
     let start_time: String
@@ -25,7 +27,7 @@ class MeetsScheduleModel: ObservableObject {
     @Published var meets: [String] = []
     @Published var isLoading: Bool = false
     @Published var error: Error?
-    @Published var schedule = []
+    @Published var schedule: [ScheduleRow] = []
     
     func loadMeets() async {
         isLoading = true
@@ -60,11 +62,17 @@ class MeetsScheduleModel: ObservableObject {
                 .order("session_id", ascending: true)
                 .execute()
             
-            let row = try JSONDecoder().decode([ScheduleRow].self, from: response.data)
+            let decoder = JSONDecoder()
+            let df = DateFormatter()
+            df.calendar = Calendar(identifier: .gregorian)
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = TimeZone.current
+            df.dateFormat = "yyyy-MM-dd"
+            decoder.dateDecodingStrategy = .formatted(df)
             
+            let row = try decoder.decode([ScheduleRow].self, from: response.data)
             self.schedule = row
             
-            print(row)
             print(schedule)
         } catch {
             print("Error: \(error)")

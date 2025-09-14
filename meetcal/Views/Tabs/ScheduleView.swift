@@ -7,104 +7,20 @@
 
 import SwiftUI
 
-struct Session: Identifiable {
-    let id: Int
-    let date: Date
-    let groups: [Group]
-
-    struct Group: Identifiable {
-        let id = UUID()
-        let platform: String
-        let weightClass: String
-        let startTime: Date
-    }
-}
-
 struct ScheduleView: View {
     @StateObject private var viewModel = MeetsScheduleModel()
     @State private var showingMeetsOverlay: Bool = false
     @State private var selectedMeet: String = ""
     @State private var platformColor: String = ""
     
-
-    private let staticSessions: [Session] = {
-        func makeDate(year: Int, month: Int, day: Int) -> Date {
-            var comps = DateComponents()
-            comps.year = year
-            comps.month = month
-            comps.day = day
-            return Calendar.current.date(from: comps) ?? Date()
-        }
-        func makeTime(on day: Date, hour: Int, minute: Int) -> Date {
-            var comps = Calendar.current.dateComponents([.year, .month, .day], from: day)
-            comps.hour = hour
-            comps.minute = minute
-            return Calendar.current.date(from: comps) ?? day
-        }
-        let d1 = makeDate(year: 2025, month: 8, day: 9)
-        let d2 = makeDate(year: 2025, month: 8, day: 10)
-        let d3 = makeDate(year: 2025, month: 8, day: 11)
-        return [
-            Session(
-                id: 1,
-                date: d1,
-                groups: [
-                    .init(platform: "Red",  weightClass: "88kg", startTime: makeTime(on: d1, hour: 9,  minute: 0)),
-                    .init(platform: "Blue", weightClass: "94kg", startTime: makeTime(on: d1, hour: 9,  minute: 0)),
-                ]
-            ),
-            Session(
-                id: 2,
-                date: d1,
-                groups: [
-                    .init(platform: "Red",  weightClass: "60kg", startTime: makeTime(on: d1, hour: 13, minute: 0)),
-                    .init(platform: "Blue", weightClass: "71kg", startTime: makeTime(on: d1, hour: 13, minute: 0)),
-                ]
-            ),
-            Session(
-                id: 3,
-                date: d2,
-                groups: [
-                    .init(platform: "Red",  weightClass: "60kg", startTime: makeTime(on: d2, hour: 9,  minute: 0)),
-                    .init(platform: "Blue", weightClass: "71kg", startTime: makeTime(on: d2, hour: 9,  minute: 0)),
-                ]
-            ),
-            Session(
-                id: 4,
-                date: d2,
-                groups: [
-                    .init(platform: "Red",  weightClass: "60kg", startTime: makeTime(on: d2, hour: 13, minute: 0)),
-                    .init(platform: "Blue", weightClass: "71kg", startTime: makeTime(on: d2, hour: 13, minute: 0)),
-                ]
-            ),
-            Session(
-                id: 5,
-                date: d3,
-                groups: [
-                    .init(platform: "Red",  weightClass: "60kg", startTime: makeTime(on: d3, hour: 9,  minute: 0)),
-                    .init(platform: "Blue", weightClass: "71kg", startTime: makeTime(on: d3, hour: 9,  minute: 0)),
-                ]
-            ),
-            Session(
-                id: 6,
-                date: d3,
-                groups: [
-                    .init(platform: "Red",  weightClass: "60kg", startTime: makeTime(on: d3, hour: 13, minute: 0)),
-                    .init(platform: "Blue", weightClass: "71kg", startTime: makeTime(on: d3, hour: 13, minute: 0)),
-                ]
-            ),
-        ]
-    }()
-    
+    var schedule: [ScheduleRow] { viewModel.schedule }
     var meets: [String] { viewModel.meets }
     
-    private var sessionsByDay: [(day: Date, sessions: [Session])] {
-        let grouped = Dictionary(grouping: staticSessions) { session in
-            Calendar.current.startOfDay(for: session.date)
-        }
-        return grouped
-            .map { ($0.key, $0.value.sorted { $0.id < $1.id }) }
-            .sorted { $0.0 < $1.0 }
+    private var uniqueDays: [Date] {
+        let calendar = Calendar.current
+        let days = schedule.map { calendar.startOfDay(for: $0.date)}
+        let unique = Array(Set(days))
+        return unique.sorted()
     }
 
     var body: some View {
@@ -134,18 +50,15 @@ struct ScheduleView: View {
                 }
                 .frame(height: 100)
 
-                if sessionsByDay.isEmpty {
-                    Text("No sessions available")
-                        .secondaryText()
-                        .padding()
-                } else {
-                    TabView {
-                        ForEach(Array(sessionsByDay.enumerated()), id: \.offset) { _, item in
-                            DaySessionsView(day: item.day, sessions: item.sessions)
-                        }
+                //need to fix the padding for this. gray bar around tab bar. ignoring safe area then wont scroll up the whole way
+                TabView {
+                    ForEach(uniqueDays, id: \.self) { day in
+                        let calendar = Calendar.current
+                        let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
+                        DaySessionsView(day: day, schedule: rowsForDay)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .automatic))
                 }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .onAppear{
@@ -233,35 +146,43 @@ struct ScheduleView: View {
 
 private struct DaySessionsView: View {
     let day: Date
-    let sessions: [Session]
-    
-    private var timeFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.timeStyle = .short
-        f.dateStyle = .none
-        return f
-    }
+    let schedule: [ScheduleRow]
     
     var body: some View {
         List {
-            ForEach(sessions) { session in
-                Section(
-                    header: Text("Session \(session.id)")
-                        .foregroundStyle(.black)
-                ) {
-                    ForEach(session.groups) { group in
-                        NavigationLink(destination: ScheduleDetailsView()) {
-                            HStack {
-                                Platform(text: group.platform)
-                                
-                                VStack(alignment: .leading) {
-                                    Text(group.weightClass)
-                                        .padding(.vertical, 2)
-                                    Text("Start: \(timeFormatter.string(from: group.startTime))")
-                                        .padding(.vertical, 2)
+            ForEach(Array(schedule.enumerated()), id: \.element.id) { index, row in
+                if schedule.firstIndex(where: {$0.session_id == row.session_id}) == index {
+                    let rowsInSession = schedule.filter{$0.session_id == row.session_id}
+                    let platformColors = [1: "Red", 2: "White", 3: "Blue", 4: "Stars", 5: "Stripes", 6: "Rogue"]
+                    
+                    let dataSorted = rowsInSession.sorted {first, second in
+                        let firstPlatform = first.platform
+                        let secondPlatform = second.platform
+                        
+                        let firstKey = platformColors.first(where: { $0.value == firstPlatform })?.key ?? Int.max
+                        let secondKey = platformColors.first(where: { $0.value == secondPlatform })?.key ?? Int.max
+                        
+                        return firstKey < secondKey
+                    }
+                    
+                    Section(
+                        header: Text("Session \(row.session_id)")
+                            .foregroundStyle(.black)
+                    ) {
+                        ForEach(dataSorted, id: \.id) { sched in
+                            NavigationLink(destination: ScheduleDetailsView()) {
+                                HStack {
+                                    Platform(text: sched.platform)
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text(sched.weight_class)
+                                            .padding(.vertical, 2)
+                                        Text("Start: \(sched.start_time)")
+                                            .padding(.vertical, 2)
+                                    }
+                                    .padding(.leading, 10)
+                                    .secondaryText()
                                 }
-                                .padding(.leading, 10)
-                                .secondaryText()
                             }
                         }
                     }
