@@ -52,26 +52,35 @@ struct QualifyingTotalsView: View {
                         .padding(.top)
                         .padding(.bottom, 2)
                     
-                    
                     VStack {
-                        List {
-                            HStack {
-                                Text("Weight Class")
-                                    .frame(width: 200, alignment: .leading)
-                                    .bold()
-                                Text("Total")
+                        if viewModel.isLoading {
+                            VStack {
+                                Spacer()
+                                ProgressView("Loading...")
                                 Spacer()
                             }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(viewModel.totals, id: \.self) { total in
-                                DataSectionView(weightClass: total.weight_class, data: String("\(total.qualifying_total)kg"), width: 200)
+                            .padding(.top, -10)
+                        } else {
+                            VStack {
+                                List {
+                                    HStack {
+                                        Text("Weight Class")
+                                            .frame(width: 200, alignment: .leading)
+                                            .bold()
+                                        Text("Total")
+                                        Spacer()
+                                    }
+                                    .bold()
+                                    .secondaryText()
+                                    
+                                    ForEach(viewModel.totals, id: \.self) { total in
+                                        DataSectionView(weightClass: total.weight_class, data: String("\(total.qualifying_total)kg"), width: 200)
+                                    }
+                                }
                             }
+                            .padding(.top, -10)
                         }
                     }
-                    .padding(.top, -10)
-                    
                 }
             }
             .navigationTitle("Qualifying Totals")

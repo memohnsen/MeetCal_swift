@@ -1,51 +1,52 @@
 //
-//  FetchMeetsSchedule.swift
+//  FetchStartList.swift
 //  meetcal
 //
-//  Created by Maddisen Mohnsen on 9/12/25.
+//  Created by Maddisen Mohnsen on 9/16/25.
 //
 
 import SwiftUI
 import Supabase
 import Combine
 
-private struct MeetsRow: Decodable {
+struct AthleteRow: Decodable {
+    let member_id: String
     let name: String
-}
-
-struct ScheduleRow: Decodable {
-    let id: Int
-    let date: Date
-    let session_id: Int
+    let age: Int
+    let club: String
+    let gender: String
     let weight_class: String
-    let start_time: String
-    let platform: String
+    let entry_total: Int
+    let session_number: Int
+    let session_platform: String
+    let meet: String
+    let adaptive: Bool
 }
 
 @MainActor
-class MeetsScheduleModel: ObservableObject {
-    @Published var meets: [String] = []
+class StartListModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
+    @Published var athletes: [AthleteRow] = []
     @Published var schedule: [ScheduleRow] = []
     
-    func loadMeets() async {
+    func loadStartList(meet: String) async {
         isLoading = true
         error = nil
+        
         do {
             let response = try await supabase
-                .from("meets")
-                .select("name")
-                .neq("status", value: "completed")
-                .order("start_date", ascending: true)
+                .from("athletes")
+                .select()
+                .eq("meet", value: meet)
+                .order("name")
                 .execute()
             
-            let row = try JSONDecoder().decode([MeetsRow].self, from: response.data)
-            let unique = Array(row.map { $0.name })
+            let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
             
-            self.meets = unique
+            self.athletes = row
         } catch {
-            print("error: \(error)")
+            print("Error: \(error)")
             self.error = error
         }
         isLoading = false

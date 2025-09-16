@@ -8,25 +8,54 @@
 import SwiftUI
 
 struct StartListView: View {
+    @AppStorage("selectedMeet") private var selectedMeet = ""
+    @StateObject private var viewModel = StartListModel()
+    
     @State private var searchText: String = ""
     
-    let athletes: [String] = ["Alexander Nordstrom", "Amber Hapken", "Ashlie Pankonin"]
+    var athleteList: [AthleteRow] { viewModel.athletes }
+    var scheduleList: [ScheduleRow] { viewModel.schedule }
     
-    var filteredAthletes: [String] {
-        if searchText.isEmpty { return athletes }
-        return athletes.filter { $0.localizedCaseInsensitiveContains(searchText) }
+    var filteredAthletes: [AthleteRow] {
+        guard !searchText.isEmpty else { return athleteList }
+        return athleteList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    private func matchSchedule(for athlete: AthleteRow) -> ScheduleRow? {
+        scheduleList.first {
+            $0.session_id == athlete.session_number && $0.platform == athlete.session_platform
+        }
+    }
+    
+    private func displayDateTime(for row: ScheduleRow) -> String {
+        let dateText = row.date.formatted(date: .abbreviated, time: .omitted)
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "h:mm a"
+        outputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        
+        var timeText = "No Time"
+        if let date = inputFormatter.date(from: row.start_time) {
+            timeText = outputFormatter.string(from: date)
+        }
+        
+        let tzAbbrev = TimeZone.current.abbreviation() ?? ""
+        return "\(dateText) • \(timeText) \(tzAbbrev)"
     }
     
     var body: some View {
         NavigationStack {
             VStack {
                 List {
-                    ForEach(filteredAthletes, id: \.self) {
-                        DisclosureGroup($0) {
+                    ForEach(filteredAthletes, id: \.member_id) { athlete in
+                        DisclosureGroup(athlete.name) {
                             VStack(spacing: 20) {
                                 HStack {
                                     Text("Session:")
-                                        .foregroundStyle(Color(red: 102/255, green: 102/255, blue: 102/255))
+                                        .secondaryText()
 
                                     Spacer()
                                     NavigationLink(destination: ScheduleDetailsView()) {
@@ -35,7 +64,7 @@ struct StartListView: View {
                                         Spacer()
                                         Spacer()
                                         Spacer()
-                                        Text("Session 24 • Red Platform")
+                                        Text("Session \(athlete.session_number) • \(athlete.session_platform) Platform")
                                             .foregroundStyle(.blue)
                                     }
                                 }
@@ -44,35 +73,39 @@ struct StartListView: View {
                                         .secondaryText()
                                     
                                     Spacer()
-                                    Text("Sep 10 • 8:30 PM PDT")
+                                    if let row = matchSchedule(for: athlete) {
+                                        Text(displayDateTime(for: row))
+                                    } else {
+                                        Text("TBD")
+                                    }
                                 }
                                 HStack {
                                     Text("Club:")
                                         .secondaryText()
                                     
                                     Spacer()
-                                    Text("POWER & GRACE PERFORMANCE.")
+                                    Text(athlete.club)
                                 }
                                 HStack {
                                     Text("Weight Class:")
                                         .secondaryText()
                                     
                                     Spacer()
-                                    Text("88kg")
+                                    Text(athlete.weight_class)
                                 }
                                 HStack {
                                     Text("Age:")
                                         .secondaryText()
                                     
                                     Spacer()
-                                    Text("40")
+                                    Text(String(athlete.age))
                                 }
                                 HStack {
                                     Text("Entry Total:")
                                         .secondaryText()
                                     
                                     Spacer()
-                                    Text("230kg")
+                                    Text(String(athlete.entry_total))
                                 }
                                                         
                                 HStack {
@@ -138,9 +171,20 @@ struct StartListView: View {
                 }
             }
         }
+        .task{
+            await viewModel.loadStartList(meet: selectedMeet)
+            await viewModel.loadMeetSchedule(meet: selectedMeet)
+        }
+        .onChange(of: selectedMeet) {
+            Task {
+                await viewModel.loadStartList(meet: selectedMeet)
+                await viewModel.loadMeetSchedule(meet: selectedMeet)
+            }
+        }
     }
 }
 
 #Preview {
     StartListView()
 }
+

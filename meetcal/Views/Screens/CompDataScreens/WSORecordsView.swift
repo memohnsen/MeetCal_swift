@@ -51,41 +51,49 @@ struct WSORecordsView: View {
                         .padding(.bottom, 2)
                     
                     
-                    VStack {
-                        List {
-                            HStack {
-                                Text("Weight Class")
-                                    .frame(width: 120, alignment: .leading)
-                                    .bold()
-                                Text("Snatch")
-                                Spacer()
-                                Text("C&J")
-                                Spacer()
-                                Spacer()
-                                Spacer()
-                                Text("Total")
-                                Spacer()
-                                Spacer()
-                            }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(viewModel.wsoRecords, id: \.self) { record in
+                    if viewModel.isLoading {
+                        VStack {
+                            Spacer()
+                            ProgressView("Loading...")
+                            Spacer()
+                        }
+                        .padding(.top, -10)
+                    } else {
+                        VStack {
+                            List {
                                 HStack {
-                                    DataSectionView(weightClass: String("\(record.weight_class)kg"), data: String("\(record.snatch_record)kg"), width: 120)
-                                    Text("\(record.cj_record)kg")
+                                    Text("Weight Class")
+                                        .frame(width: 120, alignment: .leading)
+                                        .bold()
+                                    Text("Snatch")
+                                    Spacer()
+                                    Text("C&J")
                                     Spacer()
                                     Spacer()
                                     Spacer()
-                                    Text("\(record.total_record)kg")
+                                    Text("Total")
                                     Spacer()
                                     Spacer()
                                 }
+                                .bold()
+                                .secondaryText()
+                                
+                                ForEach(viewModel.wsoRecords, id: \.self) { record in
+                                    HStack {
+                                        DataSectionView(weightClass: String("\(record.weight_class)kg"), data: String("\(record.snatch_record)kg"), width: 120)
+                                        Text("\(record.cj_record)kg")
+                                        Spacer()
+                                        Spacer()
+                                        Spacer()
+                                        Text("\(record.total_record)kg")
+                                        Spacer()
+                                        Spacer()
+                                    }
+                                }
                             }
                         }
+                        .padding(.top, -10)
                     }
-                    .padding(.top, -10)
-                    
                 }
             }
             .navigationTitle("WSO Records")

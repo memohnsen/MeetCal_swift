@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct ScheduleView: View {
+    @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @StateObject private var viewModel = MeetsScheduleModel()
+    
     @State private var showingMeetsOverlay: Bool = false
-    @State private var selectedMeet: String = ""
     @State private var platformColor: String = ""
     
     var schedule: [ScheduleRow] { viewModel.schedule }
@@ -26,39 +27,64 @@ struct ScheduleView: View {
     var body: some View {
         NavigationStack{
             VStack {
-                ZStack {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Selected Meet")
-                                .bold()
-                                .padding(.bottom, 0.5)
-                            Text(selectedMeet)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.down")
-                            .secondaryText()
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Selected Meet")
                             .bold()
+                            .padding(.bottom, 0.5)
+                        Text(selectedMeet)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(.white)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                    .onTapGesture {
-                        showingMeetsOverlay = true
-                    }
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .secondaryText()
+                        .bold()
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(.white)
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .onTapGesture {
+                    showingMeetsOverlay = true
                 }
                 .frame(height: 100)
+                .padding(.top, viewModel.schedule.count == 0 ? -50 : 0)
+                
+                if viewModel.schedule.count == 0 {
+                    Spacer()
+                }
 
                 //need to fix the padding for this. gray bar around tab bar. ignoring safe area then wont scroll up the whole way
-                TabView {
-                    ForEach(uniqueDays, id: \.self) { day in
-                        let calendar = Calendar.current
-                        let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
-                        DaySessionsView(day: day, schedule: rowsForDay)
+                VStack {
+                    if viewModel.isLoading {
+                        VStack {
+                            ProgressView("Loading...")
+                            Spacer()
+                        }
+                        .padding(.top, -10)
+                    } else if uniqueDays.count == 0 {
+                        VStack(alignment: .center) {
+                            Spacer()
+                            Image("meetcal-logo")
+                                .resizable()
+                                .frame(width: 140, height: 140)
+                                .shadow(radius: 8)
+                            Text("No data for has been loaded yet for this meet.")
+                            Text("Check back soon!")
+                            Spacer()
+                        }
+                        .padding(.top, -10)
+                    }else {
+                        TabView {
+                            ForEach(uniqueDays, id: \.self) { day in
+                                let calendar = Calendar.current
+                                let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
+                                DaySessionsView(day: day, schedule: rowsForDay)
+                            }
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .automatic))
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .automatic))
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .onAppear{
@@ -148,6 +174,24 @@ private struct DaySessionsView: View {
     let day: Date
     let schedule: [ScheduleRow]
     
+    func convert24hourTo12hour(time24hour: String) -> String? {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        
+        guard let date = inputFormatter.date(from: time24hour) else {
+            return nil
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "h:mm a"
+        outputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        
+        let time12hour = outputFormatter.string(from: date)
+        
+        return time12hour
+    }
+    
     var body: some View {
         List {
             ForEach(Array(schedule.enumerated()), id: \.element.id) { index, row in
@@ -164,7 +208,7 @@ private struct DaySessionsView: View {
                         
                         return firstKey < secondKey
                     }
-                    
+                                        
                     Section(
                         header: Text("Session \(row.session_id)")
                             .foregroundStyle(.black)
@@ -177,7 +221,7 @@ private struct DaySessionsView: View {
                                     VStack(alignment: .leading) {
                                         Text(sched.weight_class)
                                             .padding(.vertical, 2)
-                                        Text("Start: \(sched.start_time)")
+                                        Text("Start: \(convert24hourTo12hour(time24hour: sched.start_time) ?? "No Time Data")")
                                             .padding(.vertical, 2)
                                     }
                                     .padding(.leading, 10)

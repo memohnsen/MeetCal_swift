@@ -50,42 +50,51 @@ struct AmericanRecordsView: View {
                         .padding(.top)
                         .padding(.bottom, 2)
                     
-                    
                     VStack {
-                        List {
-                            HStack {
-                                Text("Weight Class")
-                                    .frame(width: 120, alignment: .leading)
-                                    .bold()
-                                Text("Snatch")
+                        if viewModel.isLoading {
+                            VStack {
                                 Spacer()
-                                Text("C&J")
-                                Spacer()
-                                Spacer()
-                                Spacer()
-                                Text("Total")
-                                Spacer()
+                                ProgressView("Loading...")
                                 Spacer()
                             }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(viewModel.records, id: \.self) { record in
-                                HStack {
-                                    DataSectionView(weightClass: record.weight_class, data: String("\(record.snatch_record)kg"), width: 120)
-                                    Text("\(record.cj_record)kg")
-                                    Spacer()
-                                    Spacer()
-                                    Spacer()
-                                    Text("\(record.total_record)kg")
-                                    Spacer()
-                                    Spacer()
+                            .padding(.top, -10)
+                        } else {
+                            VStack {
+                                List {
+                                    HStack {
+                                        Text("Weight Class")
+                                            .frame(width: 120, alignment: .leading)
+                                            .bold()
+                                        Text("Snatch")
+                                        Spacer()
+                                        Text("C&J")
+                                        Spacer()
+                                        Spacer()
+                                        Spacer()
+                                        Text("Total")
+                                        Spacer()
+                                        Spacer()
+                                    }
+                                    .bold()
+                                    .secondaryText()
+                                    
+                                    ForEach(viewModel.records, id: \.self) { record in
+                                        HStack {
+                                            DataSectionView(weightClass: record.weight_class, data: String("\(record.snatch_record)kg"), width: 120)
+                                            Text("\(record.cj_record)kg")
+                                            Spacer()
+                                            Spacer()
+                                            Spacer()
+                                            Text("\(record.total_record)kg")
+                                            Spacer()
+                                            Spacer()
+                                        }
+                                    }
                                 }
                             }
+                            .padding(.top, -10)
                         }
                     }
-                    .padding(.top, -10)
-                    
                 }
             }
             .navigationTitle("American Records")

@@ -50,49 +50,58 @@ struct InternationalRankingsView: View {
                         .padding(.top)
                         .padding(.bottom, 2)
                     
-                    
                     VStack {
-                        List {
-                            HStack {
-                                Text("Name")
-                                    .frame(width: 130, alignment: .leading)
-                                    .padding(.leading, 6)
+                        if viewModel.isLoading {
+                            VStack {
                                 Spacer()
-                                Spacer()
-                                Spacer()
-                                Text("Total")
-                                    .frame(width: 60, alignment: .leading)
-                                Spacer()
-                                Spacer()
-                                Spacer()
-                                Text("% of A")
-                                    .frame(width: 60, alignment: .leading)
-                                Spacer()
+                                ProgressView("Loading...")
                                 Spacer()
                             }
-                            .bold()
-                            .secondaryText()
-                            
-                            ForEach(viewModel.rankings, id: \.self) { ranking in
-                                HStack {
-                                    DataSectionView(weightClass: nil, data: ranking.name, width: 0)
-                                    Text("\(ranking.total)kg")
-                                        .frame(width: 50, alignment: .leading)
-                                    Spacer()
-                                    Spacer()
-                                    Spacer()
-                                    Spacer()
-                                    Spacer()
-                                    Text("\(String(format: "%.1f", ranking.percent_a))%")
-                                        .frame(width: 60, alignment: .leading)
-                                    Spacer()
-                                    Spacer()
+                            .padding(.top, -10)
+                        } else {
+                            VStack {
+                                List {
+                                    HStack {
+                                        Text("Name")
+                                            .frame(width: 130, alignment: .leading)
+                                            .padding(.leading, 6)
+                                        Spacer()
+                                        Spacer()
+                                        Spacer()
+                                        Text("Total")
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
+                                        Spacer()
+                                        Spacer()
+                                        Text("% of A")
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
+                                        Spacer()
+                                    }
+                                    .bold()
+                                    .secondaryText()
+                                    
+                                    ForEach(viewModel.rankings, id: \.self) { ranking in
+                                        HStack {
+                                            DataSectionView(weightClass: nil, data: ranking.name, width: 0)
+                                            Text("\(ranking.total)kg")
+                                                .frame(width: 50, alignment: .leading)
+                                            Spacer()
+                                            Spacer()
+                                            Spacer()
+                                            Spacer()
+                                            Spacer()
+                                            Text("\(String(format: "%.1f", ranking.percent_a))%")
+                                                .frame(width: 60, alignment: .leading)
+                                            Spacer()
+                                            Spacer()
+                                        }
+                                    }
                                 }
                             }
+                            .padding(.top, -10)
                         }
                     }
-                    .padding(.top, -10)
-                    
                 }
             }
             .navigationTitle("International Rankings")

@@ -41,9 +41,12 @@ struct StandardsView: View {
                     
                     VStack {
                         if viewModel.isLoading {
-                            ProgressView("Loading...")
-                        } else if let error = viewModel.error {
-                            Text("Failed to load: \(error.localizedDescription)").foregroundColor(.red)
+                            VStack {
+                                Spacer()
+                                ProgressView("Loading...")
+                                Spacer()
+                            }
+                            .padding(.top, -10)
                         } else {
                             List {
                                 HStack {
