@@ -23,10 +23,6 @@ struct ContentView: View {
                 .tabItem{
                     Label("Start List", systemImage: "list.bullet")
                 }
-            SponsorView()
-                .tabItem{
-                    Label("Sponsors", systemImage: "star.fill")
-                }
         }
     }
 }

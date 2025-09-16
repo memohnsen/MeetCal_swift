@@ -99,6 +99,7 @@ struct AmericanRecordsView: View {
             }
             .navigationTitle("American Records")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
         .overlay(QualifyingRankingsRecordsFilter(
                     isModalShowing: $isModalShowing,

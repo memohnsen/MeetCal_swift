@@ -69,6 +69,7 @@ struct SignInView: View {
                     .font(.system(size: 14))
             }
             .padding(.horizontal)
+            .toolbar(.hidden, for: .tabBar)
         }
     }
 }

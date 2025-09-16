@@ -79,6 +79,7 @@ struct StandardsView: View {
             }
             .navigationTitle("A/B Standards")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
         .overlay(StandardFilter(
                 isModalShowing: $isModalShowing,

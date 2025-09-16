@@ -85,6 +85,7 @@ struct QualifyingTotalsView: View {
             }
             .navigationTitle("Qualifying Totals")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
         .overlay(QualifyingRankingsRecordsFilter(
             isModalShowing: $isModalShowing,

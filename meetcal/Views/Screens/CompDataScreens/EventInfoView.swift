@@ -71,8 +71,8 @@ struct EventInfoView: View {
             }
             .navigationTitle("Event Info")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
-        
     }
 }
 

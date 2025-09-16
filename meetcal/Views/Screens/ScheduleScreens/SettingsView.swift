@@ -32,6 +32,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Info")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
             .padding(.top, -10)
         }
     }

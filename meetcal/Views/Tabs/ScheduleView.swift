@@ -83,6 +83,8 @@ struct ScheduleView: View {
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
+                        .ignoresSafeArea()
+                        
                     }
                 }
             }
@@ -232,6 +234,7 @@ private struct DaySessionsView: View {
                     }
                 }
             }
+            .padding(.top, 4)
         }
         .listStyle(.insetGrouped)
         .navigationTitle(day.formatted(date: .complete, time: .omitted))

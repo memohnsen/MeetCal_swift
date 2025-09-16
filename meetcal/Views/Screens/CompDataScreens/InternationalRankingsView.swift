@@ -106,6 +106,7 @@ struct InternationalRankingsView: View {
             }
             .navigationTitle("International Rankings")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
         .overlay(QualifyingRankingsRecordsFilter(
             isModalShowing: $isModalShowing,

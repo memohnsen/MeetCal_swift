@@ -133,6 +133,7 @@ struct ProfileView: View {
             }
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
     }
 }

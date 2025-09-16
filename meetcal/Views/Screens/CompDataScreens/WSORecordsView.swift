@@ -98,6 +98,7 @@ struct WSORecordsView: View {
             }
             .navigationTitle("WSO Records")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
         }
         .overlay(QualifyingRankingsRecordsFilter(
                     isModalShowing: $isModalShowing,

@@ -18,6 +18,9 @@ struct CompDataView: View {
 //                    NavigationLink(destination: ScheduleView()) {
 //                        Text("Weightlifting Wrapped")
 //                    }
+                NavigationLink(destination: SponsorView()) {
+                    Text("Check Out Our Sponsors!")
+                }
                 NavigationLink(destination: QualifyingTotalsView()) {
                     Text("Qualifying Totals")
                 }
@@ -49,6 +52,7 @@ struct CompDataView: View {
             }
             .navigationTitle("Competition Data")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
             .padding(.top, -10)
         }
     }

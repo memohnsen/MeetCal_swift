@@ -30,6 +30,7 @@ struct MeetResultsView: View {
                 }
                 .navigationTitle(meets[0].name)
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .tabBar)
             }
         }
     }
@@ -175,7 +176,6 @@ struct MakeRate: View {
             }
         }
         .cardStyling()
-
     }
 }
 
