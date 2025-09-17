@@ -80,18 +80,26 @@ struct ScheduleView: View {
                                 let calendar = Calendar.current
                                 let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
                                 DaySessionsView(day: day, schedule: rowsForDay)
+                                    .background(Color.clear)
+                                    .safeAreaInset(edge: .bottom) {
+                                        Color.clear
+                                            .frame(height: 80)
+                                    }
                             }
                         }
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        .ignoresSafeArea()
-                        
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        .background(Color.clear)
+                        .ignoresSafeArea(edges: .bottom)
                     }
                 }
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .onAppear{
-                UIPageControl.appearance().currentPageIndicatorTintColor = UIColor.systemBlue
-                UIPageControl.appearance().pageIndicatorTintColor = UIColor.systemBlue.withAlphaComponent(0.2)
+                let pageControl = UIPageControl.appearance()
+                pageControl.currentPageIndicatorTintColor = UIColor.systemBlue
+                pageControl.pageIndicatorTintColor = UIColor.systemBlue.withAlphaComponent(0.2)
+                pageControl.backgroundStyle = .minimal
+                pageControl.backgroundColor = .clear
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -236,6 +244,8 @@ private struct DaySessionsView: View {
             }
             .padding(.top, 4)
         }
+        .scrollContentBackground(.hidden) // hide grouped gray background
+        .background(Color.clear)
         .listStyle(.insetGrouped)
         .navigationTitle(day.formatted(date: .complete, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)

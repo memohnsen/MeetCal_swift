@@ -23,12 +23,13 @@ struct Saved: Identifiable {
 }
 
 struct SavedView: View {
+    @StateObject private var viewModel = SavedViewModel()
+
+    var saved: [SessionsRow] { viewModel.saved }
+    
     let sessions: [Saved] = [
         Saved(id: 2, date: "September 9, 2025", savedSession: [
             .init(platform: "Red", weightClass: "88kg", weighInTime: "10:00 AM EST", startTime: "12:00 PM EST", athleteName: "Alexander Nordstrom")
-        ]),
-        Saved(id: 1, date: "September 9, 2025", savedSession: [
-            .init(platform: "Blue", weightClass: "60kg", weighInTime: "8:00 AM EST", startTime: "10:00 AM EST", athleteName: "Amber Hapken")
         ]),
     ]
     
@@ -38,14 +39,8 @@ struct SavedView: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
-                VStack {
-                    ButtonComponent(image: "calendar", action: {}, title: "Add to Calendar")
-                        .padding(.horizontal)
-                    
-                    ScrollView {
-                        Divider()
-                            .padding(.vertical, 8)
-                        
+                ScrollView {
+                    VStack {
                         ForEach(sessions) { session in
                             ForEach(session.savedSession) { group in
                                 NavigationLink(destination: ScheduleDetailsView()) {
@@ -96,12 +91,13 @@ struct SavedView: View {
                         .padding(.vertical, 6)
                         .foregroundStyle(.black)
                     }
+                    .padding(.top, 8)
                     .toolbar{
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Image(systemName: "bookmark.fill")
-                        }
                         ToolbarItem(placement: .topBarLeading) {
                             Image(systemName: "plus")
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Image(systemName: "calendar")
                         }
                     }
 

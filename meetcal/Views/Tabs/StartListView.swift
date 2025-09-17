@@ -12,6 +12,7 @@ struct StartListView: View {
     @StateObject private var viewModel = StartListModel()
     
     @State private var searchText: String = ""
+    @State private var saveButtonClicked: Bool = false
     
     var athleteList: [AthleteRow] { viewModel.athletes }
     var scheduleList: [ScheduleRow] { viewModel.schedule }
@@ -56,7 +57,7 @@ struct StartListView: View {
                                 HStack {
                                     Text("Session:")
                                         .secondaryText()
-
+                                    
                                     Spacer()
                                     NavigationLink(destination: ScheduleDetailsView()) {
                                         Spacer()
@@ -107,7 +108,7 @@ struct StartListView: View {
                                     Spacer()
                                     Text(String(athlete.entry_total))
                                 }
-                                                        
+                                
                                 HStack {
                                     VStack {
                                         Divider()
@@ -165,9 +166,58 @@ struct StartListView: View {
             .toolbar{
                 ToolbarItem(placement: .topBarTrailing) {
                     Image(systemName: "square.and.arrow.down")
+                        .onTapGesture {
+                            saveButtonClicked = true
+                        }
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Image(systemName: "line.3.horizontal.decrease")
+
+                }
+            }
+            .overlay {
+                if saveButtonClicked {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                saveButtonClicked = false
+                            }
+                        
+                        VStack(spacing: 16) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Save Sessions")
+                                    Text("Save X sessions in the app")
+                                        .secondaryText()
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .onTapGesture{
+                                
+                            }
+                            
+                            Divider()
+                            
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Save to Calendar")
+                                    Text("Save X sessions directly to your iCal")
+                                        .secondaryText()
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .onTapGesture{
+                                
+                            }
+                        }
+                        .padding()
+                        .background(.white)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    }
                 }
             }
         }
@@ -187,4 +237,3 @@ struct StartListView: View {
 #Preview {
     StartListView()
 }
-

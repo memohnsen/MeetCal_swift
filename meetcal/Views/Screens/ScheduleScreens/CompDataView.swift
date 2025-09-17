@@ -18,9 +18,6 @@ struct CompDataView: View {
 //                    NavigationLink(destination: ScheduleView()) {
 //                        Text("Weightlifting Wrapped")
 //                    }
-                NavigationLink(destination: SponsorView()) {
-                    Text("Check Out Our Sponsors!")
-                }
                 NavigationLink(destination: QualifyingTotalsView()) {
                     Text("Qualifying Totals")
                 }
