@@ -180,6 +180,8 @@ struct MakeRate: View {
 }
 
 struct MeetInfo: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let meets: [MeetHistory]
     
     var body: some View {
@@ -191,12 +193,12 @@ struct MeetInfo: View {
                         .font(.headline)
                     
                     Text(meet.meetDate)
-                        .secondaryText()
+                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .font(.system(size: 16))
                         .padding(.vertical, 0.5)
                     
                     Text(meet.weightClass)
-                        .secondaryText()
+                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .font(.system(size: 16))
                     
                     Divider()

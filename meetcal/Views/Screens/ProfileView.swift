@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var localNotifs: Bool = false
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -75,7 +78,7 @@ struct ProfileView: View {
                     VStack {
                         HStack {
                             NavigationLink(destination: ScheduleView(), label: {Text("Customer Support")})
-                                .foregroundStyle(.black)
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
                             Spacer()
                             Image(systemName: "chevron.right")
                         }
@@ -85,7 +88,7 @@ struct ProfileView: View {
                         
                         HStack {
                             NavigationLink(destination: ScheduleView(), label: {Text("Submit Feedback")})
-                                .foregroundStyle(.black)
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
                             Spacer()
                             Image(systemName: "chevron.right")
                         }
@@ -99,7 +102,7 @@ struct ProfileView: View {
                                 Spacer()
                                 Image(systemName: "chevron.right")
                               }
-                            .foregroundStyle(.black)
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
                     }
                     .cardStyling()

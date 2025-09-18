@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ScheduleView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = MeetsScheduleModel()
     
     @State private var showingMeetsOverlay: Bool = false
@@ -41,7 +42,7 @@ struct ScheduleView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(.white)
+                .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                 .cornerRadius(12)
                 .padding(.horizontal)
                 .onTapGesture {
@@ -83,8 +84,9 @@ struct ScheduleView: View {
                                     .background(Color.clear)
                                     .safeAreaInset(edge: .bottom) {
                                         Color.clear
-                                            .frame(height: 80)
+                                            .frame(height: 40)
                                     }
+                                    .safeAreaPadding(.top, 28)
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -131,7 +133,7 @@ struct ScheduleView: View {
         .overlay(
             Group {
                 if showingMeetsOverlay {
-                    Color.black.opacity(0.4)
+                    Color(colorScheme == .light ? .black.opacity(0.4) : .black.opacity(0.7))
                         .ignoresSafeArea()
                         .onTapGesture { showingMeetsOverlay = false }
                     
@@ -149,7 +151,7 @@ struct ScheduleView: View {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(meet == selectedMeet ? Color.blue : Color.black)
+                                            .foregroundStyle(meet == selectedMeet ? Color.blue : colorScheme == .light ? .black : .white)
                                         Spacer()
                                         if meet == selectedMeet {
                                             Image(systemName: "checkmark")
@@ -157,7 +159,7 @@ struct ScheduleView: View {
                                         }
                                         Spacer()
                                     }
-                                    .background(meet == selectedMeet ? Color.gray.opacity(0.1) : Color.white)
+                                    .background(meet == selectedMeet ? Color.gray.opacity(0.1) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                     .onTapGesture{
                                         selectedMeet = meet
                                         showingMeetsOverlay = false
@@ -170,7 +172,7 @@ struct ScheduleView: View {
                     }
                     .frame(maxWidth: 350)
                     .frame(maxHeight: 550)
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .cornerRadius(16)
                     .shadow(radius: 20)
                     .padding(.horizontal, 30)
@@ -181,6 +183,8 @@ struct ScheduleView: View {
 }
 
 private struct DaySessionsView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let day: Date
     let schedule: [ScheduleRow]
     
@@ -221,7 +225,7 @@ private struct DaySessionsView: View {
                                         
                     Section(
                         header: Text("Session \(row.session_id)")
-                            .foregroundStyle(.black)
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
                     ) {
                         ForEach(dataSorted, id: \.id) { sched in
                             NavigationLink(destination: ScheduleDetailsView()) {
@@ -230,19 +234,19 @@ private struct DaySessionsView: View {
                                     
                                     VStack(alignment: .leading) {
                                         Text(sched.weight_class)
-                                            .padding(.vertical, 2)
+                                            .padding(.bottom, 2)
                                         Text("Start: \(convert24hourTo12hour(time24hour: sched.start_time) ?? "No Time Data")")
-                                            .padding(.vertical, 2)
                                     }
+                                    .font(.system(size: 16))
                                     .padding(.leading, 10)
-                                    .secondaryText()
+                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 }
                             }
                         }
                     }
                 }
             }
-            .padding(.top, 4)
+//            .padding(.top, 4)
         }
         .scrollContentBackground(.hidden) // hide grouped gray background
         .background(Color.clear)

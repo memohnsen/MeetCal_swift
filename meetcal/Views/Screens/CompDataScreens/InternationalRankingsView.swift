@@ -11,6 +11,8 @@ import Combine
 
 struct InternationalRankingsView: View {
     @StateObject private var viewModel = IntlRankingsViewModel()
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
@@ -79,8 +81,8 @@ struct InternationalRankingsView: View {
                                         Spacer()
                                     }
                                     .bold()
-                                    .secondaryText()
-                                    
+                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     ForEach(viewModel.rankings, id: \.self) { ranking in
                                         HStack {
                                             DataSectionView(weightClass: nil, data: ranking.name, width: 0)

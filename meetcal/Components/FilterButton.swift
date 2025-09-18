@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct FilterButton: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let filter1: String
     let filter2: String
     let filter3: String?
@@ -18,10 +20,10 @@ struct FilterButton: View {
             Spacer()
            
             Text("\(filter1) • \(filter2) \((filter3 != nil) ? "• \(filter3 ?? "")" : "")")
-                .secondaryText()
+                .foregroundStyle(colorScheme == .light ? .black : .white)
                 .bold()
             Image(systemName: "chevron.down")
-                .secondaryText()
+                .foregroundStyle(colorScheme == .light ? .black : .white)
                 .bold()
             
             Spacer()

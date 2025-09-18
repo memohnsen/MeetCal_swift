@@ -12,22 +12,6 @@ struct ContentView: View {
     @State private var search = ""
     var body: some View {
         TabView{
-//            ScheduleView()
-//                .tabItem{
-//                    Label("Schedule", systemImage: "calendar")
-//                }
-//            SavedView()
-//                .tabItem{
-//                    Label("Saved", systemImage: "bookmark.fill")
-//                }
-//            StartListView()
-//                .tabItem{
-//                    Label("Start List", systemImage: "list.bullet")
-//                }
-//            SponsorView()
-//                .tabItem{
-//                    Label("Sponsors", systemImage: "star.fill")
-//                }
             Tab("Schedule", systemImage: "calendar") {
                 ScheduleView()
             }

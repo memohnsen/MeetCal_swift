@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct QualifyingRankingsRecordsFilter: View {
+    @Environment(\.colorScheme) var colorScheme
+
     @Binding var isModalShowing: Bool
     @Binding var isModal1DropdownShowing: Bool
     @Binding var isModal2DropdownShowing: Bool
@@ -30,7 +32,7 @@ struct QualifyingRankingsRecordsFilter: View {
     var body: some View {
         Group {
             if isModalShowing {
-                Color.black.opacity(0.4)
+                Color(colorScheme == .light ? .black.opacity(0.4) : .black.opacity(0.7))
                     .ignoresSafeArea()
                     .onTapGesture {
                         isModalShowing = false
@@ -51,7 +53,7 @@ struct QualifyingRankingsRecordsFilter: View {
                         Image(systemName: isModal1DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal1DropdownShowing.toggle()
@@ -75,7 +77,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 0)
                                                     .padding()
-                                                    .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                    .foregroundStyle(meet == draftMeet ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                             }
                                             
                                             
@@ -86,7 +88,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                             }
                                             Spacer()
                                         }
-                                        .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
+                                        .background(meet == draftMeet ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                         
                                         Divider()
                                     }
@@ -106,7 +108,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()
-                                                .foregroundStyle(meet == draftMeet ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                .foregroundStyle(meet == draftMeet ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                         }
                                         
                                         
@@ -117,8 +119,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                         }
                                         Spacer()
                                     }
-                                    .background(meet == draftMeet ? .gray.opacity(0.2) : .white)
-                                    
+                                    .background(meet == draftMeet ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                     Divider()
                                 }
                             }
@@ -138,7 +139,7 @@ struct QualifyingRankingsRecordsFilter: View {
                         Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal2DropdownShowing.toggle()
@@ -162,7 +163,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 0)
                                                     .padding()
-                                                    .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                    .foregroundStyle(gender == draftGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                             }
                                             
                                             
@@ -173,7 +174,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                             }
                                             Spacer()
                                         }
-                                        .background(gender == draftGender ? .gray.opacity(0.2) : .white)
+                                        .background(gender == draftGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                         
                                         Divider()
                                     }
@@ -193,7 +194,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()
-                                                .foregroundStyle(gender == draftGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                .foregroundStyle(gender == draftGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                         }
                                         
                                         
@@ -204,7 +205,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                         }
                                         Spacer()
                                     }
-                                    .background(gender == draftGender ? .gray.opacity(0.2) : .white)
+                                    .background(gender == draftGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                     
                                     Divider()
                                 }
@@ -225,7 +226,7 @@ struct QualifyingRankingsRecordsFilter: View {
                         Image(systemName: isModal3DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal3DropdownShowing.toggle()
@@ -249,7 +250,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 0)
                                                     .padding()
-                                                    .foregroundStyle(age == draftAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                    .foregroundStyle(age == draftAge ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                             }
                                             
                                             
@@ -260,7 +261,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                             }
                                             Spacer()
                                         }
-                                        .background(age == draftAge ? .gray.opacity(0.2) : .white)
+                                        .background(age == draftAge ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                         
                                         Divider()
                                     }
@@ -280,7 +281,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()
-                                                .foregroundStyle(age == draftAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                                .foregroundStyle(age == draftAge ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                         }
                                         
                                         
@@ -291,7 +292,7 @@ struct QualifyingRankingsRecordsFilter: View {
                                         }
                                         Spacer()
                                     }
-                                    .background(age == draftAge ? .gray.opacity(0.2) : .white)
+                                    .background(age == draftAge ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                     
                                     Divider()
                                 }
@@ -318,7 +319,7 @@ struct QualifyingRankingsRecordsFilter: View {
                     }
                 }
                 .frame(maxWidth: 350)
-                .background(.white)
+                .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                 .cornerRadius(16)
                 .shadow(radius: 20)
                 .padding(.horizontal, 30)

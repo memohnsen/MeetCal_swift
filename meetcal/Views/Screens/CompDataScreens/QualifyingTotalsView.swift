@@ -11,6 +11,8 @@ import Combine
 
 struct QualifyingTotalsView: View {
     @StateObject private var viewModel = QualifyingTotalModel()
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
@@ -71,8 +73,8 @@ struct QualifyingTotalsView: View {
                                         Spacer()
                                     }
                                     .bold()
-                                    .secondaryText()
-                                    
+                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     ForEach(viewModel.totals, id: \.self) { total in
                                         DataSectionView(weightClass: total.weight_class, data: String("\(total.qualifying_total)kg"), width: 200)
                                     }

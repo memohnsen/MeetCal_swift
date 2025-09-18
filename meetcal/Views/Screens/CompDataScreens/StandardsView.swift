@@ -11,6 +11,8 @@ import Supabase
 
 struct StandardsView: View {
     @StateObject private var viewModel = StandardsViewModel()
+    @Environment(\.colorScheme) var colorScheme
+
     @State private var isModalShowing: Bool = false
     @State var appliedGender: String = "Men"
     @State var appliedAge: String = "Senior"
@@ -60,8 +62,8 @@ struct StandardsView: View {
                                     Spacer()
                                 }
                                 .bold()
-                                .secondaryText()
-                                
+                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                 ForEach(viewModel.standards) { total in
                                     HStack {
                                         DataSectionView(weightClass: total.weight_class, data: String("\(total.standard_a)kg"), width: 160)
@@ -114,6 +116,8 @@ struct StandardsView: View {
 }
 
 struct StandardFilter: View {
+    @Environment(\.colorScheme) var colorScheme
+
     @Binding var isModalShowing: Bool
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
@@ -128,7 +132,7 @@ struct StandardFilter: View {
     var body: some View {
         Group {
             if isModalShowing {
-                Color.black.opacity(0.4)
+                Color(colorScheme == .light ? .black.opacity(0.4) : .black.opacity(0.7))
                     .ignoresSafeArea()
                     .onTapGesture {
                         isModalShowing = false
@@ -148,7 +152,7 @@ struct StandardFilter: View {
                         Image(systemName: isModal1DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal1DropdownShowing.toggle()
@@ -168,7 +172,7 @@ struct StandardFilter: View {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(gender == appliedGender ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(gender == appliedGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                     }
 
 
@@ -179,7 +183,7 @@ struct StandardFilter: View {
                                     }
                                     Spacer()
                                 }
-                                .background(gender == appliedGender ? .gray.opacity(0.2) : .white)
+                                .background(gender == appliedGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
 
                                 Divider()
                             }
@@ -199,7 +203,7 @@ struct StandardFilter: View {
                         Image(systemName: isModal2DropdownShowing ? "chevron.down" : "chevron.right")
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
                         isModal2DropdownShowing.toggle()
@@ -219,7 +223,7 @@ struct StandardFilter: View {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.leading, 0)
                                             .padding()
-                                            .foregroundStyle(age == appliedAge ? Color.blue : Color(red: 102/255, green: 102/255, blue: 102/255))
+                                            .foregroundStyle(age == appliedAge ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                     }
 
 
@@ -230,7 +234,7 @@ struct StandardFilter: View {
                                     }
                                     Spacer()
                                 }
-                                .background(age == appliedAge ? .gray.opacity(0.2) : .white)
+                                .background(age == appliedAge ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
 
                                 Divider()
                             }
@@ -257,7 +261,7 @@ struct StandardFilter: View {
                     }
                 }
                 .frame(maxWidth: 350)
-                .background(.white)
+                .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                 .cornerRadius(16)
                 .shadow(radius: 20)
                 .padding(.horizontal, 30)

@@ -23,6 +23,7 @@ struct Saved: Identifiable {
 }
 
 struct SavedView: View {
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
 
     var saved: [SessionsRow] { viewModel.saved }
@@ -47,6 +48,7 @@ struct SavedView: View {
                                     VStack(alignment: .leading) {
                                         Text("Session \(session.id) • \(session.date)")
                                             .padding(.bottom, 6)
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
                                             .font(.headline)
                                             .bold()
                                         
@@ -56,14 +58,14 @@ struct SavedView: View {
                                         }
                                         .padding(.bottom, 6)
                                         .font(.system(size: 14))
-                                        .secondaryText()
-                                        
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                         HStack {
                                             Platform(text: group.platform)
                                         
                                             Text(group.weightClass)
                                                 .padding(.leading, 8)
-                                                .secondaryText()
+                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                         }
                                         .padding(.bottom, 6)
                                         
@@ -71,11 +73,12 @@ struct SavedView: View {
                                             Divider()
                                             
                                             Text("Athlete:")
-                                                .secondaryText()
+                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                                 .padding(.vertical, 6)
                                             
                                             Text(name)
                                                 .bold()
+                                                .foregroundStyle(colorScheme == .light ? .black : .white)
                                                 .padding(.bottom, 6)
                                         }
                                     }
@@ -85,7 +88,7 @@ struct SavedView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 230)
-                        .background(.white)
+                        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                         .cornerRadius(12)
                         .padding(.horizontal)
                         .padding(.vertical, 6)

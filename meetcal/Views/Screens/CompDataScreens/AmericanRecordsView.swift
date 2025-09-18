@@ -11,6 +11,7 @@ import Combine
 
 struct AmericanRecordsView: View {
     @StateObject private var viewModel = RecordsViewModel()
+    @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
@@ -76,7 +77,7 @@ struct AmericanRecordsView: View {
                                         Spacer()
                                     }
                                     .bold()
-                                    .secondaryText()
+                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                     
                                     ForEach(viewModel.records, id: \.self) { record in
                                         HStack {

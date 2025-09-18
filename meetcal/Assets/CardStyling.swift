@@ -8,11 +8,13 @@
 import SwiftUI
 
 struct CardStyling: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+
     func body(content: Content) -> some View {
         content
             .frame(maxWidth: .infinity)
             .padding()
-            .background(.white)
+            .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
             .cornerRadius(12)
     }
 }

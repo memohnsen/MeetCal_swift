@@ -44,6 +44,8 @@ struct SponsorView: View {
 }
 
 struct SponsorCard: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let title: String
     let caption: String
     let code: String
@@ -75,9 +77,9 @@ struct SponsorCard: View {
                 .padding(.horizontal)
                 .padding(.top, 5)
                 .padding(.bottom, 10)
-                .foregroundStyle(.black)
+                .foregroundStyle(colorScheme == .light ? .black : .white)
             }
-            .background(.white)
+            .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
             .cornerRadius(12)
         }
     }

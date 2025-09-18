@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State var darkMode: Bool = false
-
     var body: some View {
         NavigationStack{
             List {
@@ -17,8 +15,6 @@ struct SettingsView: View {
                     NavigationLink(destination: ProfileView()) {
                         Text("My Profile")
                     }
-                    Toggle("Dark Mode", isOn: $darkMode)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                 }
                 
                 Section("Danger Zone") {

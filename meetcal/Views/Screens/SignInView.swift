@@ -11,9 +11,11 @@ import GoogleSignIn
 import GoogleSignInSwift
 
 struct SignInView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground)
+            Color(colorScheme == .light ? .systemGroupedBackground : .secondarySystemGroupedBackground)
                 .ignoresSafeArea()
             
             VStack {
@@ -21,7 +23,7 @@ struct SignInView: View {
                 Image("meetcal-logo")
                     .resizable()
                     .frame(width: 140, height: 140)
-                    .shadow(radius: 8)
+                    .shadow(color: colorScheme == .light ? .black.opacity(0.35) : .white.opacity(0.35), radius: 8)
                 
                 Spacer()
                 

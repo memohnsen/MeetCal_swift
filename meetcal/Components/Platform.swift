@@ -28,7 +28,8 @@ struct Platform: View {
     
     var body: some View {
         Text(text)
-            .frame(width: 50, height: 40)
+            .frame(width: 55, height: 40)
+            .font(.system(size: 16))
             .padding(.horizontal, 10)
             .background(platformColor())
             .foregroundStyle(.white)

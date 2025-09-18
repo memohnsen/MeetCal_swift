@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StartListView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
+    @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = StartListModel()
     
     @State private var searchText: String = ""
@@ -56,8 +57,8 @@ struct StartListView: View {
                             VStack(spacing: 20) {
                                 HStack {
                                     Text("Session:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     NavigationLink(destination: ScheduleDetailsView()) {
                                         Spacer()
@@ -71,8 +72,8 @@ struct StartListView: View {
                                 }
                                 HStack {
                                     Text("Date & Time:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     if let row = matchSchedule(for: athlete) {
                                         Text(displayDateTime(for: row))
@@ -82,29 +83,29 @@ struct StartListView: View {
                                 }
                                 HStack {
                                     Text("Club:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     Text(athlete.club)
                                 }
                                 HStack {
                                     Text("Weight Class:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     Text(athlete.weight_class)
                                 }
                                 HStack {
                                     Text("Age:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     Text(String(athlete.age))
                                 }
                                 HStack {
                                     Text("Entry Total:")
-                                        .secondaryText()
-                                    
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+
                                     Spacer()
                                     Text(String(athlete.entry_total))
                                 }
@@ -178,7 +179,7 @@ struct StartListView: View {
             .overlay {
                 if saveButtonClicked {
                     ZStack {
-                        Color.black.opacity(0.4)
+                        Color(colorScheme == .light ? .black.opacity(0.4) : .black.opacity(0.7))
                             .ignoresSafeArea()
                             .onTapGesture {
                                 saveButtonClicked = false
@@ -189,7 +190,7 @@ struct StartListView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Save Sessions")
                                     Text("Save X sessions in the app")
-                                        .secondaryText()
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
@@ -204,7 +205,7 @@ struct StartListView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Save to Calendar")
                                     Text("Save X sessions directly to your iCal")
-                                        .secondaryText()
+                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
@@ -214,7 +215,7 @@ struct StartListView: View {
                             }
                         }
                         .padding()
-                        .background(.white)
+                        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                         .cornerRadius(12)
                         .padding(.horizontal)
                     }

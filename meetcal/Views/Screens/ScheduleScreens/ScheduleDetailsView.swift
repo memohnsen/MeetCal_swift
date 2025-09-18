@@ -31,6 +31,8 @@ struct ScheduleDetailsView: View {
 }
 
 struct TopView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let sessionNum: String
     let platformColor: String
     let weightClass: String
@@ -40,7 +42,7 @@ struct TopView: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text("Session \(sessionNum) • \(startTime)")
-                .secondaryText()
+                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                 .padding(.vertical, 6)
 
             Divider()
@@ -99,6 +101,8 @@ struct Athlete: Identifiable {
 }
 
 struct BottomView: View {
+    @Environment(\.colorScheme) var colorScheme
+
     let athletes: [Athlete] = [
         Athlete(id: 1, name: "Alexander Nordstrom", details: [
             .init(age: 25, weightClass: "88kg", club: "POWER & GRACE PERFORMANCE.", entryTotal: 130)
@@ -124,12 +128,12 @@ struct BottomView: View {
                 
                 ForEach(athlete.details) {details in
                     Text("Age: \(details.age) • Weight Class: \(details.weightClass)")
-                        .secondaryText()
+                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .padding(.top, 0.5)
                         .font(.system(size: 16))
                     
                     Text(details.club)
-                        .secondaryText()
+                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .padding(.top, 0.5)
                         .font(.system(size: 16))
                     
@@ -193,7 +197,7 @@ struct BottomView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
-        .background(.white)
+        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
         .cornerRadius(12)
     }
 }

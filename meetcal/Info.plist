@@ -10,5 +10,38 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>totals</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Qualifying Totals</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>View competition qualifying totals</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>list.bullet</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>wso</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>WSO Records</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Browse WSO records</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>star.fill</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>records</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>American Records</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Browse competition records</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>trophy.fill</string>
+		</dict>
+	</array>
 </dict>
 </plist>
