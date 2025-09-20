@@ -105,7 +105,7 @@ struct ScheduleView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(destination: SettingsView()) {
+                    NavigationLink(destination: ProfileView()) {
                         Image(systemName: "gearshape.fill")
                     }
                 }

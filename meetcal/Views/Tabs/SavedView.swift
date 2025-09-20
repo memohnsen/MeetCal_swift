@@ -99,8 +99,13 @@ struct SavedView: View {
                         ToolbarItem(placement: .topBarLeading) {
                             Image(systemName: "plus")
                         }
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem {
                             Image(systemName: "calendar")
+                        }
+                        ToolbarSpacer()
+                        ToolbarItem {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
                         }
                     }
 

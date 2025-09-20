@@ -17,8 +17,8 @@ struct AthleteRow: Decodable {
     let gender: String
     let weight_class: String
     let entry_total: Int
-    let session_number: Int
-    let session_platform: String
+    let session_number: Int?
+    let session_platform: String?
     let meet: String
     let adaptive: Bool
 }
@@ -29,6 +29,8 @@ class StartListModel: ObservableObject {
     @Published var error: Error?
     @Published var athletes: [AthleteRow] = []
     @Published var schedule: [ScheduleRow] = []
+    @Published var weightClass: [AthleteRow] = []
+    @Published var ages: [AthleteRow] = []
     
     func loadStartList(meet: String) async {
         isLoading = true
