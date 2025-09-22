@@ -7,6 +7,35 @@
 
 import SwiftUI
 
+private struct AgeBand: Identifiable, Hashable {
+    let id = UUID()
+    let label: String
+    let range: ClosedRange<Int>?
+
+    static let all = AgeBand(label: "All Ages", range: nil)
+}
+
+private let defaultAgeBands: [AgeBand] = [
+    .all,
+    AgeBand(label: "U13", range: 0...13),
+    AgeBand(label: "U15", range: 14...15),
+    AgeBand(label: "U17", range: 16...17),
+    AgeBand(label: "Junior", range: 18...20),
+    AgeBand(label: "Senior", range: 21...35),
+    AgeBand(label: "Masters 35", range: 36...40),
+    AgeBand(label: "Masters 40", range: 41...45),
+    AgeBand(label: "Masters 45", range: 46...50),
+    AgeBand(label: "Masters 50", range: 51...55),
+    AgeBand(label: "Masters 55", range: 56...60),
+    AgeBand(label: "Masters 60", range: 61...65),
+    AgeBand(label: "Masters 65", range: 66...70),
+    AgeBand(label: "Masters 70", range: 71...75),
+    AgeBand(label: "Masters 75", range: 76...80),
+    AgeBand(label: "Masters 80", range: 81...85),
+    AgeBand(label: "Masters 85", range: 86...90),
+    AgeBand(label: "Masters 90+", range: 91...150)
+]
+
 struct StartListView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
@@ -18,17 +47,17 @@ struct StartListView: View {
     @State var isClubDropdownShowing: Bool = false
     @State var isAdapDropdownShowing: Bool = false
     
-    @State var selectedAge: String = "Senior"
-    @State var selectedWeight: Int = 60
-    @State var selectedGender: String = "Men"
+    @State private var selectedAgeBand: AgeBand = .all
+    @State var selectedWeight: String = "All Weight Classes"
+    @State var selectedGender: String = "All Genders"
     @State var selectedClub: String = "All Clubs"
-    @State var selectedAdap: String = "All Athletes"
+    @State private var selectedAdap: String = "All Athletes"
     
-    @State var draftAge: String = "Senior"
-    @State var draftWeight: Int = 60
-    @State var draftGender: String = "Men"
+    @State private var draftAgeBand: AgeBand = .all
+    @State var draftWeight: String = "All Weight Classes"
+    @State var draftGender: String = "All Genders"
     @State var draftClub: String = "All Clubs"
-    @State var draftAdap: String = "All Athletes"
+    @State private var draftAdap: String = "All Athletes"
     
     @State private var searchText: String = ""
     @State private var saveButtonClicked: Bool = false
@@ -36,9 +65,10 @@ struct StartListView: View {
     
     var athleteList: [AthleteRow] { viewModel.athletes }
     var scheduleList: [ScheduleRow] { viewModel.schedule }
-    var weightClass: [AthleteRow] { viewModel.weightClass }
-    var ages: [AthleteRow] { viewModel.ages }
-    let ageGroups: [String] = ["Senior"]
+    var weightClass: [String] { viewModel.weightClass }
+    var ages: [Int] { viewModel.ages }
+    var club: [String] { viewModel.club }
+    var adaptive: [Bool] { viewModel.adaptiveBool }
     
     var filteredAthletes: [AthleteRow] {
         guard !searchText.isEmpty else { return athleteList }
@@ -68,6 +98,34 @@ struct StartListView: View {
         
         let tzAbbrev = TimeZone.current.abbreviation() ?? ""
         return "\(dateText) • \(timeText) \(tzAbbrev)"
+    }
+    
+    private func adaptiveFlag(from selection: String) -> Bool? {
+        switch selection {
+        case "Adaptive Athletes":
+            return true
+        case "Non-Adaptive Athletes":
+            return false
+        default:
+            return nil
+        }
+    }
+    
+    private func applyFilters() {
+        let adapParam: Bool? = adaptiveFlag(from: selectedAdap)
+        let clubParam: String? = (selectedClub == "All Clubs") ? nil : selectedClub
+        let weightParam: String? = (selectedWeight == "All Weight Classes") ? nil : selectedWeight
+        let genderParam: String? = (selectedGender == "All Genders") ? nil : selectedGender
+        Task {
+            await viewModel.loadFilteredStartList(
+                meet: selectedMeet,
+                ageRange: selectedAgeBand.range,
+                gender: genderParam,
+                weight_class: weightParam,
+                club: clubParam,
+                adaptive: adapParam
+            )
+        }
     }
     
     var body: some View {
@@ -148,6 +206,8 @@ struct StartListView: View {
                 }
             }
         }
+        .toolbar(filterClicked ? .hidden : .visible, for: .tabBar)
+        .toolbar(filterClicked ? .hidden : .visible, for: .navigationBar)
         .overlay{
             if filterClicked {
                 FilterModal(
@@ -157,19 +217,31 @@ struct StartListView: View {
                     isGenderDropdownShowing: $isGenderDropdownShowing,
                     isClubDropdownShowing: $isClubDropdownShowing,
                     isAdapDropdownShowing: $isAdapDropdownShowing,
-                    selectedAge: $selectedAge,
+                    selectedAgeBand: $selectedAgeBand,
                     selectedWeight: $selectedWeight,
                     selectedGender: $selectedGender,
                     selectedClub: $selectedClub,
                     selectedAdap: $selectedAdap,
-                    draftAge: $draftAge,
+                    draftAgeBand: $draftAgeBand,
                     draftWeight: $draftWeight,
                     draftGender: $draftGender,
                     draftClub: $draftClub,
                     draftAdap: $draftAdap,
-                    ageGroups: ageGroups,
-                    meets: ["Nationals"],
-                    onApply: {}
+                    ageBands: defaultAgeBands,
+                    club: club,
+                    weightClass: weightClass,
+                    adaptiveBool: adaptive,
+                    onApply: {
+                        selectedAgeBand = draftAgeBand
+                        selectedAdap = draftAdap
+                        selectedClub = draftClub
+                        selectedGender = draftGender
+                        selectedWeight = draftWeight
+                        Task {
+                            applyFilters()
+                        }
+                        filterClicked = false
+                    }
                 )
             }
         }
@@ -181,6 +253,23 @@ struct StartListView: View {
             Task {
                 await viewModel.loadStartList(meet: selectedMeet)
                 await viewModel.loadMeetSchedule(meet: selectedMeet)
+            }
+        }
+        .onChange(of: draftAgeBand) {
+            Task {
+                await viewModel.loadWeightClasses(meet: selectedMeet, ageRange: draftAgeBand.range, gender: draftGender == "All Genders" ? nil : draftGender)
+            }
+        }
+        .onChange(of: draftGender) {
+            Task {
+                await viewModel.loadWeightClasses(meet: selectedMeet, ageRange: draftAgeBand.range, gender: draftGender == "All Genders" ? nil : draftGender)
+            }
+        }
+        .onChange(of: isWeightDropdownShowing) {
+            if isWeightDropdownShowing {
+                Task {
+                    await viewModel.loadWeightClasses(meet: selectedMeet, ageRange: draftAgeBand == .all ? nil : draftAgeBand.range, gender: draftGender == "All Genders" ? nil : draftGender)
+                }
             }
         }
     }
@@ -296,7 +385,7 @@ private struct AthleteDisclosureRow: View {
     }
 }
 
-struct FilterModal: View {
+private struct FilterModal: View {
     @Environment(\.colorScheme) var colorScheme
 
     @Binding var isShowing: Bool
@@ -306,24 +395,24 @@ struct FilterModal: View {
     @Binding var isClubDropdownShowing: Bool
     @Binding var isAdapDropdownShowing: Bool
     
-    @Binding var selectedAge: String
-    @Binding var selectedWeight: Int
+    @Binding var selectedAgeBand: AgeBand
+    @Binding var selectedWeight: String
     @Binding var selectedGender: String
     @Binding var selectedClub: String
     @Binding var selectedAdap: String
     
-    @Binding var draftAge: String
-    @Binding var draftWeight: Int
+    @Binding var draftAgeBand: AgeBand
+    @Binding var draftWeight: String
     @Binding var draftGender: String
     @Binding var draftClub: String
     @Binding var draftAdap: String
     
-    let genders: [String] = ["Men", "Women"]
+    let genders: [String] = ["All Genders", "Male", "Female"]
     let adaptive: [String] = ["All Athletes", "Adaptive Athletes", "Non-Adaptive Athletes"]
-    let ageGroups: [String]
-    let club: [String] = ["P&G", "1kilo"]
-    let weightClass: [Int] = [60, 45, 110]
-    var meets: [String]
+    var ageBands: [AgeBand]
+    var club: [String]
+    var weightClass: [String]
+    var adaptiveBool: [Bool]
     var onApply: () -> Void
     
     var body: some View {
@@ -346,7 +435,7 @@ struct FilterModal: View {
                             Text("Age Groups")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text(draftAge.isEmpty ? selectedAge : draftAge)
+                            Text(draftAgeBand.label)
                         }
                         Spacer()
                         Image(systemName: isAgeDropdownShowing ? "chevron.down" : "chevron.right")
@@ -363,34 +452,30 @@ struct FilterModal: View {
                     }
                     
                     if isAgeDropdownShowing {
-                        if ageGroups.count > 6 {
+                        if ageBands.count > 6 {
                             ScrollView {
                                 VStack(alignment: .leading, spacing: 0) {
                                     Divider()
-                                    
-                                    ForEach(ageGroups, id: \.self) { age in
+                                    ForEach(ageBands) { band in
                                         HStack {
                                             Button(action: {
-                                                draftAge = age
+                                                draftAgeBand = band
                                                 isAgeDropdownShowing = false
                                             }) {
-                                                Text(age)
+                                                Text(band.label)
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 0)
                                                     .padding()
-                                                    .foregroundStyle(age == draftAge ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                                    .foregroundStyle(band == draftAgeBand ? Color.blue : (colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white))
                                             }
-                                            
-                                            
                                             Spacer()
-                                            if age == draftAge {
+                                            if band == draftAgeBand {
                                                 Image(systemName: "checkmark")
                                                     .foregroundStyle(.blue)
                                             }
                                             Spacer()
                                         }
-                                        .background(age == draftAge ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                                        
+                                        .background(band == draftAgeBand ? .gray.opacity(0.2) : (colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground)))
                                         Divider()
                                     }
                                 }
@@ -398,29 +483,26 @@ struct FilterModal: View {
                         } else {
                             VStack(alignment: .leading, spacing: 0) {
                                 Divider()
-                                
-                                ForEach(ageGroups, id: \.self) { age in
+                                ForEach(ageBands) { band in
                                     HStack {
                                         Button(action: {
-                                            draftAge = age
+                                            draftAgeBand = band
                                             isAgeDropdownShowing = false
                                         }) {
-                                            Text(age)
+                                            Text(band.label)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()
-                                                .foregroundStyle(age == draftAge ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                                .foregroundStyle(band == draftAgeBand ? Color.blue : (colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white))
                                         }
-                                        
-                                        
                                         Spacer()
-                                        if age == draftAge {
+                                        if band == draftAgeBand {
                                             Image(systemName: "checkmark")
                                                 .foregroundStyle(.blue)
                                         }
                                         Spacer()
                                     }
-                                    .background(age == draftAge ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                    .background(band == draftAgeBand ? .gray.opacity(0.2) : (colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground)))
                                     Divider()
                                 }
                             }
@@ -451,67 +533,33 @@ struct FilterModal: View {
                     }
                     
                     if isGenderDropdownShowing {
-                        if genders.count > 6 {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Divider()
-                                    
-                                    ForEach(genders, id: \.self) { gender in
-                                        HStack {
-                                            Button(action: {
-                                                draftGender = gender
-                                                isGenderDropdownShowing = false
-                                            }) {
-                                                Text(gender)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 0)
-                                                    .padding()
-                                                    .foregroundStyle(gender == draftGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                            }
-                                            
-                                            
-                                            Spacer()
-                                            if gender == draftGender {
-                                                Image(systemName: "checkmark")
-                                                    .foregroundStyle(.blue)
-                                            }
-                                            Spacer()
-                                        }
-                                        .background(gender == draftGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                                        
-                                        Divider()
+                        VStack(alignment: .leading, spacing: 0) {
+                            Divider()
+                            
+                            ForEach(genders, id: \.self) { gender in
+                                HStack {
+                                    Button(action: {
+                                        draftGender = gender
+                                        isGenderDropdownShowing = false
+                                    }) {
+                                        Text(gender)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 0)
+                                            .padding()
+                                            .foregroundStyle(gender == draftGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                     }
+                                    
+                                    
+                                    Spacer()
+                                    if gender == draftGender {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                    Spacer()
                                 }
-                            }
-                        } else {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Divider()
+                                .background(gender == draftGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                 
-                                ForEach(genders, id: \.self) { gender in
-                                    HStack {
-                                        Button(action: {
-                                            draftGender = gender
-                                            isGenderDropdownShowing = false
-                                        }) {
-                                            Text(gender)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding(.leading, 0)
-                                                .padding()
-                                                .foregroundStyle(gender == draftGender ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                        }
-                                        
-                                        
-                                        Spacer()
-                                        if gender == draftGender {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(.blue)
-                                        }
-                                        Spacer()
-                                    }
-                                    .background(gender == draftGender ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                                    
-                                    Divider()
-                                }
+                                Divider()
                             }
                         }
                     }
@@ -523,7 +571,7 @@ struct FilterModal: View {
                             Text("Weight Class")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text("\(String(draftWeight == 0 ? selectedWeight : draftWeight))kg")
+                            Text(((draftWeight.isEmpty ? selectedWeight : draftWeight) == "All Weight Classes") ? (draftWeight.isEmpty ? selectedWeight : draftWeight) : "\(draftWeight.isEmpty ? selectedWeight : draftWeight)kg")
                         }
                         Spacer()
                         Image(systemName: isWeightDropdownShowing ? "chevron.down" : "chevron.right")
@@ -545,13 +593,13 @@ struct FilterModal: View {
                                 VStack(alignment: .leading, spacing: 0) {
                                     Divider()
                                     
-                                    ForEach(weightClass, id: \.self) { weight in
+                                    ForEach(["All Weight Classes"] + weightClass, id: \.self) { weight in
                                         HStack {
                                             Button(action: {
                                                 draftWeight = weight
                                                 isWeightDropdownShowing = false
                                             }) {
-                                                Text("\(String(weight))kg")
+                                                Text(weight == "All Weight Classes" ? weight : "\(weight)kg")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 0)
                                                     .padding()
@@ -576,13 +624,13 @@ struct FilterModal: View {
                             VStack(alignment: .leading, spacing: 0) {
                                 Divider()
                                 
-                                ForEach(weightClass, id: \.self) { weight in
+                                ForEach(["All Weight Classes"] + weightClass, id: \.self) { weight in
                                     HStack {
                                         Button(action: {
                                             draftWeight = weight
                                             isWeightDropdownShowing = false
                                         }) {
-                                            Text("\(String(weight))kg")
+                                            Text(weight == "All Weight Classes" ? weight : "\(weight)kg")
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                                 .padding(.leading, 0)
                                                 .padding()
@@ -634,7 +682,7 @@ struct FilterModal: View {
                                 VStack(alignment: .leading, spacing: 0) {
                                     Divider()
                                     
-                                    ForEach(club, id: \.self) { team in
+                                    ForEach(["All Clubs"] + club, id: \.self) { team in
                                         HStack {
                                             Button(action: {
                                                 draftClub = team
@@ -665,7 +713,7 @@ struct FilterModal: View {
                             VStack(alignment: .leading, spacing: 0) {
                                 Divider()
                                 
-                                ForEach(club, id: \.self) { team in
+                                ForEach(["All Clubs"] + club, id: \.self) { team in
                                     HStack {
                                         Button(action: {
                                             draftClub = team
@@ -718,67 +766,33 @@ struct FilterModal: View {
                     }
                     
                     if isAdapDropdownShowing {
-                        if adaptive.count > 6 {
-                            ScrollView {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Divider()
-                                    
-                                    ForEach(adaptive, id: \.self) { adap in
-                                        HStack {
-                                            Button(action: {
-                                                draftAdap = adap
-                                                isAdapDropdownShowing = false
-                                            }) {
-                                                Text(adap)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 0)
-                                                    .padding()
-                                                    .foregroundStyle(adap == draftAdap ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                            }
-                                            
-                                            
-                                            Spacer()
-                                            if adap == draftAdap {
-                                                Image(systemName: "checkmark")
-                                                    .foregroundStyle(.blue)
-                                            }
-                                            Spacer()
-                                        }
-                                        .background(adap == draftAdap ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                                        
-                                        Divider()
+                        VStack(alignment: .leading, spacing: 0) {
+                            Divider()
+                            
+                            ForEach(adaptive, id: \.self) { adap in
+                                HStack {
+                                    Button(action: {
+                                        draftAdap = adap
+                                        isAdapDropdownShowing = false
+                                    }) {
+                                        Text(adap)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 0)
+                                            .padding()
+                                            .foregroundStyle(adap == draftAdap ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                     }
+                                    
+                                    
+                                    Spacer()
+                                    if adap == draftAdap {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                    Spacer()
                                 }
-                            }
-                        } else {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Divider()
+                                .background(adap == draftAdap ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                 
-                                ForEach(adaptive, id: \.self) { adap in
-                                    HStack {
-                                        Button(action: {
-                                            draftAdap = adap
-                                            isAdapDropdownShowing = false
-                                        }) {
-                                            Text(adap)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding(.leading, 0)
-                                                .padding()
-                                                .foregroundStyle(adap == draftAdap ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                        }
-                                        
-                                        
-                                        Spacer()
-                                        if adap == draftAdap {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(.blue)
-                                        }
-                                        Spacer()
-                                    }
-                                    .background(adap == draftAdap ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                                    
-                                    Divider()
-                                }
+                                Divider()
                             }
                         }
                     }
@@ -814,3 +828,4 @@ struct FilterModal: View {
 #Preview {
     StartListView()
 }
+

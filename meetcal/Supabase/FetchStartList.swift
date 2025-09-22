@@ -29,8 +29,41 @@ class StartListModel: ObservableObject {
     @Published var error: Error?
     @Published var athletes: [AthleteRow] = []
     @Published var schedule: [ScheduleRow] = []
-    @Published var weightClass: [AthleteRow] = []
-    @Published var ages: [AthleteRow] = []
+    @Published var weightClass: [String] = []
+    @Published var ages: [Int] = []
+    @Published var club: [String] = []
+    @Published var adaptiveBool: [Bool] = []
+    
+    private func updateFilterArrays(from rows: [AthleteRow]) {
+        let agesSet = Set(rows.map { $0.age })
+        self.ages = agesSet.sorted()
+
+        let weightClassesSet = Set(rows.map { $0.weight_class })
+        self.weightClass = weightClassesSet.sorted { (a: String, b: String) -> Bool in
+            let aPlus = a.contains("+")
+            let bPlus = b.contains("+")
+            if aPlus != bPlus {
+                return aPlus == false
+            }
+            let aDigits = a.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+            let bDigits = b.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+            let aNum = Int(String(String.UnicodeScalarView(aDigits))) ?? 0
+            let bNum = Int(String(String.UnicodeScalarView(bDigits))) ?? 0
+            if aNum != bNum {
+                return aNum < bNum
+            }
+            return a < b
+        }
+        
+        let clubsSet = Set(rows.map { $0.club })
+        self.club = clubsSet.sorted()
+        
+        let adaptiveSet = Set(rows.map { $0.adaptive })
+        self.adaptiveBool = adaptiveSet.sorted { (lhs, rhs) in
+            if lhs == rhs { return false }
+            return lhs == false && rhs == true
+        }
+    }
     
     func loadStartList(meet: String) async {
         isLoading = true
@@ -46,6 +79,56 @@ class StartListModel: ObservableObject {
             
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
             
+            self.athletes = row
+            self.updateFilterArrays(from: row)
+        } catch {
+            print("Error: \(error)")
+            self.error = error
+        }
+        isLoading = false
+    }
+    
+    func loadFilteredStartList(
+        meet: String,
+        ageRange: ClosedRange<Int>? = nil,
+        gender: String? = nil,
+        weight_class: String? = nil,
+        club: String? = nil,
+        adaptive: Bool? = nil
+    ) async {
+        isLoading = true
+        error = nil
+
+        do {
+            var query = supabase
+                .from("athletes")
+                .select()
+                .eq("meet", value: meet)
+
+            if let range = ageRange {
+                query = query
+                    .gte("age", value: range.lowerBound)
+                    .lte("age", value: range.upperBound)
+            }
+            if let gender = gender {
+                query = query.eq("gender", value: gender)
+            }
+            if let weight_class = weight_class {
+                query = query.eq("weight_class", value: weight_class)
+            }
+            if let club = club {
+                query = query.eq("club", value: club)
+            }
+            if let adaptive = adaptive {
+                query = query.eq("adaptive", value: adaptive)
+            }
+
+            let response = try await query
+                .order("name")
+                .execute()
+
+            let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
+
             self.athletes = row
         } catch {
             print("Error: \(error)")
@@ -82,4 +165,55 @@ class StartListModel: ObservableObject {
         }
         isLoading = false
     }
+
+    struct WeightOnlyRow: Decodable {
+        let weight_class: String
+    }
+
+    func loadWeightClasses(
+        meet: String,
+        ageRange: ClosedRange<Int>? = nil,
+        gender: String? = nil
+    ) async {
+        error = nil
+        do {
+            var query = supabase
+                .from("athletes")
+                .select("weight_class")
+                .eq("meet", value: meet)
+
+            if let range = ageRange {
+                query = query
+                    .gte("age", value: range.lowerBound)
+                    .lte("age", value: range.upperBound)
+            }
+            if let gender = gender, !gender.isEmpty {
+                query = query.eq("gender", value: gender)
+            }
+
+            let response = try await query.execute()
+            let rows = try JSONDecoder().decode([WeightOnlyRow].self, from: response.data)
+            let weightsSet = Set(rows.map { $0.weight_class })
+
+            self.weightClass = weightsSet.sorted { (a: String, b: String) -> Bool in
+                let aPlus = a.contains("+")
+                let bPlus = b.contains("+")
+                if aPlus != bPlus {
+                    return aPlus == false
+                }
+                let aDigits = a.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+                let bDigits = b.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+                let aNum = Int(String(String.UnicodeScalarView(aDigits))) ?? 0
+                let bNum = Int(String(String.UnicodeScalarView(bDigits))) ?? 0
+                if aNum != bNum {
+                    return aNum < bNum
+                }
+                return a < b
+            }
+        } catch {
+            print("Error: \(error)")
+            self.error = error
+        }
+    }
 }
+
