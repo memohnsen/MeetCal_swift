@@ -8,7 +8,14 @@
 import SwiftUI
 
 struct ScheduleDetailsView: View {
-    @State private var date: Date = Date.now
+    @StateObject private var viewModel = ScheduleDetailsModel()
+    
+    let meet: String
+    let date: Date
+    let sessionNum: Int
+    let platformColor: String
+    let weightClass: String
+    let startTime: String
     
     var body: some View {
         NavigationStack {
@@ -17,15 +24,18 @@ struct ScheduleDetailsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    TopView(sessionNum: "1", platformColor: "Red", weightClass: "88kg A", weighTime: "7:00 AM EST", startTime: "9:00 AM EST")
+                    TopView(sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
                         .padding(.bottom, 8)
                     
-                    BottomView()
+                    BottomView(viewModel: viewModel)
                 }
                 .padding(.horizontal)
                 .navigationTitle(date.formatted(date: .long, time: .omitted))
                 .navigationBarTitleDisplayMode(.inline)
             }
+        }
+        .task {
+            await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
         }
     }
 }
@@ -33,10 +43,9 @@ struct ScheduleDetailsView: View {
 struct TopView: View {
     @Environment(\.colorScheme) var colorScheme
 
-    let sessionNum: String
+    let sessionNum: Int
     let platformColor: String
     let weightClass: String
-    let weighTime: String
     let startTime: String
     
     var body: some View {
@@ -83,34 +92,16 @@ struct TopView: View {
             
         }
         .cardStyling()
-    }
-}
-
-struct Athlete: Identifiable {
-    let id: Int
-    let name: String
-    let details: [Details]
-
-    struct Details: Identifiable {
-        let id = UUID()
-        let age: Int
-        let weightClass: String
-        let club: String
-        let entryTotal: Int
+        .cornerRadius(32)
     }
 }
 
 struct BottomView: View {
     @Environment(\.colorScheme) var colorScheme
+    @ObservedObject var viewModel: ScheduleDetailsModel
 
-    let athletes: [Athlete] = [
-        Athlete(id: 1, name: "Alexander Nordstrom", details: [
-            .init(age: 25, weightClass: "88kg", club: "POWER & GRACE PERFORMANCE.", entryTotal: 130)
-        ]),
-        Athlete(id: 2, name: "Ashlie Pankonin", details: [
-            .init(age: 30, weightClass: "77kg", club: "POWER & GRACE PERFORMANCE.", entryTotal: 200)
-        ]),
-    ]
+    var athletes: [AthleteRow] { viewModel.athletes }
+    var results: [AthleteResults] { viewModel.athleteResults }
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -121,18 +112,18 @@ struct BottomView: View {
             
             Divider()
             
-            ForEach(athletes) {athlete in
+            ForEach(athletes, id: \.member_id) { athlete in
                 Text(athlete.name)
                     .bold()
                     .padding(.top, 8)
                 
-                ForEach(athlete.details) {details in
-                    Text("Age: \(details.age) • Weight Class: \(details.weightClass)")
+                VStack(alignment: .leading) {
+                    Text("Age: \(athlete.age) • Weight Class: \(athlete.weight_class)")
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .padding(.top, 0.5)
                         .font(.system(size: 16))
                     
-                    Text(details.club)
+                    Text(athlete.club)
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .padding(.top, 0.5)
                         .font(.system(size: 16))
@@ -142,7 +133,7 @@ struct BottomView: View {
                             Text("Entry Total")
                                 .secondaryText()
                                 .padding(.bottom, 0.5)
-                            Text("230kg")
+                            Text("\(athlete.entry_total)kg")
                                 .bold()
                         }
                         
@@ -198,10 +189,10 @@ struct BottomView: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
         .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .cornerRadius(32)
     }
 }
 
 #Preview {
-    ScheduleDetailsView()
+    ScheduleDetailsView(meet: "2025 New England WSO Championships", date: .now, sessionNum: 1, platformColor: "Blue", weightClass: "F 58B", startTime: "8:00")
 }

@@ -23,6 +23,7 @@ struct Saved: Identifiable {
 }
 
 struct SavedView: View {
+    @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
 
@@ -44,7 +45,7 @@ struct SavedView: View {
                     VStack {
                         ForEach(sessions) { session in
                             ForEach(session.savedSession) { group in
-                                NavigationLink(destination: ScheduleDetailsView()) {
+                                NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: .now, sessionNum: session.id, platformColor: group.platform, weightClass: group.weightClass, startTime: group.startTime)) {
                                     VStack(alignment: .leading) {
                                         Text("Session \(session.id) • \(session.date)")
                                             .padding(.bottom, 6)

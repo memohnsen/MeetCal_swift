@@ -20,6 +20,7 @@ struct ScheduleRow: Decodable {
     let weight_class: String
     let start_time: String
     let platform: String
+    let meet: String?
 }
 
 @MainActor

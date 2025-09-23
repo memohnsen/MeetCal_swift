@@ -276,6 +276,8 @@ struct StartListView: View {
 }
 
 private struct AthleteDisclosureRow: View {
+    @AppStorage("selectedMeet") private var selectedMeet = ""
+    
     let athlete: AthleteRow
     let schedule: ScheduleRow?
     let dateTimeText: String
@@ -289,7 +291,7 @@ private struct AthleteDisclosureRow: View {
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                     
                     Spacer()
-                    NavigationLink(destination: ScheduleDetailsView()) {
+                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
                         Spacer()
                         Spacer()
                         Spacer()
