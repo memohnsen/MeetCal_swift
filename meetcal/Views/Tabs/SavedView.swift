@@ -7,33 +7,12 @@
 
 import SwiftUI
 
-struct Saved: Identifiable {
-    let id: Int
-    let date: String
-    let savedSession: [SavedSession]
-
-    struct SavedSession: Identifiable {
-        let id = UUID()
-        let platform: String
-        let weightClass: String
-        let weighInTime: String
-        let startTime: String
-        let athleteName: String?
-    }
-}
-
 struct SavedView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
 
     var saved: [SessionsRow] { viewModel.saved }
-    
-    let sessions: [Saved] = [
-        Saved(id: 2, date: "September 9, 2025", savedSession: [
-            .init(platform: "Red", weightClass: "88kg", weighInTime: "10:00 AM EST", startTime: "12:00 PM EST", athleteName: "Alexander Nordstrom")
-        ]),
-    ]
     
     var body: some View {
         NavigationStack {
@@ -43,48 +22,54 @@ struct SavedView: View {
                 
                 ScrollView {
                     VStack {
-                        ForEach(sessions) { session in
-                            ForEach(session.savedSession) { group in
-                                NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: .now, sessionNum: session.id, platformColor: group.platform, weightClass: group.weightClass, startTime: group.startTime)) {
-                                    VStack(alignment: .leading) {
-                                        Text("Session \(session.id) • \(session.date)")
-                                            .padding(.bottom, 6)
-                                            .foregroundStyle(colorScheme == .light ? .black : .white)
-                                            .font(.headline)
-                                            .bold()
-                                        
-                                        HStack {
-                                            Text("Weigh-In: \(group.weighInTime)")
-                                            Text("Start: \(group.startTime)")
-                                        }
+                        ForEach(saved) { session in
+                            NavigationLink(destination:
+                                            ScheduleDetailsView(
+                                                meet: selectedMeet,
+                                                date: .now,
+                                                sessionNum: session.session_number,
+                                                platformColor: session.platform,
+                                                weightClass: session.weight_class,
+                                                startTime: session.start_time)) {
+                                VStack(alignment: .leading) {
+                                    Text("Session \(String(session.session_number)) • Fill date here")
                                         .padding(.bottom, 6)
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                                        .font(.headline)
+                                        .bold()
+                                    
+                                    HStack {
+                                        Text("Start: \(session.start_time)")
+                                    }
+                                    .padding(.bottom, 6)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
 
-                                        HStack {
-                                            Platform(text: group.platform)
+                                    HStack {
+                                        Platform(text: session.platform)
+                                    
+                                        Text(session.weight_class)
+                                            .padding(.leading, 8)
+                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                    }
+                                    .padding(.bottom, 6)
+                                    
+                                    if session.athlete_names.count != 0 {
+                                        Divider()
                                         
-                                            Text(group.weightClass)
-                                                .padding(.leading, 8)
-                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                        }
-                                        .padding(.bottom, 6)
+                                        Text("Athlete:")
+                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                            .padding(.vertical, 6)
                                         
-                                        if let name = group.athleteName {
-                                            Divider()
-                                            
-                                            Text("Athlete:")
-                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                                .padding(.vertical, 6)
-                                            
+                                        ForEach(session.athlete_names, id: \.self) { name in
                                             Text(name)
                                                 .bold()
                                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                                                 .padding(.bottom, 6)
                                         }
                                     }
-                                    .padding()
                                 }
+                                .padding()
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -113,6 +98,9 @@ struct SavedView: View {
                 }
                 .navigationTitle("Saved")
                 .navigationBarTitleDisplayMode(.inline)
+            }
+            .task {
+                await viewModel.loadSaved(meet: selectedMeet)
             }
         }
     }

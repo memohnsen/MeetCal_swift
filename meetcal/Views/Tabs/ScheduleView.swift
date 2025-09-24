@@ -176,6 +176,7 @@ struct ScheduleView: View {
                     .cornerRadius(16)
                     .shadow(radius: 20)
                     .padding(.horizontal, 30)
+                    .toolbar(.hidden, for: .tabBar)
                 }
             }
         )
@@ -228,7 +229,7 @@ private struct DaySessionsView: View {
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                     ) {
                         ForEach(dataSorted, id: \.id) { sched in
-                            NavigationLink(destination: ScheduleDetailsView(meet: sched.meet ?? "TBD", date: .now, sessionNum: sched.session_id, platformColor: sched.platform, weightClass: sched.weight_class, startTime: sched.start_time)) {
+                            NavigationLink(destination: ScheduleDetailsView(meet: sched.meet ?? "TBD", date: day, sessionNum: sched.session_id, platformColor: sched.platform, weightClass: sched.weight_class, startTime: sched.start_time)) {
                                 HStack {
                                     Platform(text: sched.platform)
                                     
