@@ -7,18 +7,28 @@
 
 import SwiftUI
 
-struct EventDetails {
-    let eventName: String
-    let eventVenueName: String
-    let venueStreet: String
-    let venueCityStateZip: String
-    let timeZone: String
-}
-
 struct EventInfoView: View {
-    let event: [EventDetails] = [
-        EventDetails(eventName: "IMWA Master's World Championships", eventVenueName: "Westgate Resort", venueStreet: "3000 Paradise Road", venueCityStateZip: "Las Vegas, NV 89109", timeZone: "Pacific")
-    ]
+    @StateObject private var viewModel = MeetsScheduleModel()
+    @AppStorage("selectedMeet") private var selectedMeet = ""
+    
+    var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
+    
+    func timeZoneShortHand(timeZone: String?) -> String {
+        switch timeZone {
+        case "America/New_York": "Eastern"
+        case "America/Los_Angeles": "Pacific"
+        case "America/Denver": "Mountain"
+        default: "Central"
+        }
+    }
+    
+    private func openInMaps(address: String?) {
+        let encodedAddress = address?.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "http://maps.apple.com/?q=\(encodedAddress)"
+        if let url = URL(string: urlString) {
+              UIApplication.shared.open(url)
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -28,7 +38,7 @@ struct EventInfoView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading) {
-                        Text(event[0].eventName)
+                        Text(meetDetails.first?.name ?? "Unknown Event")
                             .bold()
                             .font(.headline)
                         
@@ -37,16 +47,18 @@ struct EventInfoView: View {
                         
                         Text("Location")
                             .bold()
-                        NavigationLink(destination: ScheduleView(),) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(event[0].eventVenueName)
-                                    Text(event[0].venueStreet)
-                                    Text(event[0].venueCityStateZip)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(meetDetails.first?.venue_name ?? "Unknown Venue")
+                                Text(meetDetails.first?.venue_street ?? "Unknown Street")
+                                Text("\(meetDetails.first?.venue_city ?? "Unknown City, "), \(meetDetails.first?.venue_state ?? "State"), \(meetDetails.first?.venue_zip ?? " and Zip Code")")
                             }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .foregroundStyle(.blue)
+                        .onTapGesture {
+                            openInMaps(address: "\(meetDetails.first?.venue_street ?? "Unknown Street") \(meetDetails.first?.venue_city ?? "Unknown City, ") \(meetDetails.first?.venue_state ?? "State")")
                         }
                         
                         Divider()
@@ -54,7 +66,7 @@ struct EventInfoView: View {
                         
                         Text("Venue Time Zone")
                             .bold()
-                        Text(event[0].timeZone)
+                        Text(timeZoneShortHand(timeZone: meetDetails.first?.time_zone))
                     }
                     .cardStyling()
                     .padding(.bottom, 12)
@@ -72,6 +84,9 @@ struct EventInfoView: View {
             .navigationTitle("Event Info")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
+        }
+        .task {
+            await viewModel.loadMeetDetails(meetName: selectedMeet)
         }
     }
 }

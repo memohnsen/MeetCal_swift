@@ -219,6 +219,23 @@ struct MeetInfo: View {
     @ObservedObject var viewModel: ScheduleDetailsModel
     
     var results: [AthleteResults] { viewModel.athleteResults }
+    
+    func formatDate(_ dateString: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "MM/dd/yy"
+        outputFormatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        guard let date = inputFormatter.date(from: dateString) else {
+            return dateString // Return original string if parsing fails
+        }
+        
+        return outputFormatter.string(from: date)
+    }
+    
 
     var body: some View {
         VStack {
@@ -228,7 +245,7 @@ struct MeetInfo: View {
                         .bold()
                         .font(.headline)
                     
-                    Text(result.date, style: .date)
+                    Text(formatDate(result.date))
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                         .font(.system(size: 16))
                         .padding(.vertical, 0.5)

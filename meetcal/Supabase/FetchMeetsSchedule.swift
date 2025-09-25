@@ -23,12 +23,25 @@ struct ScheduleRow: Decodable {
     let meet: String?
 }
 
+struct MeetDetailsRow: Decodable {
+    let name: String
+    let venue_name: String
+    let venue_street: String
+    let venue_city: String
+    let venue_state: String
+    let venue_zip: String
+    let time_zone: String
+    let start_date: String
+    let end_date: String
+}
+
 @MainActor
 class MeetsScheduleModel: ObservableObject {
     @Published var meets: [String] = []
     @Published var isLoading: Bool = false
     @Published var error: Error?
     @Published var schedule: [ScheduleRow] = []
+    @Published var meetDetails: [MeetDetailsRow] = []
     
     func loadMeets() async {
         isLoading = true
@@ -74,6 +87,26 @@ class MeetsScheduleModel: ObservableObject {
             let row = try decoder.decode([ScheduleRow].self, from: response.data)
             self.schedule = row
             
+        } catch {
+            print("Error: \(error)")
+            self.error = error
+        }
+        isLoading = false
+    }
+    
+    func loadMeetDetails(meetName: String) async {
+        error = nil
+        isLoading = true
+        do {
+            let response = try await supabase
+                .from("meets")
+                .select()
+                .eq("name", value: meetName)
+                .execute()
+            
+            let row = try JSONDecoder().decode([MeetDetailsRow].self, from: response.data)
+            
+            self.meetDetails = row
         } catch {
             print("Error: \(error)")
             self.error = error

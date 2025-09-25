@@ -17,6 +17,7 @@ struct ScheduleView: View {
     
     var schedule: [ScheduleRow] { viewModel.schedule }
     var meets: [String] { viewModel.meets }
+    var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     
     private var uniqueDays: [Date] {
         let calendar = Calendar.current
@@ -55,7 +56,6 @@ struct ScheduleView: View {
                     Spacer()
                 }
 
-                //need to fix the padding for this. gray bar around tab bar. ignoring safe area then wont scroll up the whole way
                 VStack {
                     if viewModel.isLoading {
                         VStack {
@@ -80,7 +80,7 @@ struct ScheduleView: View {
                             ForEach(uniqueDays, id: \.self) { day in
                                 let calendar = Calendar.current
                                 let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
-                                DaySessionsView(day: day, schedule: rowsForDay)
+                                DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails)
                                     .background(Color.clear)
                                     .safeAreaInset(edge: .bottom) {
                                         Color.clear
@@ -96,17 +96,10 @@ struct ScheduleView: View {
                 }
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .onAppear{
-                let pageControl = UIPageControl.appearance()
-                pageControl.currentPageIndicatorTintColor = UIColor.systemBlue
-                pageControl.pageIndicatorTintColor = UIColor.systemBlue.withAlphaComponent(0.2)
-                pageControl.backgroundStyle = .minimal
-                pageControl.backgroundColor = .clear
-            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: "person.crop.circle.fill")
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -121,9 +114,8 @@ struct ScheduleView: View {
             if selectedMeet.isEmpty, let first = viewModel.meets.first {
                 selectedMeet = first
             }
-        }
-        .task {
             await viewModel.loadMeetSchedule(meet: selectedMeet)
+            await viewModel.loadMeetDetails(meetName: selectedMeet)
         }
         .onChange(of: selectedMeet) {
             Task {
@@ -137,13 +129,13 @@ struct ScheduleView: View {
                         .ignoresSafeArea()
                         .onTapGesture { showingMeetsOverlay = false }
                     
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            Text("Select Your Meet")
-                                .font(.headline)
-                                .padding()
-                            Divider()
-                            
+                    VStack(spacing: 0) {
+                        Text("Select Your Meet")
+                            .font(.headline)
+                            .padding()
+                        Divider()
+                        
+                        ScrollView {
                             VStack(alignment: .leading, spacing: 0) {
                                 ForEach(meets, id: \.self) { meet in
                                     HStack {
@@ -185,9 +177,11 @@ struct ScheduleView: View {
 
 private struct DaySessionsView: View {
     @Environment(\.colorScheme) var colorScheme
+    @AppStorage("selectedMeet") private var selectedMeet: String = ""
 
     let day: Date
     let schedule: [ScheduleRow]
+    let meetDetails: [MeetDetailsRow]
     
     func convert24hourTo12hour(time24hour: String) -> String? {
         let inputFormatter = DateFormatter()
@@ -205,6 +199,17 @@ private struct DaySessionsView: View {
         let time12hour = outputFormatter.string(from: date)
         
         return time12hour
+    }
+    
+    func timeZoneShortHand() -> String {
+        let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "Unknown"
+
+        switch timeZone {
+        case "America/New_York": return "Eastern"
+        case "America/Los_Angeles": return "Pacific"
+        case "America/Denver": return "Mountain"
+        default: return "Central"
+        }
     }
     
     var body: some View {
@@ -236,7 +241,7 @@ private struct DaySessionsView: View {
                                     VStack(alignment: .leading) {
                                         Text(sched.weight_class)
                                             .padding(.bottom, 2)
-                                        Text("Start: \(convert24hourTo12hour(time24hour: sched.start_time) ?? "No Time Data")")
+                                        Text("Start: \(convert24hourTo12hour(time24hour: sched.start_time) ?? "No Time Data") \(timeZoneShortHand())")
                                     }
                                     .font(.system(size: 16))
                                     .padding(.leading, 10)

@@ -40,6 +40,7 @@ struct StartListView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = StartListModel()
+    @StateObject private var viewModel2 = MeetsScheduleModel()
     
     @State var isAgeDropdownShowing: Bool = false
     @State var isWeightDropdownShowing: Bool = false
@@ -60,6 +61,7 @@ struct StartListView: View {
     @State private var draftAdap: String = "All Athletes"
     
     @State private var searchText: String = ""
+    @State private var clubSearchText: String = ""
     @State private var saveButtonClicked: Bool = false
     @State private var filterClicked: Bool = false
     
@@ -69,10 +71,16 @@ struct StartListView: View {
     var ages: [Int] { viewModel.ages }
     var club: [String] { viewModel.club }
     var adaptive: [Bool] { viewModel.adaptiveBool }
+    var meetDetails: [MeetDetailsRow] { viewModel2.meetDetails }
     
     var filteredAthletes: [AthleteRow] {
         guard !searchText.isEmpty else { return athleteList }
         return athleteList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    var filteredClubs: [String] {
+        guard !clubSearchText.isEmpty else { return club }
+        return club.filter { $0.localizedCaseInsensitiveContains(clubSearchText) }
     }
     
     private func matchSchedule(for athlete: AthleteRow) -> ScheduleRow? {
@@ -89,14 +97,22 @@ struct StartListView: View {
         
         let outputFormatter = DateFormatter()
         outputFormatter.dateFormat = "h:mm a"
-        outputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        outputFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         var timeText = "No Time"
         if let date = inputFormatter.date(from: row.start_time) {
             timeText = outputFormatter.string(from: date)
         }
         
-        let tzAbbrev = TimeZone.current.abbreviation() ?? ""
+        let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "Unknown"
+
+        let tzAbbrev = switch timeZone {
+            case "America/New_York": "ET"
+            case "America/Los_Angeles": "PT"
+            case "America/Denver": "MT"
+            default: "CT"
+        }
+        
         return "\(dateText) • \(timeText) \(tzAbbrev)"
     }
     
@@ -227,6 +243,7 @@ struct StartListView: View {
                     draftGender: $draftGender,
                     draftClub: $draftClub,
                     draftAdap: $draftAdap,
+                    clubSearchText: $clubSearchText,
                     ageBands: defaultAgeBands,
                     club: club,
                     weightClass: weightClass,
@@ -248,6 +265,7 @@ struct StartListView: View {
         .task{
             await viewModel.loadStartList(meet: selectedMeet)
             await viewModel.loadMeetSchedule(meet: selectedMeet)
+            await viewModel2.loadMeetDetails(meetName: selectedMeet)
         }
         .onChange(of: selectedMeet) {
             Task {
@@ -409,6 +427,8 @@ private struct FilterModal: View {
     @Binding var draftClub: String
     @Binding var draftAdap: String
     
+    @Binding var clubSearchText: String
+    
     let genders: [String] = ["All Genders", "Male", "Female"]
     let adaptive: [String] = ["All Athletes", "Adaptive Athletes", "Non-Adaptive Athletes"]
     var ageBands: [AgeBand]
@@ -416,6 +436,11 @@ private struct FilterModal: View {
     var weightClass: [String]
     var adaptiveBool: [Bool]
     var onApply: () -> Void
+    
+    var filteredClubs: [String] {
+        guard !clubSearchText.isEmpty else { return club }
+        return club.filter { $0.localizedCaseInsensitiveContains(clubSearchText) }
+    }
     
     var body: some View {
         Group {
@@ -429,6 +454,7 @@ private struct FilterModal: View {
                         isClubDropdownShowing = false
                         isGenderDropdownShowing = false
                         isAdapDropdownShowing = false
+                        clubSearchText = ""
                     }
                 
                 VStack(spacing: 0) {
@@ -679,16 +705,126 @@ private struct FilterModal: View {
                     }
                     
                     if isClubDropdownShowing {
-                        if club.count > 6 {
-                            ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Divider()
+                            
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(.gray)
+                                TextField("Search clubs...", text: $clubSearchText)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                if !clubSearchText.isEmpty {
+                                    Button(action: {
+                                        clubSearchText = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.gray)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(colorScheme == .light ? Color(.systemGray6) : Color(.systemGray5))
+                            
+                            Divider()
+                            
+                            if filteredClubs.count > 6 {
+                                ScrollView {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        HStack {
+                                            Button(action: {
+                                                draftClub = "All Clubs"
+                                                isClubDropdownShowing = false
+                                                clubSearchText = ""
+                                            }) {
+                                                Text("All Clubs")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 0)
+                                                    .padding()
+                                                    .foregroundStyle("All Clubs" == draftClub ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                            }
+                                            
+                                            Spacer()
+                                            if "All Clubs" == draftClub {
+                                                Image(systemName: "checkmark")
+                                                    .foregroundStyle(.blue)
+                                            }
+                                            Spacer()
+                                        }
+                                        .background("All Clubs" == draftClub ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                        
+                                        Divider()
+                                        
+                                        ForEach(filteredClubs, id: \.self) { team in
+                                            HStack {
+                                                Button(action: {
+                                                    draftClub = team
+                                                    isClubDropdownShowing = false
+                                                    clubSearchText = ""
+                                                }) {
+                                                    Text(team)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.leading, 0)
+                                                        .padding()
+                                                        .foregroundStyle(team == draftClub ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                                }
+                                                
+                                                Spacer()
+                                                if team == draftClub {
+                                                    Image(systemName: "checkmark")
+                                                        .foregroundStyle(.blue)
+                                                }
+                                                Spacer()
+                                            }
+                                            .background(team == draftClub ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                            
+                                            Divider()
+                                        }
+                                        
+                                        if filteredClubs.isEmpty && !clubSearchText.isEmpty {
+                                            HStack {
+                                                Text("No clubs found")
+                                                    .foregroundStyle(.gray)
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding()
+                                            }
+                                            .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                            
+                                            Divider()
+                                        }
+                                    }
+                                }
+                            } else {
                                 VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        Button(action: {
+                                            draftClub = "All Clubs"
+                                            isClubDropdownShowing = false
+                                            clubSearchText = ""
+                                        }) {
+                                            Text("All Clubs")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 0)
+                                                .padding()
+                                                .foregroundStyle("All Clubs" == draftClub ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                        }
+                                        
+                                        Spacer()
+                                        if "All Clubs" == draftClub {
+                                            Image(systemName: "checkmark")
+                                                .foregroundStyle(.blue)
+                                        }
+                                        Spacer()
+                                    }
+                                    .background("All Clubs" == draftClub ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                    
                                     Divider()
                                     
-                                    ForEach(["All Clubs"] + club, id: \.self) { team in
+                                    ForEach(filteredClubs, id: \.self) { team in
                                         HStack {
                                             Button(action: {
                                                 draftClub = team
                                                 isClubDropdownShowing = false
+                                                clubSearchText = ""
                                             }) {
                                                 Text(team)
                                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -696,7 +832,6 @@ private struct FilterModal: View {
                                                     .padding()
                                                     .foregroundStyle(team == draftClub ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                             }
-                                            
                                             
                                             Spacer()
                                             if team == draftClub {
@@ -709,41 +844,23 @@ private struct FilterModal: View {
                                         
                                         Divider()
                                     }
-                                }
-                            }
-                        } else {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Divider()
-                                
-                                ForEach(["All Clubs"] + club, id: \.self) { team in
-                                    HStack {
-                                        Button(action: {
-                                            draftClub = team
-                                            isClubDropdownShowing = false
-                                        }) {
-                                            Text(team)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding(.leading, 0)
-                                                .padding()
-                                                .foregroundStyle(team == draftClub ? Color.blue : colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                        }
-                                        
-                                        
-                                        Spacer()
-                                        if team == draftClub {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(.blue)
-                                        }
-                                        Spacer()
-                                    }
-                                    .background(team == draftClub ? .gray.opacity(0.2) : colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                                     
-                                    Divider()
+                                    if filteredClubs.isEmpty && !clubSearchText.isEmpty {
+                                        HStack {
+                                            Text("No clubs found")
+                                                .foregroundStyle(.gray)
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding()
+                                        }
+                                        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                                        
+                                        Divider()
+                                    }
                                 }
                             }
                         }
                     }
-                    
+
                     Divider()
                     
                     HStack {

@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct ScheduleDetailsView: View {
+    @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @StateObject private var viewModel = ScheduleDetailsModel()
+    @StateObject private var viewModel2 = MeetsScheduleModel()
     
     let meet: String
     let date: Date
@@ -45,13 +48,18 @@ struct ScheduleDetailsView: View {
         }
         .task {
             await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
+            await viewModel2.loadMeetDetails(meetName: selectedMeet)
             await viewModel.loadAllResults()
         }
     }
 }
 
 struct TopView: View {
+    @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var viewModel = MeetsScheduleModel()
+    
+    var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
 
     let sessionNum: Int
     let platformColor: String
@@ -76,9 +84,20 @@ struct TopView: View {
         return time12hour
     }
     
+    func timeZoneShortHand() -> String {
+        let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "Unknown"
+
+        switch timeZone {
+        case "America/New_York": return "Eastern"
+        case "America/Los_Angeles": return "Pacific"
+        case "America/Denver": return "Mountain"
+        default: return "Central"
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Session \(sessionNum) • \(convert24hourTo12hour(time24hour: startTime) ?? "TBD")")
+            Text("Session \(sessionNum) • \(convert24hourTo12hour(time24hour: startTime) ?? "TBD") \(timeZoneShortHand())")
                 .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                 .padding(.vertical, 6)
 

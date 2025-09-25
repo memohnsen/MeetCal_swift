@@ -11,7 +11,7 @@ import Combine
 
 struct AthleteResults: Decodable, Hashable {
     let meet: String
-    let date: Date
+    let date: String
     let name: String
     let age: String
     let body_weight: Float
@@ -87,15 +87,7 @@ class ScheduleDetailsModel: ObservableObject {
                 .order("date", ascending: false)
                 .execute()
             
-            let decoder = JSONDecoder()
-            let df = DateFormatter()
-            df.calendar = Calendar(identifier: .gregorian)
-            df.locale = Locale(identifier: "en_US_POSIX")
-            df.timeZone = TimeZone.current
-            df.dateFormat = "yyyy-MM-dd"
-            decoder.dateDecodingStrategy = .formatted(df)
-            
-            let rows = try decoder.decode([AthleteResults].self, from: response.data)
+            let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
             
             self.athleteResults.removeAll { $0.name == name }
             self.athleteResults.append(contentsOf: rows)
