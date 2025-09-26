@@ -78,6 +78,7 @@ class ScheduleDetailsModel: ObservableObject {
     }
     
     func loadResults(name: String) async {
+        isLoading = true
         error = nil
         do {
             let response = try await supabase
@@ -95,5 +96,6 @@ class ScheduleDetailsModel: ObservableObject {
             print("Error loading results for \(name): \(error)")
             self.error = error
         }
+        isLoading = false
     }
 }

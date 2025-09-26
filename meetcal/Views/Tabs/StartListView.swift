@@ -153,7 +153,8 @@ struct StartListView: View {
                             athlete: athlete,
                             schedule: matchSchedule(for: athlete),
                             dateTimeText: matchSchedule(for: athlete).map(displayDateTime(for:)) ?? "TBD",
-                            colorScheme: colorScheme
+                            colorScheme: colorScheme,
+                            viewModel: viewModel
                         )
                     }
                 }
@@ -300,6 +301,26 @@ private struct AthleteDisclosureRow: View {
     let schedule: ScheduleRow?
     let dateTimeText: String
     let colorScheme: ColorScheme
+    @ObservedObject var viewModel: StartListModel
+    
+    @State private var hasLoadedBestLifts = false
+    
+    // Computed properties to get best lifts for this athlete
+    private var athleteBestLifts: [AthleteResults] {
+        viewModel.athleteBests.filter { $0.name == athlete.name }
+    }
+    
+    private var bestSnatch: Float {
+        athleteBestLifts.map { $0.snatch_best }.max() ?? 0
+    }
+    
+    private var bestCleanJerk: Float {
+        athleteBestLifts.map { $0.cj_best }.max() ?? 0
+    }
+    
+    private var bestTotal: Float {
+        athleteBestLifts.map { $0.total }.max() ?? 0
+    }
     
     var body: some View {
         DisclosureGroup(athlete.name) {
@@ -309,7 +330,7 @@ private struct AthleteDisclosureRow: View {
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                     
                     Spacer()
-                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
+                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
                         Spacer()
                         Spacer()
                         Spacer()
@@ -363,37 +384,48 @@ private struct AthleteDisclosureRow: View {
                         Text("Best Lifts From The Last Year")
                             .padding(.bottom, 10)
                         
-                        HStack {
-                            VStack {
-                                Text("Snatch")
-                                    .secondaryText()
-                                Text("120")
-                                    .bold()
+                        if viewModel.isLoading && !hasLoadedBestLifts {
+                            ProgressView()
+                                .frame(height: 60)
+                        } else {
+                            HStack {
+                                VStack {
+                                    Text("Snatch")
+                                        .secondaryText()
+                                    Text(bestSnatch > 0 ? String(Int(bestSnatch)) : "N/A")
+                                        .bold()
+                                }
+                                
+                                Spacer()
+                                
+                                VStack {
+                                    Text("CJ")
+                                        .secondaryText()
+                                    Text(bestCleanJerk > 0 ? String(Int(bestCleanJerk)) : "N/A")
+                                        .bold()
+                                }
+                                
+                                Spacer()
+                                
+                                VStack {
+                                    Text("Total")
+                                        .secondaryText()
+                                    Text(bestTotal > 0 ? String(Int(bestTotal)) : "N/A")
+                                        .bold()
+                                }
                             }
-                            
-                            Spacer()
-                            
-                            VStack {
-                                Text("CJ")
-                                    .secondaryText()
-                                Text("160")
-                                    .bold()
-                            }
-                            
-                            Spacer()
-                            
-                            VStack {
-                                Text("Total")
-                                    .secondaryText()
-                                Text("280")
-                                    .bold()
-                            }
+                            .frame(width: 220)
                         }
-                        .frame(width: 220)
                         
-                        HStack {
-                            Text("See All Meet Results")
-                            Image(systemName: "chevron.right")
+                        NavigationLink(destination: MeetResultsView(name: athlete.name)) {
+                            HStack {
+                                Spacer()
+                                Spacer()
+                                Spacer()
+                                Text("See All Meet Results")
+                                Spacer()
+                                Spacer()
+                            }
                         }
                         .padding(.top, 10)
                         .foregroundStyle(.blue)
@@ -401,6 +433,12 @@ private struct AthleteDisclosureRow: View {
                 }
             }
             .padding(.leading, -20)
+            .task {
+                if !hasLoadedBestLifts {
+                    await viewModel.loadBestLifts(name: athlete.name)
+                    hasLoadedBestLifts = true
+                }
+            }
         }
     }
 }
@@ -947,4 +985,3 @@ private struct FilterModal: View {
 #Preview {
     StartListView()
 }
-

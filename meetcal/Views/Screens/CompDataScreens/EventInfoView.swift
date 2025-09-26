@@ -47,19 +47,21 @@ struct EventInfoView: View {
                         
                         Text("Location")
                             .bold()
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(meetDetails.first?.venue_name ?? "Unknown Venue")
-                                Text(meetDetails.first?.venue_street ?? "Unknown Street")
-                                Text("\(meetDetails.first?.venue_city ?? "Unknown City, "), \(meetDetails.first?.venue_state ?? "State"), \(meetDetails.first?.venue_zip ?? " and Zip Code")")
+                        Button(action: {
+                            openInMaps(address: "\(meetDetails.first?.venue_street ?? "Unknown Street") \(meetDetails.first?.venue_city ?? "Unknown City, ") \(meetDetails.first?.venue_state ?? "State")")
+                        }) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(meetDetails.first?.venue_name ?? "Unknown Venue")
+                                    Text(meetDetails.first?.venue_street ?? "Unknown Street")
+                                    Text("\(meetDetails.first?.venue_city ?? "Unknown City, "), \(meetDetails.first?.venue_state ?? "State"), \(meetDetails.first?.venue_zip ?? " and Zip Code")")
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
                             }
-                            Spacer()
-                            Image(systemName: "chevron.right")
                         }
                         .foregroundStyle(.blue)
-                        .onTapGesture {
-                            openInMaps(address: "\(meetDetails.first?.venue_street ?? "Unknown Street") \(meetDetails.first?.venue_city ?? "Unknown City, ") \(meetDetails.first?.venue_state ?? "State")")
-                        }
+
                         
                         Divider()
                             .padding(.vertical, 8)

@@ -94,14 +94,17 @@ struct SavedView: View {
                                 .foregroundStyle(.red)
                         }
                     }
-
                 }
                 .navigationTitle("Saved")
                 .navigationBarTitleDisplayMode(.inline)
+                .refreshable{
+                    await viewModel.loadSaved(meet: selectedMeet)
+                }
             }
             .task {
                 await viewModel.loadSaved(meet: selectedMeet)
             }
+
         }
     }
 }

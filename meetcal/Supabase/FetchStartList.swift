@@ -29,6 +29,7 @@ class StartListModel: ObservableObject {
     @Published var error: Error?
     @Published var athletes: [AthleteRow] = []
     @Published var schedule: [ScheduleRow] = []
+    @Published var athleteBests: [AthleteResults] = []
     @Published var weightClass: [String] = []
     @Published var ages: [Int] = []
     @Published var club: [String] = []
@@ -214,6 +215,33 @@ class StartListModel: ObservableObject {
             print("Error: \(error)")
             self.error = error
         }
+    }
+    
+    func loadBestLifts(name: String) async {
+        isLoading = true
+        error = nil
+        do {
+            let oneYearAgo = Date().addingTimeInterval(-365 * 24 * 60 * 60)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let oneYearAgoString = dateFormatter.string(from: oneYearAgo)
+            
+            let response = try await supabase
+                .from("lifting_results")
+                .select()
+                .eq("name", value: name)
+                .gte("date", value: oneYearAgoString)
+                .execute()
+            
+            let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
+            
+            self.athleteBests.removeAll { $0.name == name }
+            self.athleteBests.append(contentsOf: rows)
+        } catch {
+            print("Error loading results for \(name): \(error)")
+            self.error = error
+        }
+        isLoading = false
     }
 }
 
