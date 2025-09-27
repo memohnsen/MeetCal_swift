@@ -6,11 +6,14 @@
 //
 
 import SwiftUI
+import RevenueCat
+import RevenueCatUI
 
 struct SavedView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
+    @State private var showPaywall = false
 
     var saved: [SessionsRow] { viewModel.saved }
     
@@ -84,10 +87,19 @@ struct SavedView: View {
                     .toolbar{
                         ToolbarItem(placement: .topBarLeading) {
                             Image(systemName: "plus")
+                                .presentPaywallIfNeeded(
+                                    requiredEntitlementIdentifier: "default",
+                                    purchaseCompleted: { customerInfo in
+                                        print("Purchase completed: \(customerInfo.entitlements)")
+                                    },
+                                    restoreCompleted: { customerInfo in
+                                        print("Purchases restored: \(customerInfo.entitlements)")
+                                    }
+                                )
                         }
                         ToolbarItem {
                             Image(systemName: "calendar")
-                        }
+                        } 
                         ToolbarSpacer()
                         ToolbarItem {
                             Image(systemName: "trash")

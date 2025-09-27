@@ -19,7 +19,7 @@ struct FilterButton: View {
         HStack {
             Spacer()
            
-            Text("\(filter1) • \(filter2) \((filter3 != nil) ? "• \(filter3 ?? "")" : "")")
+            Text("\(filter1) • \(filter2.capitalized) \((filter3 != nil) ? "• \(filter3?.capitalized ?? "")" : "")")
                 .foregroundStyle(colorScheme == .light ? .black : .white)
                 .bold()
             Image(systemName: "chevron.down")

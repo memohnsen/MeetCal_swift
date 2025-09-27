@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import RevenueCatUI
 
 struct ProfileView: View {
     @Environment(\.colorScheme) var colorScheme
 
     @State private var localNotifs: Bool = false
+    @State private var isCustomerCenterPresented: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -77,10 +79,14 @@ struct ProfileView: View {
                     
                     VStack {
                         HStack {
-                            NavigationLink(destination: ScheduleView(), label: {Text("Customer Support")})
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                            Button{
+                                self.isCustomerCenterPresented = true
+                            } label: {
+                                Text("Customer Support")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
                         
                         Divider()
@@ -137,6 +143,9 @@ struct ProfileView: View {
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
+        }
+        .sheet(isPresented: $isCustomerCenterPresented) {
+            CustomerCenterView()
         }
     }
 }

@@ -177,6 +177,7 @@ struct StartListView: View {
                         }
                 }
             }
+            .toolbar(filterClicked || saveButtonClicked ? .hidden : .visible, for: .tabBar)
             .overlay {
                 if saveButtonClicked {
                     ZStack {
@@ -223,8 +224,6 @@ struct StartListView: View {
                 }
             }
         }
-        .toolbar(filterClicked ? .hidden : .visible, for: .tabBar)
-        .toolbar(filterClicked ? .hidden : .visible, for: .navigationBar)
         .overlay{
             if filterClicked {
                 FilterModal(
