@@ -13,7 +13,10 @@ struct SavedView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @State private var showPaywall = false
+    @State private var navigateToSchedule = false
+    @State private var navigateToPaywall = false
 
     var saved: [SessionsRow] { viewModel.saved }
     
@@ -86,16 +89,33 @@ struct SavedView: View {
                     .padding(.top, 8)
                     .toolbar{
                         ToolbarItem(placement: .topBarLeading) {
-                            Image(systemName: "plus")
-                                .presentPaywallIfNeeded(
-                                    requiredEntitlementIdentifier: "default",
-                                    purchaseCompleted: { customerInfo in
-                                        print("Purchase completed: \(customerInfo.entitlements)")
-                                    },
-                                    restoreCompleted: { customerInfo in
-                                        print("Purchases restored: \(customerInfo.entitlements)")
+                            Button {
+                                Task {
+                                    await customerManager.fetchCustomerInfo()
+                                    if customerManager.hasProAccess == true {
+                                        navigateToSchedule = true
+                                    } else {
+                                        navigateToPaywall = true
                                     }
-                                )
+                                }
+                            } label: {
+                                Image(systemName: "plus")
+                            }
+                            .navigationDestination(isPresented: $navigateToSchedule) {
+                                ScheduleView()
+                            }
+                            .sheet(isPresented: $navigateToPaywall) {
+                                PaywallView()
+                            }
+//                                .presentPaywallIfNeeded(
+//                                    requiredEntitlementIdentifier: "default",
+//                                    purchaseCompleted: { customerInfo in
+//                                        print("Purchase completed: \(customerInfo.entitlements)")
+//                                    },
+//                                    restoreCompleted: { customerInfo in
+//                                        print("Purchases restored: \(customerInfo.entitlements)")
+//                                    }
+//                                )
                         }
                         ToolbarItem {
                             Image(systemName: "calendar")

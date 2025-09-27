@@ -7,11 +7,14 @@
 
 import SwiftUI
 import Foundation
+import RevenueCatUI
+import RevenueCat
 
 struct ScheduleDetailsView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @StateObject private var viewModel = ScheduleDetailsModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     
     let meet: String
     let date: Date
@@ -118,7 +121,7 @@ struct TopView: View {
 
             HStack {
                 Button("Save Session") {
-                    
+
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
@@ -146,6 +149,9 @@ struct TopView: View {
 struct BottomView: View {
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: ScheduleDetailsModel
+    @StateObject private var customerManager = CustomerInfoManager()
+    @State private var navigateToPaywall: Bool = false
+    @State private var navigateToResults: Bool = false
 
     var athletes: [AthleteRow] { viewModel.athletes }
     var results: [AthleteResults] { viewModel.athleteResults }
@@ -195,48 +201,80 @@ struct BottomView: View {
                             
                             Spacer()
                             
-                            VStack {
-                                Text("Best Sn")
-                                    .secondaryText()
-                                    .padding(.bottom, 0.5)
-                                Text("\(Int(getBestResults(for: athlete.name).snatch))kg")
-                                    .bold()
-                            }
+                            if !customerManager.hasProAccess {
+                                VStack {
+                                    Text("Best Sn")
+                                        .secondaryText()
+                                        .padding(.bottom, 0.5)
+                                    Text("\(Int(getBestResults(for: athlete.name).snatch))kg")
+                                        .bold()
+                                }
                             
-                            Spacer()
-                            
-                            VStack {
-                                Text("Best CJ")
-                                    .secondaryText()
-                                    .padding(.bottom, 0.5)
-                                Text("\(Int(getBestResults(for: athlete.name).cleanJerk))kg")
-                                    .bold()
-                            }
-                            
-                            Spacer()
-                            
-                            VStack {
-                                Text("Best Total")
-                                    .secondaryText()
-                                    .padding(.bottom, 0.5)
-                                Text("\(Int(getBestResults(for: athlete.name).total))kg")
-                                    .bold()
+                                Spacer()
+                                
+                                VStack {
+                                    Text("Best CJ")
+                                        .secondaryText()
+                                        .padding(.bottom, 0.5)
+                                    Text("\(Int(getBestResults(for: athlete.name).cleanJerk))kg")
+                                        .bold()
+                                }
+                                
+                                Spacer()
+
+                                VStack {
+                                    Text("Best Total")
+                                        .secondaryText()
+                                        .padding(.bottom, 0.5)
+                                    Text("\(Int(getBestResults(for: athlete.name).total))kg")
+                                        .bold()
+                                }
+                            } else {
+                                HStack {
+                                    Spacer()
+                                    Text("PRO ACCESS ONLY")
+                                        .bold()
+                                    Spacer()
+                                }
+                                .padding()
+                                .background(.ultraThickMaterial)
+                                .background(.blue)
+                                .cornerRadius(12)
+                                .padding(.horizontal)
                             }
                         }
                         .padding(.vertical, 8)
                         .font(.system(size: 16))
 
-                        
-                        HStack {
-                            Spacer()
-                            NavigationLink(destination: MeetResultsView(name: athlete.name)) {
-                                Text("See All Meet Results")
-                                Image(systemName: "chevron.right")
+                        if customerManager.hasProAccess {
+                            HStack {
+                                Spacer()
+                                NavigationLink(destination: MeetResultsView(name: athlete.name)) {
+                                    Text("See All Meet Results")
+                                    Image(systemName: "chevron.right")
+                                }
+                                .padding(.vertical, 8)
+                                Spacer()
+                            }
+                        } else {
+                            Button {
+                                navigateToPaywall = true
+                            } label: {
+                                HStack {
+                                    Spacer()
+                                    Text("Get Pro To See All Meet Results")
+                                        .font(.system(size: 15))
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12))
+                                    Spacer()
+                                }
+                                .foregroundStyle(.blue)
                             }
                             .padding(.vertical, 8)
-                            Spacer()
+                            .sheet(isPresented: $navigateToPaywall) {
+                                PaywallView()
+                            }
                         }
-                        
                         Divider()
                     }
                 }
@@ -246,6 +284,9 @@ struct BottomView: View {
         .padding(.horizontal)
         .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
         .cornerRadius(32)
+        .task{
+            await customerManager.fetchCustomerInfo()
+        }
     }
 }
 
