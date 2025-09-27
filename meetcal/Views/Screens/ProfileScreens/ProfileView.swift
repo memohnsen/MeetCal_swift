@@ -13,6 +13,9 @@ struct ProfileView: View {
 
     @State private var localNotifs: Bool = false
     @State private var isCustomerCenterPresented: Bool = false
+    @State private var firstName: String = "Maddisen"
+    @State private var lastName: String = "Mohnsen"
+    @State private var email: String = "memohnsen@gmail.com"
     
     var body: some View {
         NavigationStack {
@@ -27,7 +30,7 @@ struct ProfileView: View {
                                 Text("First Name")
                                     .bold()
                                     .padding(.bottom, 0.5)
-                                Text("Maddisen")
+                                Text(firstName)
                                     .secondaryText()
                             }
                             Spacer()
@@ -42,7 +45,7 @@ struct ProfileView: View {
                                 Text("Last Name")
                                     .bold()
                                     .padding(.bottom, 0.5)
-                                Text("Mohnsen")
+                                Text(lastName)
                                     .secondaryText()
                             }
                             Spacer()
@@ -57,7 +60,7 @@ struct ProfileView: View {
                                 Text("Email")
                                     .bold()
                                     .padding(.bottom, 0.5)
-                                Text("memohnsen@gmail.com")
+                                Text(email)
                                     .secondaryText()
                             }
                             Spacer()
@@ -93,7 +96,7 @@ struct ProfileView: View {
                             .padding(.vertical, 8)
                         
                         HStack {
-                            NavigationLink(destination: ScheduleView(), label: {Text("Submit Feedback")})
+                            NavigationLink(destination: FeedbackView(firstName: firstName, lastName: lastName, email: email), label: {Text("Submit Feedback")})
                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                             Spacer()
                             Image(systemName: "chevron.right")

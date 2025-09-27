@@ -28,102 +28,84 @@ struct ScheduleView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            if viewModel.isLoading || selectedMeet.isEmpty {
-                // Launch screen / Loading state
-                VStack {
-                    Spacer()
-                    
-                    Image("meetcal-logo")
-                        .resizable()
-                        .frame(width: 140, height: 140)
-                        .shadow(radius: 8)
-                    
-                    Text("MeetCal")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top, 20)
-                    
-                    ProgressView("Loading your meets...")
-                        .padding(.top, 30)
-                    
-                    Spacer()
-                }
-                .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            } else {
-                // Main content
-                VStack {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Selected Meet")
-                                .bold()
-                                .padding(.bottom, 0.5)
-                            Text(selectedMeet)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.down")
-                            .secondaryText()
+        NavigationStack{
+            VStack {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Selected Meet")
                             .bold()
+                            .padding(.bottom, 0.5)
+                        Text(selectedMeet)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                    .onTapGesture {
-                        showingMeetsOverlay = true
-                    }
-                    .frame(height: 100)
-                    .padding(.top, viewModel.schedule.count == 0 ? -50 : 0)
-                    
-                    if viewModel.schedule.count == 0 {
-                        Spacer()
-                    }
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .secondaryText()
+                        .bold()
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .onTapGesture {
+                    showingMeetsOverlay = true
+                }
+                .frame(height: 100)
+                .padding(.top, viewModel.schedule.count == 0 ? -50 : 0)
+                
+                if viewModel.schedule.count == 0 {
+                    Spacer()
+                }
 
-                    VStack {
-                        if uniqueDays.count == 0 {
-                            VStack(alignment: .center) {
-                                Spacer()
-                                Image("meetcal-logo")
-                                    .resizable()
-                                    .frame(width: 140, height: 140)
-                                    .shadow(radius: 8)
-                                Text("No data for has been loaded yet for this meet.")
-                                Text("Check back soon!")
-                                Spacer()
-                            }
-                            .padding(.top, -10)
-                        } else {
-                            TabView {
-                                ForEach(uniqueDays, id: \.self) { day in
-                                    let calendar = Calendar.current
-                                    let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
-                                    DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
-                                        .background(Color.clear)
-                                        .safeAreaInset(edge: .bottom) {
-                                            Color.clear
-                                                .frame(height: 40)
-                                        }
-                                        .safeAreaPadding(.top, 28)
-                                }
-                            }
-                            .tabViewStyle(.page(indexDisplayMode: .never))
-                            .background(Color.clear)
-                            .ignoresSafeArea(edges: .bottom)
+                VStack {
+                    if viewModel.isLoading {
+                        VStack {
+                            ProgressView("Loading...")
+                            Spacer()
                         }
+                        .padding(.top, -10)
+                    } else if uniqueDays.count == 0 {
+                        VStack(alignment: .center) {
+                            Spacer()
+                            Image("meetcal-logo")
+                                .resizable()
+                                .frame(width: 140, height: 140)
+                                .shadow(radius: 8)
+                            Text("No data for has been loaded yet for this meet.")
+                            Text("Check back soon!")
+                            Spacer()
+                        }
+                        .padding(.top, -10)
+                    }else {
+                        TabView {
+                            ForEach(uniqueDays, id: \.self) { day in
+                                let calendar = Calendar.current
+                                let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
+                                DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
+                                    .background(Color.clear)
+                                    .safeAreaInset(edge: .bottom) {
+                                        Color.clear
+                                            .frame(height: 40)
+                                    }
+                                    .safeAreaPadding(.top, 28)
+                            }
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        .background(Color.clear)
+                        .ignoresSafeArea(edges: .bottom)
                     }
                 }
-                .background(Color(.systemGroupedBackground).ignoresSafeArea())
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(destination: ProfileView()) {
-                            Image(systemName: "person.crop.circle.fill")
-                        }
+            }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(destination: ProfileView()) {
+                        Image(systemName: "person.crop.circle.fill")
                     }
-                    ToolbarItem(placement: .topBarLeading) {
-                        NavigationLink(destination: CompDataView()) {
-                            Image(systemName: "list.bullet")
-                        }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(destination: CompDataView()) {
+                        Image(systemName: "list.bullet")
                     }
                 }
             }
