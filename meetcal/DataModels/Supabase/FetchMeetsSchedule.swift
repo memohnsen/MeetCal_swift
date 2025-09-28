@@ -166,7 +166,6 @@ class MeetsScheduleModel: ObservableObject {
                 isLoading = false
             }
         }
-        
         await loadDetailsTask?.value
     }
 }

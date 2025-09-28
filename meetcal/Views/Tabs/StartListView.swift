@@ -149,10 +149,13 @@ struct StartListView: View {
             VStack {
                 List {
                     ForEach(filteredAthletes, id: \.member_id) { athlete in
+                        let matchedSchedule = matchSchedule(for: athlete)
+                        let formattedDateTime = matchedSchedule.map(displayDateTime(for:)) ?? "TBD"
+                        
                         AthleteDisclosureRow(
                             athlete: athlete,
-                            schedule: matchSchedule(for: athlete),
-                            dateTimeText: matchSchedule(for: athlete).map(displayDateTime(for:)) ?? "TBD",
+                            schedule: matchedSchedule,
+                            dateTimeText: formattedDateTime,
                             colorScheme: colorScheme,
                             viewModel: viewModel
                         )
@@ -304,7 +307,6 @@ private struct AthleteDisclosureRow: View {
     
     @State private var hasLoadedBestLifts = false
     
-    // Computed properties to get best lifts for this athlete
     private var athleteBestLifts: [AthleteResults] {
         viewModel.athleteBests.filter { $0.name == athlete.name }
     }

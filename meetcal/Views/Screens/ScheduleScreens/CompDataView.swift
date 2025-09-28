@@ -37,9 +37,6 @@ struct CompDataView: View {
                         
                     }
                 }
-                .navigationDestination(isPresented: $navigateToEventInfo) {
-                    EventInfoView()
-                }
                 
                 Button {
                     Task {
@@ -60,12 +57,6 @@ struct CompDataView: View {
                             .foregroundStyle(.gray.opacity(0.8))
                         
                     }
-                }
-                .navigationDestination(isPresented: $navigateToTotals) {
-                    QualifyingTotalsView()
-                }
-                .sheet(isPresented: $navigateToPaywall) {
-                    PaywallView()
                 }
                 
 //                    NavigationLink(destination: ScheduleView()) {
@@ -94,12 +85,6 @@ struct CompDataView: View {
                             
                         }
                     }
-                    .navigationDestination(isPresented: $navigateToRecords) {
-                        AmericanRecordsView()
-                    }
-                    .sheet(isPresented: $navigateToPaywall) {
-                        PaywallView()
-                    }
                     
                     Button {
                         Task {
@@ -120,12 +105,6 @@ struct CompDataView: View {
                                 .foregroundStyle(.gray.opacity(0.8))
                             
                         }
-                    }
-                    .navigationDestination(isPresented: $navigateToWSO) {
-                        WSORecordsView()
-                    }
-                    .sheet(isPresented: $navigateToPaywall) {
-                        PaywallView()
                     }
                     
 //                    NavigationLink(destination: ScheduleView()) {
@@ -154,12 +133,6 @@ struct CompDataView: View {
                             
                         }
                     }
-                    .navigationDestination(isPresented: $navigateToStandards) {
-                        StandardsView()
-                    }
-                    .sheet(isPresented: $navigateToPaywall) {
-                        PaywallView()
-                    }
                     
                     Button {
                         Task {
@@ -181,12 +154,6 @@ struct CompDataView: View {
                             
                         }
                     }
-                    .navigationDestination(isPresented: $navigateToRankings) {
-                        InternationalRankingsView()
-                    }
-                    .sheet(isPresented: $navigateToPaywall) {
-                        PaywallView()
-                    }
                 }
             }
             .navigationTitle("Competition Data")
@@ -196,7 +163,29 @@ struct CompDataView: View {
             .task {
                 await customerManager.fetchCustomerInfo()
             }
+            .navigationDestination(isPresented: $navigateToEventInfo) {
+                EventInfoView()
+            }
+            .navigationDestination(isPresented: $navigateToTotals) {
+                QualifyingTotalsView()
+            }
+            .navigationDestination(isPresented: $navigateToRecords) {
+                AmericanRecordsView()
+            }
+            .navigationDestination(isPresented: $navigateToWSO) {
+                WSORecordsView()
+            }
+            .navigationDestination(isPresented: $navigateToStandards) {
+                StandardsView()
+            }
+            .navigationDestination(isPresented: $navigateToRankings) {
+                InternationalRankingsView()
+            }
+            .sheet(isPresented: $navigateToPaywall) {
+                PaywallView()
+            }
         }
+        
     }
 }
 

@@ -133,13 +133,13 @@ struct AmericanRecordsView: View {
         .task {
             await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
         }
-        .onChange(of: appliedGender) { _ in
+        .onChange(of: appliedGender) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
         }
-        .onChange(of: appliedAge) { _ in
+        .onChange(of: appliedAge) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
         }
-        .onChange(of: appliedFederation) { _ in
+        .onChange(of: appliedFederation) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
         }
         .onChange(of: draftFederation) {

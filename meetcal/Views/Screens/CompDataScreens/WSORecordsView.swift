@@ -136,16 +136,16 @@ struct WSORecordsView: View {
         .task{
             await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
         }
-        .onChange(of: appliedGender) { _ in
+        .onChange(of: appliedGender) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
         }
-        .onChange(of: appliedAge) { _ in
+        .onChange(of: appliedAge) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
         }
-        .onChange(of: appliedMeet) { _ in
+        .onChange(of: appliedMeet) {
             Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
         }
-        .onChange(of: draftWSO) {_ in
+        .onChange(of: draftWSO) {
             Task { await viewModel.loadAgeGroups(gender: draftGender, wso: draftWSO )}
         }
     }

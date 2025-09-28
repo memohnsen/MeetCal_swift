@@ -43,8 +43,6 @@ class CustomerInfoManager: ObservableObject {
             } else {
                 hasProAccess = false
             }
-            print(customerInfo)
-            print(hasProAccess)
         } catch {
             errorMessage = error.localizedDescription
             print("Error fetching customer info: \(error)")

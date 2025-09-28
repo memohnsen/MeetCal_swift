@@ -121,13 +121,13 @@ struct QualifyingTotalsView: View {
         .task {
             await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
         }
-        .onChange(of: appliedGender) { _ in
+        .onChange(of: appliedGender) {
             Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
         }
-        .onChange(of: appliedAge) { _ in
+        .onChange(of: appliedAge) {
             Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
         }
-        .onChange(of: appliedMeet) { _ in
+        .onChange(of: appliedMeet) {
             Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
         }
         .onChange(of: draftMeet) {

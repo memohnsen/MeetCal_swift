@@ -145,16 +145,16 @@ struct InternationalRankingsView: View {
         .task {
             await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
         }
-        .onChange(of: appliedGender) { _ in
+        .onChange(of: appliedGender) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
-        .onChange(of: appliedAge) { _ in
+        .onChange(of: appliedAge) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
-        .onChange(of: appliedMeet) { _ in
+        .onChange(of: appliedMeet) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
-        .onChange(of: draftMeet) {_ in
+        .onChange(of: draftMeet) {
             Task {
                 await viewModel.loadAgeGroups(meet: draftMeet, gender: draftGender)
                 draftAge = viewModel.ageGroups.first ?? draftAge

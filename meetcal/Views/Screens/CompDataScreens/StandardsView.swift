@@ -105,11 +105,11 @@ struct StandardsView: View {
         .task {
             await viewModel.loadAgeGroups(for: appliedGender)
         }
-        .onChange(of: appliedGender) { _ in
+        .onChange(of: appliedGender) {
             Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
             Task { await viewModel.loadAgeGroups(for: appliedGender) }
         }
-        .onChange(of: appliedAge) { _ in
+        .onChange(of: appliedAge) {
             Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
         }
     }

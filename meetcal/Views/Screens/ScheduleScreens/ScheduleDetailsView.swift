@@ -31,7 +31,7 @@ struct ScheduleDetailsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    TopView(date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
+                    TopView(viewModel: viewModel2, date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
                         .padding(.bottom, 8)
                     
                     BottomView(viewModel: viewModel)
@@ -51,8 +51,8 @@ struct ScheduleDetailsView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task {
-            await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
+            await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
             await viewModel.loadAllResults()
         }
     }
@@ -61,7 +61,7 @@ struct ScheduleDetailsView: View {
 struct TopView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @Environment(\.colorScheme) var colorScheme
-    @StateObject private var viewModel = MeetsScheduleModel()
+    @ObservedObject var viewModel: MeetsScheduleModel
     
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
@@ -94,12 +94,16 @@ struct TopView: View {
     }
     
     func timeZoneShortHand() -> String {
-        let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "Unknown"
+        guard !meetDetails.isEmpty,
+              let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone else {
+            return "TBD" 
+        }
 
         switch timeZone {
         case "America/New_York": return "Eastern"
         case "America/Los_Angeles": return "Pacific"
         case "America/Denver": return "Mountain"
+        case "America/Chicago": return "Central"
         default: return "Central"
         }
     }
@@ -130,6 +134,90 @@ struct TopView: View {
         let event = EKEvent(eventStore: eventStore)
         event.title = "Session \(sessionNum) \(platformColor) - \(weightClass)"
         
+        // Get the meet's time zone
+        let meetTimeZoneIdentifier = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "America/Chicago"
+        guard let meetTimeZone = TimeZone(identifier: meetTimeZoneIdentifier) else {
+            print("Invalid time zone identifier: \(meetTimeZoneIdentifier)")
+            createEventWithLocalTime(event: event, eventStore: eventStore)
+            return
+        }
+        
+        // Create a calendar with the meet's time zone
+        var meetCalendar = Calendar.current
+        meetCalendar.timeZone = meetTimeZone
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.timeZone = meetTimeZone // Set formatter to meet's time zone
+        
+        if let timeDate = timeFormatter.date(from: startTime) {
+            let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
+            let dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
+            
+            var combinedComponents = DateComponents()
+            combinedComponents.year = dateComponents.year
+            combinedComponents.month = dateComponents.month
+            combinedComponents.day = dateComponents.day
+            combinedComponents.hour = timeComponents.hour
+            combinedComponents.minute = timeComponents.minute
+            combinedComponents.second = timeComponents.second
+            combinedComponents.timeZone = meetTimeZone // Specify the time zone
+            
+            if let eventStartDate = meetCalendar.date(from: combinedComponents) {
+                event.startDate = eventStartDate
+                event.endDate = eventStartDate.addingTimeInterval(7200) // 2 hours duration
+            } else {
+                // Fallback: create event with meet time zone applied to the date
+                var fallbackComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
+                fallbackComponents.hour = 12 // Default to noon
+                fallbackComponents.minute = 0
+                fallbackComponents.second = 0
+                fallbackComponents.timeZone = meetTimeZone
+                
+                if let fallbackDate = meetCalendar.date(from: fallbackComponents) {
+                    event.startDate = fallbackDate
+                    event.endDate = fallbackDate.addingTimeInterval(7200)
+                } else {
+                    event.startDate = date
+                    event.endDate = date.addingTimeInterval(7200)
+                }
+            }
+        } else {
+            // Fallback for invalid time format
+            var fallbackComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
+            fallbackComponents.hour = 12 // Default to noon
+            fallbackComponents.minute = 0
+            fallbackComponents.second = 0
+            fallbackComponents.timeZone = meetTimeZone
+            
+            if let fallbackDate = meetCalendar.date(from: fallbackComponents) {
+                event.startDate = fallbackDate
+                event.endDate = fallbackDate.addingTimeInterval(7200)
+            } else {
+                event.startDate = date
+                event.endDate = date.addingTimeInterval(7200)
+            }
+        }
+        
+        event.calendar = eventStore.defaultCalendarForNewEvents
+        
+        do {
+            try eventStore.save(event, span: .thisEvent)
+            print("Event saved successfully!")
+            alertTitle = "Event Saved Successfully"
+            alertMessage = "Session \(sessionNum) \(platformColor) - \(weightClass) is now in your calendar"
+            alertShowing = true
+        } catch let error as NSError {
+            print("Failed to save event: \(error.localizedDescription)")
+            alertTitle = "Error saving to calendar"
+            alertMessage = "Failed to save event: \(error.localizedDescription)"
+            alertShowing = true
+        }
+    }
+    
+    private func createEventWithLocalTime(event: EKEvent, eventStore: EKEventStore) {
+        // Fallback method using local time (original logic)
         let calendar = Calendar.current
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
