@@ -9,6 +9,7 @@ import SwiftUI
 import Foundation
 import RevenueCatUI
 import RevenueCat
+import EventKit
 
 struct ScheduleDetailsView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
@@ -30,8 +31,8 @@ struct ScheduleDetailsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    TopView(sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
-                        .padding(.bottom, 8) 
+                    TopView(date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
+                        .padding(.bottom, 8)
                     
                     BottomView(viewModel: viewModel)
                 }
@@ -62,8 +63,13 @@ struct TopView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = MeetsScheduleModel()
     
+    @State private var alertShowing: Bool = false
+    @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
+    
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
 
+    let date: Date
     let sessionNum: Int
     let platformColor: String
     let weightClass: String
@@ -72,7 +78,7 @@ struct TopView: View {
     func convert24hourTo12hour(time24hour: String) -> String? {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "HH:mm:ss"
-        inputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         guard let date = inputFormatter.date(from: time24hour) else {
             return nil
@@ -80,7 +86,7 @@ struct TopView: View {
         
         let outputFormatter = DateFormatter()
         outputFormatter.dateFormat = "h:mm a"
-        outputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        outputFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         let time12hour = outputFormatter.string(from: date)
         
@@ -95,6 +101,77 @@ struct TopView: View {
         case "America/Los_Angeles": return "Pacific"
         case "America/Denver": return "Mountain"
         default: return "Central"
+        }
+    }
+    
+    func addToCal() {
+        let eventStore = EKEventStore()
+        
+        let authStatus = EKEventStore.authorizationStatus(for: .event)
+        print("Current auth status: \(authStatus.rawValue)")
+        
+        eventStore.requestWriteOnlyAccessToEvents { (granted, error) in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Error requesting access: \(error.localizedDescription)")
+                    return
+                }
+                
+                if granted {
+                    self.createEvent(eventStore: eventStore)
+                } else {
+                    print("Calendar access denied")
+                }
+            }
+        }
+    }
+    
+    private func createEvent(eventStore: EKEventStore) {
+        let event = EKEvent(eventStore: eventStore)
+        event.title = "Session \(sessionNum) \(platformColor) - \(weightClass)"
+        
+        let calendar = Calendar.current
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        if let timeDate = timeFormatter.date(from: startTime) {
+            let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: timeDate)
+            let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+            
+            var combinedComponents = DateComponents()
+            combinedComponents.year = dateComponents.year
+            combinedComponents.month = dateComponents.month
+            combinedComponents.day = dateComponents.day
+            combinedComponents.hour = timeComponents.hour
+            combinedComponents.minute = timeComponents.minute
+            combinedComponents.second = timeComponents.second
+            
+            if let eventStartDate = calendar.date(from: combinedComponents) {
+                event.startDate = eventStartDate
+                event.endDate = eventStartDate.addingTimeInterval(7200)
+            } else {
+                event.startDate = date
+                event.endDate = date.addingTimeInterval(7200)
+            }
+        } else {
+            event.startDate = date
+            event.endDate = date.addingTimeInterval(7200)
+        }
+        
+        event.calendar = eventStore.defaultCalendarForNewEvents
+        
+        do {
+            try eventStore.save(event, span: .thisEvent)
+            print("Event saved successfully!")
+            alertTitle = "Event Saved Successfully"
+            alertMessage = "Session \(sessionNum) \(platformColor) - \(weightClass) is now in your calendar"
+            alertShowing = true
+        } catch let error as NSError {
+            print("Failed to save event: \(error.localizedDescription)")
+            alertTitle = "Error saving to calendar"
+            alertMessage = "Failed to save event: \(error.localizedDescription)"
+            alertShowing = true
         }
     }
     
@@ -131,7 +208,7 @@ struct TopView: View {
                 .padding(.vertical, 6)
                 
                 Button("Add to Calendar") {
-                    
+                    addToCal()
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
@@ -143,6 +220,11 @@ struct TopView: View {
         }
         .cardStyling()
         .cornerRadius(32)
+        .alert(alertTitle, isPresented: $alertShowing) {
+            Button("OK") { }
+        } message: {
+            Text(alertMessage)
+        }
     }
 }
 
@@ -201,7 +283,7 @@ struct BottomView: View {
                             
                             Spacer()
                             
-                            if !customerManager.hasProAccess {
+                            if customerManager.hasProAccess {
                                 VStack {
                                     Text("Best Sn")
                                         .secondaryText()

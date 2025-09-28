@@ -51,7 +51,7 @@ struct ScheduleView: View {
                     showingMeetsOverlay = true
                 }
                 .frame(height: 100)
-                .padding(.top, viewModel.schedule.count == 0 ? -50 : 0)
+                .padding(.top, 0)
                 
                 if viewModel.schedule.count == 0 {
                     Spacer()
@@ -60,12 +60,15 @@ struct ScheduleView: View {
                 VStack {
                     if viewModel.isLoading {
                         VStack {
+                            Spacer()
                             ProgressView("Loading...")
                             Spacer()
                         }
                         .padding(.top, -10)
+                        .navigationTitle("Loading...")
+                        .navigationBarTitleDisplayMode(.inline)
                     } else if uniqueDays.count == 0 {
-                        VStack(alignment: .center) {
+                        VStack {
                             Spacer()
                             Image("meetcal-logo")
                                 .resizable()
@@ -76,7 +79,9 @@ struct ScheduleView: View {
                             Spacer()
                         }
                         .padding(.top, -10)
-                    }else {
+                        .navigationTitle("TBD")
+                        .navigationBarTitleDisplayMode(.inline)
+                    } else {
                         TabView {
                             ForEach(uniqueDays, id: \.self) { day in
                                 let calendar = Calendar.current
@@ -196,7 +201,7 @@ private struct DaySessionsView: View {
     func convert24hourTo12hour(time24hour: String) -> String? {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "HH:mm:ss"
-        inputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         guard let date = inputFormatter.date(from: time24hour) else {
             return nil
@@ -204,7 +209,7 @@ private struct DaySessionsView: View {
         
         let outputFormatter = DateFormatter()
         outputFormatter.dateFormat = "h:mm a"
-        outputFormatter.locale = Locale(identifier: "America/Los_Angeles")
+        outputFormatter.locale = Locale(identifier: "en_US_POSIX")
         
         let time12hour = outputFormatter.string(from: date)
         
