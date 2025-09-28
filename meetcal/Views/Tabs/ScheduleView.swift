@@ -192,7 +192,7 @@ struct ScheduleView: View {
 private struct DaySessionsView: View {
     @Environment(\.colorScheme) var colorScheme
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
-
+    
     let day: Date
     let schedule: [ScheduleRow]
     let meetDetails: [MeetDetailsRow]
@@ -218,7 +218,7 @@ private struct DaySessionsView: View {
     
     func timeZoneShortHand() -> String {
         let timeZone = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "Unknown"
-
+        
         switch timeZone {
         case "America/New_York": return "Eastern"
         case "America/Los_Angeles": return "Pacific"
@@ -243,13 +243,13 @@ private struct DaySessionsView: View {
                         
                         return firstKey < secondKey
                     }
-                                        
+                    
                     Section(
                         header: Text("Session \(row.session_id)")
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                     ) {
                         ForEach(dataSorted, id: \.id) { sched in
-                            NavigationLink(destination: ScheduleDetailsView(meet: sched.meet ?? "TBD", date: day, sessionNum: sched.session_id, platformColor: sched.platform, weightClass: sched.weight_class, startTime: sched.start_time)) {
+                            NavigationLink(destination: ScheduleDetailsView(meet: sched.meet ?? "TBD", date: sched.date, sessionNum: sched.session_id, platformColor: sched.platform, weightClass: sched.weight_class, startTime: sched.start_time)) {
                                 HStack {
                                     Platform(text: sched.platform)
                                     
@@ -266,14 +266,14 @@ private struct DaySessionsView: View {
                         }
                     }
                 }
+                //            .padding(.top, 4)
             }
-//            .padding(.top, 4)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
+            .listStyle(.insetGrouped)
+            .navigationTitle(isLoading ? "Loading..." : day.formatted(date: .complete, time: .omitted))
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .scrollContentBackground(.hidden)
-        .background(Color.clear)
-        .listStyle(.insetGrouped)
-        .navigationTitle(isLoading ? "Loading..." : day.formatted(date: .complete, time: .omitted))
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
