@@ -102,46 +102,9 @@ class MeetsScheduleModel: ObservableObject {
                 
                 try Task.checkCancellation()
                 
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .custom { decoder in
-                    let container = try decoder.singleValueContainer()
-                    let dateString = try container.decode(String.self)
-
-                    let components = dateString.split(separator: "-")
-                    guard components.count == 3,
-                          let year = Int(components[0]),
-                          let month = Int(components[1]),
-                          let day = Int(components[2]) else {
-                        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string \(dateString)")
-                    }
-                    
-                    var dateComponents = DateComponents()
-                    dateComponents.year = year
-                    dateComponents.month = month
-                    dateComponents.day = day
-                    dateComponents.hour = 12
-                    dateComponents.minute = 0
-                    dateComponents.second = 0
-                    
-                    let calendar = Calendar.current
-                    guard let date = calendar.date(from: dateComponents) else {
-                        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot create date from components")
-                    }
-                    
-                    return date
-                }
+                let decoder = JSONDecoder.scheduleNoonDateDecoder()
                 
                 let row = try decoder.decode([ScheduleRow].self, from: response.data)
-                
-                // DEBUG: Print raw response to see what we're getting
-                if let responseString = String(data: response.data, encoding: .utf8) {
-                    print("DEBUG: Raw database response: \(responseString)")
-                }
-                
-                // DEBUG: Print parsed dates
-                for item in row.prefix(3) {
-                    print("DEBUG: Parsed date: \(item.date)")
-                }
                 
                 if !Task.isCancelled {
                     self.schedule = row

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import EventKit
 
 private struct AgeBand: Identifiable, Hashable {
     let id = UUID()
@@ -65,6 +66,10 @@ struct StartListView: View {
     @State private var saveButtonClicked: Bool = false
     @State private var filterClicked: Bool = false
     
+    @State private var alertShowing: Bool = false
+    @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
+    
     var athleteList: [AthleteRow] { viewModel.athletes }
     var scheduleList: [ScheduleRow] { viewModel.schedule }
     var weightClass: [String] { viewModel.weightClass }
@@ -81,6 +86,21 @@ struct StartListView: View {
     var filteredClubs: [String] {
         guard !clubSearchText.isEmpty else { return club }
         return club.filter { $0.localizedCaseInsensitiveContains(clubSearchText) }
+    }
+    
+    // Unique sessions represented by the currently filtered athletes (deduped by session_id + platform)
+    private var uniqueFilteredSessions: [ScheduleRow] {
+        var seen = Set<String>()
+        var result: [ScheduleRow] = []
+        for athlete in filteredAthletes {
+            guard let sched = matchSchedule(for: athlete) else { continue }
+            let key = "\(sched.session_id)|\(sched.platform)"
+            if !seen.contains(key) {
+                seen.insert(key)
+                result.append(sched)
+            }
+        }
+        return result
     }
     
     private func matchSchedule(for athlete: AthleteRow) -> ScheduleRow? {
@@ -144,6 +164,119 @@ struct StartListView: View {
         }
     }
     
+    // Add all unique sessions for the currently filtered athletes to Calendar
+    func addFilteredSessionsToCalendar() {
+        let sessions = uniqueFilteredSessions
+        if sessions.isEmpty {
+            alertTitle = "Nothing to Add"
+            alertMessage = "No sessions were found for the current filters."
+            alertShowing = true
+            return
+        }
+        let eventStore = EKEventStore()
+
+        let authStatus = EKEventStore.authorizationStatus(for: .event)
+        print("Current auth status: \(authStatus.rawValue)")
+
+        eventStore.requestWriteOnlyAccessToEvents { (granted, error) in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.alertTitle = "Calendar Access Error"
+                    self.alertMessage = error.localizedDescription
+                    self.alertShowing = true
+                    return
+                }
+
+                guard granted else {
+                    self.alertTitle = "Calendar Access Denied"
+                    self.alertMessage = "Please allow calendar access in Settings to add sessions."
+                    self.alertShowing = true
+                    return
+                }
+
+                // Determine meet time zone
+                let tzIdentifier = self.meetDetails.first(where: { $0.name == self.selectedMeet })?.time_zone ?? "America/Chicago"
+                let meetTimeZone = TimeZone(identifier: tzIdentifier) ?? TimeZone.current
+
+                var successCount = 0
+                var failureCount = 0
+
+                for session in sessions {
+                    if let event = self.makeEvent(for: session, eventStore: eventStore, timeZone: meetTimeZone) {
+                        do {
+                            try eventStore.save(event, span: .thisEvent)
+                            successCount += 1
+                        } catch {
+                            print("Failed to save event for session \(session.session_id) \(session.platform): \(error.localizedDescription)")
+                            failureCount += 1
+                        }
+                    } else {
+                        failureCount += 1
+                    }
+                }
+
+                self.alertTitle = failureCount == 0 ? "Added to Calendar" : "Added with Issues"
+                if failureCount == 0 {
+                    self.alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s") to your calendar."
+                } else {
+                    self.alertMessage = "Added \(successCount) of \(sessions.count) sessions. \(failureCount) failed."
+                }
+                self.alertShowing = true
+            }
+        }
+    }
+
+    // Create a single EKEvent for a schedule row using the meet's time zone
+    private func makeEvent(for session: ScheduleRow, eventStore: EKEventStore, timeZone: TimeZone) -> EKEvent? {
+        let event = EKEvent(eventStore: eventStore)
+        event.title = "Session \(session.session_id) \(session.platform) - \(session.weight_class)"
+
+        var meetCalendar = Calendar.current
+        meetCalendar.timeZone = timeZone
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.timeZone = timeZone
+
+        let date = session.date
+
+        if let timeDate = timeFormatter.date(from: session.start_time) {
+            let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
+            var dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
+            dateComponents.hour = timeComponents.hour
+            dateComponents.minute = timeComponents.minute
+            dateComponents.second = timeComponents.second
+            dateComponents.timeZone = timeZone
+
+            if let eventStartDate = meetCalendar.date(from: dateComponents) {
+                event.startDate = eventStartDate
+                event.endDate = eventStartDate.addingTimeInterval(7200) // 2 hours
+            } else {
+                // Fallback to noon on that date in meet TZ
+                var fallback = meetCalendar.dateComponents([.year, .month, .day], from: date)
+                fallback.hour = 12
+                fallback.minute = 0
+                fallback.second = 0
+                fallback.timeZone = timeZone
+                event.startDate = meetCalendar.date(from: fallback) ?? date
+                event.endDate = event.startDate.addingTimeInterval(7200)
+            }
+        } else {
+            // Fallback for invalid/missing time
+            var fallback = meetCalendar.dateComponents([.year, .month, .day], from: date)
+            fallback.hour = 12
+            fallback.minute = 0
+            fallback.second = 0
+            fallback.timeZone = timeZone
+            event.startDate = meetCalendar.date(from: fallback) ?? date
+            event.endDate = event.startDate.addingTimeInterval(7200)
+        }
+
+        event.calendar = eventStore.defaultCalendarForNewEvents
+        return event
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -194,7 +327,7 @@ struct StartListView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Save Sessions")
-                                    Text("Save X sessions in the app")
+                                    Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") in the app")
                                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 }
                                 Spacer()
@@ -209,14 +342,15 @@ struct StartListView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Save to Calendar")
-                                    Text("Save X sessions directly to your iCal")
+                                    Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") directly to your iCal")
                                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                             }
                             .onTapGesture{
-                                
+                                addFilteredSessionsToCalendar()
+                                saveButtonClicked = false
                             }
                         }
                         .padding()
@@ -293,6 +427,11 @@ struct StartListView: View {
                 }
             }
         }
+        .alert(alertTitle, isPresented: $alertShowing) {
+            Button("OK") { }
+        } message: {
+            Text(alertMessage)
+        }
     }
 }
 
@@ -331,12 +470,13 @@ private struct AthleteDisclosureRow: View {
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                     
                     Spacer()
+                    Spacer()
+                    Spacer()
+                    Spacer()
+                    Spacer()
+                    Spacer()
                     NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                        Spacer()
+
                         Text("Session \(athlete.session_number ?? 0) • \(athlete.session_platform ?? "TBD") Platform")
                             .foregroundStyle(.blue)
                     }

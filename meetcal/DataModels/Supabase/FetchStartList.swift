@@ -149,13 +149,7 @@ class StartListModel: ObservableObject {
                 .order("session_id", ascending: true)
                 .execute()
             
-            let decoder = JSONDecoder()
-            let df = DateFormatter()
-            df.calendar = Calendar(identifier: .gregorian)
-            df.locale = Locale(identifier: "en_US_POSIX")
-            df.timeZone = TimeZone.current
-            df.dateFormat = "yyyy-MM-dd"
-            decoder.dateDecodingStrategy = .formatted(df)
+            let decoder = JSONDecoder.scheduleNoonDateDecoder()
             
             let row = try decoder.decode([ScheduleRow].self, from: response.data)
             self.schedule = row
