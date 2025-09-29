@@ -18,7 +18,9 @@
 		<string>webcredentials:https://accounts.google.com</string>
 	</array>
 	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array/>
+	<array>
+		<string>iCloud.com.memohnsen.meetcal</string>
+	</array>
 	<key>com.apple.developer.icloud-services</key>
 	<array>
 		<string>CloudKit</string>
