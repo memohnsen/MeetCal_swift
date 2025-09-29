@@ -63,32 +63,34 @@ struct WSORecordsView: View {
                         VStack {
                             List {
                                 HStack {
-                                    Text("Weight Class")
-                                        .frame(width: 120, alignment: .leading)
-                                        .bold()
+                                    Text("Class")
+                                        .frame(width: 60, alignment: .leading)
+                                    Spacer()
                                     Text("Snatch")
+                                        .frame(width: 60, alignment: .leading)
                                     Spacer()
                                     Text("C&J")
-                                    Spacer()
-                                    Spacer()
+                                        .frame(width: 60, alignment: .leading)
                                     Spacer()
                                     Text("Total")
-                                    Spacer()
-                                    Spacer()
+                                        .frame(width: 60, alignment: .leading)
                                 }
                                 .bold()
                                 .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                 
                                 ForEach(viewModel.wsoRecords, id: \.self) { record in
                                     HStack {
-                                        DataSectionView(weightClass: String("\(record.weight_class)kg"), data: String("\(record.snatch_record)kg"), width: 120)
+                                        Text(String("\(record.weight_class)kg"))
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
+                                        Text(String("\(record.snatch_record)kg"))
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
                                         Text("\(record.cj_record)kg")
-                                        Spacer()
-                                        Spacer()
+                                            .frame(width: 60, alignment: .leading)
                                         Spacer()
                                         Text("\(record.total_record)kg")
-                                        Spacer()
-                                        Spacer()
+                                            .frame(width: 60, alignment: .leading)
                                     }
                                 }
                             }

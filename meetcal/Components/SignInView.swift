@@ -34,9 +34,7 @@ struct SignInView: View {
                     .bold()
                     .padding(.bottom, 80)
                 
-                Button{
-                    action()
-                } label: {
+                HStack {
                     Text("Sign In To Get Started")
                         .font(.system(size: 16))
                 }
@@ -49,6 +47,9 @@ struct SignInView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.gray.opacity(0.2), lineWidth: 2)
                 )
+                .onTapGesture {
+                    action()
+                }
                 
                 Spacer()
                 

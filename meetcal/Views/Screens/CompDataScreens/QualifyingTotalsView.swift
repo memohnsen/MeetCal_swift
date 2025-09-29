@@ -67,16 +67,22 @@ struct QualifyingTotalsView: View {
                                 List {
                                     HStack {
                                         Text("Weight Class")
-                                            .frame(width: 200, alignment: .leading)
-                                            .bold()
-                                        Text("Total")
+                                            .frame(width: 150, alignment: .leading)
                                         Spacer()
+                                        Text("Total")
+                                            .frame(width: 100, alignment: .leading)
                                     }
                                     .bold()
                                     .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
 
                                     ForEach(viewModel.totals, id: \.self) { total in
-                                        DataSectionView(weightClass: total.weight_class, data: String("\(total.qualifying_total)kg"), width: 200)
+                                        HStack {
+                                            Text(total.weight_class)
+                                                .frame(width: 150, alignment: .leading)
+                                            Spacer()
+                                            Text(String("\(total.qualifying_total)kg"))
+                                                .frame(width: 100, alignment: .leading)
+                                        }
                                     }
                                 }
                             }

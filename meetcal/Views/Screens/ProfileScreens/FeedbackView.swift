@@ -7,17 +7,16 @@
 
 import SwiftUI
 import Supabase
+import Clerk
 
 struct FeedbackView: View {
+    @Environment(\.clerk) private var clerk
+
     @State private var feedbackText: String = ""
     @State private var isLoading: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
     @State private var alertTitle: String = ""
-    
-    let firstName: String
-    let lastName: String
-    let email: String
     
     var body: some View {
         ZStack{
@@ -31,7 +30,7 @@ struct FeedbackView: View {
                             Text("First Name")
                                 .padding(.bottom, 2)
                                 .bold()
-                            Text(firstName)
+                            Text(clerk.user?.firstName ?? "Please Sign-In")
                                 .secondaryText()
                         }
                         Spacer()
@@ -43,7 +42,7 @@ struct FeedbackView: View {
                             Text("Last Name")
                                 .padding(.bottom, 2)
                                 .bold()
-                            Text(lastName)
+                            Text(clerk.user?.lastName ?? "Please Sign-In")
                                 .secondaryText()
                         }
                         Spacer()
@@ -55,7 +54,7 @@ struct FeedbackView: View {
                             Text("Email")
                                 .padding(.bottom, 2)
                                 .bold()
-                            Text(email)
+                            Text(clerk.user?.emailAddresses.first?.emailAddress ?? "Please Sign-In")
                                 .secondaryText()
                         }
                         Spacer()
@@ -124,8 +123,8 @@ struct FeedbackView: View {
         
         do {
             let requestBody = FeedbackRequest(
-                name: "\(firstName) \(lastName)",
-                email: email,
+                name: "\(clerk.user?.firstName ?? "Unknown") \(clerk.user?.lastName ?? "Unknown")",
+                email: clerk.user?.emailAddresses.first?.emailAddress ?? "Unknown",
                 role: "user",
                 description: feedbackText
             )
@@ -178,5 +177,5 @@ enum NetworkError: Error, LocalizedError {
 }
 
 #Preview {
-    FeedbackView(firstName: "Maddisen", lastName: "Mohnsen", email: "memohnsen@gmail.com")
+    FeedbackView()
 }

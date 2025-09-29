@@ -65,38 +65,28 @@ struct InternationalRankingsView: View {
                                 List {
                                     HStack {
                                         Text("Name")
-                                            .frame(width: 130, alignment: .leading)
-                                            .padding(.leading, 6)
-                                        Spacer()
-                                        Spacer()
+                                            .frame(width: 100, alignment: .leading)
+
                                         Spacer()
                                         Text("Total")
-                                            .frame(width: 60, alignment: .leading)
-                                        Spacer()
-                                        Spacer()
+                                            .frame(width: 50, alignment: .leading)
                                         Spacer()
                                         Text("% of A")
                                             .frame(width: 60, alignment: .leading)
-                                        Spacer()
-                                        Spacer()
                                     }
                                     .bold()
                                     .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
 
                                     ForEach(viewModel.rankings, id: \.self) { ranking in
                                         HStack {
-                                            DataSectionView(weightClass: nil, data: ranking.name, width: 0)
+                                            Text(ranking.name)
+                                                .frame(width: 100, alignment: .leading)
+                                            Spacer()
                                             Text("\(ranking.total)kg")
                                                 .frame(width: 50, alignment: .leading)
                                             Spacer()
-                                            Spacer()
-                                            Spacer()
-                                            Spacer()
-                                            Spacer()
                                             Text("\(String(format: "%.1f", ranking.percent_a))%")
                                                 .frame(width: 60, alignment: .leading)
-                                            Spacer()
-                                            Spacer()
                                         }
                                     }
                                 }

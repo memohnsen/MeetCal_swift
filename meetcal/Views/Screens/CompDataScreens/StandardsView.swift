@@ -52,24 +52,28 @@ struct StandardsView: View {
                         } else {
                             List {
                                 HStack {
-                                    Text("Weight Class")
-                                        .frame(width: 160, alignment: .leading)
-                                        .bold()
-                                    Text("A")
+                                    Text("Class")
+                                        .frame(width: 60, alignment: .leading)
                                     Spacer()
+                                    Text("A")
+                                        .frame(width: 60, alignment: .leading)
                                     Spacer()
                                     Text("B")
-                                    Spacer()
+                                        .frame(width: 60, alignment: .leading)
                                 }
                                 .bold()
                                 .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
 
                                 ForEach(viewModel.standards) { total in
                                     HStack {
-                                        DataSectionView(weightClass: total.weight_class, data: String("\(total.standard_a)kg"), width: 160)
+                                        Text(total.weight_class)
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
+                                        Text(String("\(total.standard_a)kg"))
+                                            .frame(width: 60, alignment: .leading)
+                                        Spacer()
                                         Text("\(total.standard_b)kg")
-                                        Spacer()
-                                        Spacer()
+                                            .frame(width: 60, alignment: .leading)
                                     }
                                 }
                             }

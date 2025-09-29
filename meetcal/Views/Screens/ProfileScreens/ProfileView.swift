@@ -17,9 +17,6 @@ struct ProfileView: View {
 
     @State private var localNotifs: Bool = false
     @State private var isCustomerCenterPresented: Bool = false
-    @State private var firstName: String = "Maddisen"
-    @State private var lastName: String = "Mohnsen"
-    @State private var email: String = "memohnsen@gmail.com"
     
     var body: some View {
         NavigationStack {
@@ -63,10 +60,12 @@ struct ProfileView: View {
                             .padding(.vertical, 8)
                         
                         HStack {
-                            NavigationLink(destination: FeedbackView(firstName: firstName, lastName: lastName, email: email), label: {Text("Submit Feedback")})
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                            NavigationLink(destination: FeedbackView()) {
+                                Text("Submit Feedback")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
                         
                         Divider()
