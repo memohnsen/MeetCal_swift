@@ -25,9 +25,9 @@ struct SponsorView: View {
                         Divider()
                         
                         SponsorCard(title: "The Art of Barbell", caption: "Capture The Moments That Matter Most", code: "Use code MEETCAL for 20% off!", image: "theartofbarbell", link: "https://nikkijeanphotography.pixieset.com/contact-form/cf_ZnYPcTFnBcJEyiV6tpsKab7NbOdQ")
-                        SponsorCard(title: "War Games", caption: "Better Coaches, Better Athletes", code: "Use code MEETCAL20 for 20% off!", image: "wg-ad", link: "https://wl-wargames.com")
                         SponsorCard(title: "Power & Grace Performance", caption: "Data-Driven Programming, Nation-Wide", code: "Team Support, and Coaching Education", image: "powergrace", link: "https://powerandgraceperformance.com")
-                        
+                        SponsorCard(title: "War Games", caption: "Better Coaches, Better Athletes", code: "Use code MEETCAL20 for 20% off!", image: "wg-ad", link: "https://wl-wargames.com")
+
                         Divider()
                         
                         Text("Intested in partnering with us? Contact us at: ")

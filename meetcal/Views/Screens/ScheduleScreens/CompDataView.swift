@@ -13,145 +13,104 @@ struct CompDataView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var customerManager = CustomerInfoManager()
     @State private var navigateToPaywall: Bool = false
-    @State private var navigateToEventInfo: Bool = false
-    @State private var navigateToTotals: Bool = false
-    @State private var navigateToRecords: Bool = false
-    @State private var navigateToWSO: Bool = false
-    @State private var navigateToStandards: Bool = false
-    @State private var navigateToRankings: Bool = false
     
     var body: some View {
         NavigationStack{
             List {
-                Button {
-                    navigateToEventInfo = true
-                } label: {
-                    HStack {
-                        Text("Event Info")
-                            .font(.system(size: 17))
-                            .foregroundStyle(colorScheme == .light ? .black : .white)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.gray.opacity(0.8))
-                        
-                    }
-                }
+                NavigationLink("Event Info", destination: EventInfoView())
                 
-                Button {
-                    Task {
-                        if customerManager.hasProAccess == true {
-                            navigateToTotals = true
-                        } else {
-                            navigateToPaywall = true
+                if customerManager.hasProAccess {
+                    NavigationLink(destination: QualifyingTotalsView()) {
+                        Text("Qualifying Totals")
+                    }
+                } else {
+                    Button {
+                        navigateToPaywall = true
+                    } label: {
+                        HStack {
+                            Text("Qualifying Totals")
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.gray.opacity(0.5))
                         }
                     }
-                } label: {
-                    HStack {
-                        Text("Qualifying Totals")
-                            .font(.system(size: 17))
-                            .foregroundStyle(colorScheme == .light ? .black : .white)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.gray.opacity(0.8))
-                        
-                    }
                 }
-                
-//                    NavigationLink(destination: ScheduleView()) {
-//                        Text("Weightlifting Wrapped")
-//                    }
-
                 
                 Section("Records") {
-                    Button {
-                        Task {
-                            if customerManager.hasProAccess == true {
-                                navigateToRecords = true
-                            } else {
-                                navigateToPaywall = true
-                            }
-                        }
-                    } label: {
-                        HStack {
+                    if customerManager.hasProAccess {
+                        NavigationLink(destination: AmericanRecordsView()) {
                             Text("American Records")
-                                .font(.system(size: 17))
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.gray.opacity(0.8))
-                            
                         }
-                    }
-                    
-                    Button {
-                        Task {
-                            if customerManager.hasProAccess == true {
-                                navigateToWSO = true
-                            } else {
-                                navigateToPaywall = true
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("American Records")
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.gray.opacity(0.5))
                             }
                         }
-                    } label: {
-                        HStack {
-                            Text("WSO Records")
-                                .font(.system(size: 17))
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.gray.opacity(0.8))
-                            
-                        }
                     }
                     
-//                    NavigationLink(destination: ScheduleView()) {
-//                        Text("Adaptive Records")
-//                    }
+                    
+                    if customerManager.hasProAccess {
+                        NavigationLink(destination: WSORecordsView()) {
+                            Text("WSO Records")
+                        }
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("WSO Records")
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.gray.opacity(0.5))
+                            }
+                        }
+                    }
                 }
+                    
                 
                 Section("International") {
-                    Button {
-                        Task {
-                            if customerManager.hasProAccess == true {
-                                navigateToStandards = true
-                            } else {
-                                navigateToPaywall = true
-                            }
-                        }
-                    } label: {
-                        HStack {
+                    if customerManager.hasProAccess {
+                        NavigationLink(destination: StandardsView()) {
                             Text("A/B Standards")
-                                .font(.system(size: 17))
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.gray.opacity(0.8))
-                            
+                        }
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("A/B Standards")
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.gray.opacity(0.5))
+                            }
                         }
                     }
                     
-                    Button {
-                        Task {
-                            if customerManager.hasProAccess == true {
-                                navigateToRankings = true
-                            } else {
-                                navigateToPaywall = true
-                            }
-                        }
-                    } label: {
-                        HStack {
+                    if customerManager.hasProAccess {
+                        NavigationLink(destination: InternationalRankingsView()) {
                             Text("International Rankings")
-                                .font(.system(size: 17))
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.gray.opacity(0.8))
-                            
+                        }
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("International Rankings")
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.gray.opacity(0.5))
+                            }
                         }
                     }
                 }
@@ -162,24 +121,6 @@ struct CompDataView: View {
             .padding(.top, -10)
             .task {
                 await customerManager.fetchCustomerInfo()
-            }
-            .navigationDestination(isPresented: $navigateToEventInfo) {
-                EventInfoView()
-            }
-            .navigationDestination(isPresented: $navigateToTotals) {
-                QualifyingTotalsView()
-            }
-            .navigationDestination(isPresented: $navigateToRecords) {
-                AmericanRecordsView()
-            }
-            .navigationDestination(isPresented: $navigateToWSO) {
-                WSORecordsView()
-            }
-            .navigationDestination(isPresented: $navigateToStandards) {
-                StandardsView()
-            }
-            .navigationDestination(isPresented: $navigateToRankings) {
-                InternationalRankingsView()
             }
             .sheet(isPresented: $navigateToPaywall) {
                 PaywallView()
