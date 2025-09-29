@@ -7,10 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import Clerk
 
 @main
 struct meetcalApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var clerk = Clerk.shared
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -28,6 +30,11 @@ struct meetcalApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.clerk, clerk)
+                .task {
+                  clerk.configure(publishableKey: "pk_live_Y2xlcmsubWVldGNhbC5hcHAk")
+                  try? await clerk.load()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

@@ -7,9 +7,13 @@
 
 import SwiftUI
 import RevenueCatUI
+import RevenueCat
+import Clerk
 
 struct ProfileView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.clerk) private var clerk
+    @StateObject private var customerManager = CustomerInfoManager()
 
     @State private var localNotifs: Bool = false
     @State private var isCustomerCenterPresented: Bool = false
@@ -24,61 +28,24 @@ struct ProfileView: View {
                     .ignoresSafeArea()
             
                 ScrollView {
-                    VStack {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("First Name")
-                                    .bold()
-                                    .padding(.bottom, 0.5)
-                                Text(firstName)
-                                    .secondaryText()
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        
-                        Divider()
-                            .padding(.vertical, 8)
-
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Last Name")
-                                    .bold()
-                                    .padding(.bottom, 0.5)
-                                Text(lastName)
-                                    .secondaryText()
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        
-                        Divider()
-                            .padding(.vertical, 8)
-                        
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Email")
-                                    .bold()
-                                    .padding(.bottom, 0.5)
-                                Text(email)
-                                    .secondaryText()
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
+                    NavigationLink(destination: UserProfileView()) {
+                        Text("Manage Your Profile")
+                        Spacer()
+                        Image(systemName: "chevron.right")
                     }
                     .cardStyling()
+                    .foregroundStyle(colorScheme == .light ? .black : .white)
                     .padding(.bottom, 12)
-                    
+
                     Toggle(isOn: $localNotifs) {
                         Text("Session Reminders")
-                            .bold()
                         Text("Get notified 1 hour before your sessions")
                             .font(.system(size: 14))
                             .padding(.top, 0.5)
                     }
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                        .cardStyling()
+                    .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                    .cardStyling()
+                    .disabled(!customerManager.hasProAccess)
                     
                     VStack {
                         HStack {
@@ -126,26 +93,15 @@ struct ProfileView: View {
                     }
                     .font(.system(size: 14))
                     .padding(.top)
-                    
-                    Link("Delete Your Account", destination: URL(string: "https://www.meetcal.app/privacy")!)
-                        .font(.system(size: 14))
-                        .padding(.top, 8)
-                    
-                    Button("Sign Out") {
-                        
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(.red)
-                    .foregroundStyle(.white)
-                    .cornerRadius(12)
-                    .padding(.top)
                 }
                 .padding(.horizontal)
             }
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
+            .task{
+                await customerManager.fetchCustomerInfo()
+            }
         }
         .sheet(isPresented: $isCustomerCenterPresented) {
             CustomerCenterView()
@@ -156,3 +112,4 @@ struct ProfileView: View {
 #Preview {
     ProfileView()
 }
+

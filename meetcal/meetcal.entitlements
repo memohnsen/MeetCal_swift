@@ -4,6 +4,19 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>webcredentials:clerk.meetcal.app</string>
+		<string>webcredentials:https://clerk.meetcal.app</string>
+		<string>webcredentials:https://clerk.meetcal.app/v1/oauth_callback</string>
+		<string>webcredentials:meetcal://oauth-native-callback</string>
+		<string>webcredentials:https://clerk.meetcal.app/v1/oauth/google/callback</string>
+		<string>webcredentials:https://accounts.google.com</string>
+	</array>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array/>
 	<key>com.apple.developer.icloud-services</key>

@@ -184,6 +184,7 @@ struct CompDataView: View {
             .sheet(isPresented: $navigateToPaywall) {
                 PaywallView()
             }
+            
         }
         
     }

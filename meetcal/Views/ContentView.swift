@@ -7,9 +7,11 @@
 
 import SwiftUI
 import SwiftData
+import Clerk
 
 struct ContentView: View {
     @State private var search = ""
+    
     var body: some View {
         TabView{
             Tab("Schedule", systemImage: "calendar") {

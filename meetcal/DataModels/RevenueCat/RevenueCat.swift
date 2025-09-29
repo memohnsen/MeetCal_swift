@@ -10,6 +10,7 @@ import RevenueCatUI
 import SwiftUI
 import UIKit
 import Combine
+import Clerk
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,

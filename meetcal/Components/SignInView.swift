@@ -12,6 +12,8 @@ import GoogleSignInSwift
 
 struct SignInView: View {
     @Environment(\.colorScheme) var colorScheme
+    
+    let action: () -> Void
 
     var body: some View {
         ZStack {
@@ -24,33 +26,18 @@ struct SignInView: View {
                     .resizable()
                     .frame(width: 140, height: 140)
                     .shadow(color: colorScheme == .light ? .black.opacity(0.35) : .white.opacity(0.35), radius: 8)
-                
+                                
                 Spacer()
                 
-                Text("Welcome to MeetCal")
+                Text("Welcome to MeetCal!")
                     .font(.title)
                     .bold()
-                    .padding(.bottom, 4)
-                Text("Sign in to start your journey")
-                    .secondaryText()
-                
-                Spacer()
-                
-                SignInWithAppleButton(onRequest: { request in
-                    
-                }, onCompletion: { result in
-                    
-                })
-                .frame(height: 45)
-                .cornerRadius(12)
+                    .padding(.bottom, 80)
                 
                 Button{
-                    
+                    action()
                 } label: {
-                    Image("google")
-                        .resizable()
-                        .frame(width: 15, height: 15)
-                    Text("Sign In With Google")
+                    Text("Sign In To Get Started")
                         .font(.system(size: 16))
                 }
                 .foregroundStyle(.black)
@@ -77,5 +64,5 @@ struct SignInView: View {
 }
 
 #Preview {
-    SignInView()
+    SignInView(action: {})
 }

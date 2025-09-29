@@ -9,7 +9,6 @@
 import Foundation
 import Supabase
 
-// MARK: - Supabase Configuration
 let supabaseURL = "https://ztziuiiharxtvzitwzfv.supabase.co"
 let supabaseKey = "sb_publishable_SQ-w0vWM9q3r5eF6PCAFCQ_e12p8AmT"
 

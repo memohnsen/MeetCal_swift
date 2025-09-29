@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct ScheduleView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.clerk) private var clerk
     @StateObject private var viewModel = MeetsScheduleModel()
     
+    @State private var authIsPresented = false
     @State private var showingMeetsOverlay: Bool = false
     @State private var platformColor: String = ""
     
@@ -29,91 +32,98 @@ struct ScheduleView: View {
 
     var body: some View {
         NavigationStack{
-            VStack {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Selected Meet")
-                            .bold()
-                            .padding(.bottom, 0.5)
-                        Text(selectedMeet)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .secondaryText()
-                        .bold()
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                .onTapGesture {
-                    showingMeetsOverlay = true
-                }
-                .frame(height: 100)
-                .padding(.top, 0)
-                
-                if viewModel.schedule.count == 0 {
-                    Spacer()
-                }
-
+            if clerk.user != nil {
                 VStack {
-                    if viewModel.isLoading {
-                        VStack {
-                            Spacer()
-                            ProgressView("Loading...")
-                            Spacer()
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Selected Meet")
+                                .bold()
+                                .padding(.bottom, 0.5)
+                            Text(selectedMeet)
                         }
-                        .padding(.top, -10)
-                        .navigationTitle("Loading...")
-                        .navigationBarTitleDisplayMode(.inline)
-                    } else if uniqueDays.count == 0 {
-                        VStack {
-                            Spacer()
-                            Image("meetcal-logo")
-                                .resizable()
-                                .frame(width: 140, height: 140)
-                                .shadow(radius: 8)
-                            Text("No data for has been loaded yet for this meet.")
-                            Text("Check back soon!")
-                            Spacer()
-                        }
-                        .padding(.top, -10)
-                        .navigationTitle("TBD")
-                        .navigationBarTitleDisplayMode(.inline)
-                    } else {
-                        TabView {
-                            ForEach(uniqueDays, id: \.self) { day in
-                                let calendar = Calendar.current
-                                let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
-                                DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
-                                    .background(Color.clear)
-                                    .safeAreaInset(edge: .bottom) {
-                                        Color.clear
-                                            .frame(height: 40)
-                                    }
-                                    .safeAreaPadding(.top, 28)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .secondaryText()
+                            .bold()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                    .onTapGesture {
+                        showingMeetsOverlay = true
+                    }
+                    .frame(height: 100)
+                    .padding(.top, 0)
+                    
+                    if viewModel.schedule.count == 0 {
+                        Spacer()
+                    }
+                    
+                    VStack {
+                        if viewModel.isLoading {
+                            VStack {
+                                Spacer()
+                                ProgressView("Loading...")
+                                Spacer()
                             }
+                            .padding(.top, -10)
+                            .navigationTitle("Loading...")
+                            .navigationBarTitleDisplayMode(.inline)
+                        } else if uniqueDays.count == 0 {
+                            VStack {
+                                Spacer()
+                                Image("meetcal-logo")
+                                    .resizable()
+                                    .frame(width: 140, height: 140)
+                                    .shadow(radius: 8)
+                                Text("No data for has been loaded yet for this meet.")
+                                Text("Check back soon!")
+                                Spacer()
+                            }
+                            .padding(.top, -10)
+                            .navigationTitle("TBD")
+                            .navigationBarTitleDisplayMode(.inline)
+                        } else {
+                            TabView {
+                                ForEach(uniqueDays, id: \.self) { day in
+                                    let calendar = Calendar.current
+                                    let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
+                                    DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
+                                        .background(Color.clear)
+                                        .safeAreaInset(edge: .bottom) {
+                                            Color.clear
+                                                .frame(height: 40)
+                                        }
+                                        .safeAreaPadding(.top, 28)
+                                }
+                            }
+                            .tabViewStyle(.page(indexDisplayMode: .never))
+                            .background(Color.clear)
+                            .ignoresSafeArea(edges: .bottom)
                         }
-                        .tabViewStyle(.page(indexDisplayMode: .never))
-                        .background(Color.clear)
-                        .ignoresSafeArea(edges: .bottom)
                     }
                 }
+                .background(Color(.systemGroupedBackground).ignoresSafeArea())
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink(destination: ProfileView()) {
+                            Image(systemName: "person.crop.circle.fill")
+                        }
+                    }
+                    ToolbarItem(placement: .topBarLeading) {
+                        NavigationLink(destination: CompDataView()) {
+                            Image(systemName: "list.bullet")
+                        }
+                    }
+                }
+            } else {
+                SignInView(action: { authIsPresented = true })
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "person.crop.circle.fill")
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink(destination: CompDataView()) {
-                        Image(systemName: "list.bullet")
-                    }
-                }
-            }
+        }
+        .sheet(isPresented: $authIsPresented) {
+          AuthView()
         }
         .task {
             await viewModel.loadMeets()
