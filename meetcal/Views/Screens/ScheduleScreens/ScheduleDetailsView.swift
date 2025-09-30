@@ -62,6 +62,7 @@ struct TopView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: MeetsScheduleModel
+    @StateObject private var saveModel = SavedViewModel()
     
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
@@ -286,7 +287,18 @@ struct TopView: View {
 
             HStack {
                 Button("Save Session") {
-
+                    Task {
+                        do {
+                            try await saveModel.saveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor, weightClass: weightClass, startTime: startTime, date: date, athleteNames: [], notes: "")
+                            alertTitle = "Session Saved"
+                            alertMessage = "Session \(sessionNum) has been saved successfully!"
+                            alertShowing = true
+                        } catch {
+                            alertTitle = "Error"
+                            alertMessage = "Failed to save session: \(error.localizedDescription)"
+                            alertShowing = true
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)

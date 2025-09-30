@@ -60,14 +60,14 @@ struct SavedView: View {
                                     }
                                     .padding(.bottom, 6)
                                     
-                                    if session.athlete_names.count != 0 {
+                                    if let athleteNames = session.athlete_names, !athleteNames.isEmpty {
                                         Divider()
-                                        
+
                                         Text("Athlete:")
                                             .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                                             .padding(.vertical, 6)
-                                        
-                                        ForEach(session.athlete_names, id: \.self) { name in
+
+                                        ForEach(athleteNames, id: \.self) { name in
                                             Text(name)
                                                 .bold()
                                                 .foregroundStyle(colorScheme == .light ? .black : .white)
@@ -75,11 +75,10 @@ struct SavedView: View {
                                         }
                                     }
                                 }
-                                .padding()
                             }
+                                                .padding(.vertical)
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 230)
                         .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                         .cornerRadius(12)
                         .padding(.horizontal)
@@ -107,15 +106,6 @@ struct SavedView: View {
                             .sheet(isPresented: $navigateToPaywall) {
                                 PaywallView()
                             }
-//                                .presentPaywallIfNeeded(
-//                                    requiredEntitlementIdentifier: "default",
-//                                    purchaseCompleted: { customerInfo in
-//                                        print("Purchase completed: \(customerInfo.entitlements)")
-//                                    },
-//                                    restoreCompleted: { customerInfo in
-//                                        print("Purchases restored: \(customerInfo.entitlements)")
-//                                    }
-//                                )
                         }
                         ToolbarItem {
                             Image(systemName: "calendar")

@@ -8,17 +8,32 @@
 import SwiftUI
 import Supabase
 import Combine
+import Clerk
 
-struct SessionsRow: Decodable, Identifiable, Hashable {
+struct SessionsRow: Decodable, Identifiable, Hashable, Sendable {
     let id: String
-    let user_id: String
+    let clerk_user_id: String
     let meet: String
     let session_number: Int
     let platform: String
     let weight_class: String
     let start_time: String
-    let notes: String
+    let date: String
+    let notes: String?
+    let athlete_names: [String]?
+}
+
+struct SaveSessionRequest: Encodable, Sendable {
+    let id: String
+    let clerk_user_id: String
+    let meet: String
+    let session_number: Int
+    let platform: String
+    let weight_class: String
+    let start_time: String
+    let date: String
     let athlete_names: [String]
+    let notes: String
 }
 
 @MainActor
@@ -30,17 +45,27 @@ class SavedViewModel: ObservableObject {
     func loadSaved(meet: String) async {
         isLoading = true
         error = nil
+
+        guard let userId = Clerk.shared.user?.id else {
+            print("No user logged in")
+            isLoading = false
+            return
+        }
+
         do {
-            let response = try await supabase
-                .from("saved_sessions")
+            let client = getSupabaseClient()
+
+            let response = try await client
+                .from("user_saved_sessions")
                 .select()
+                .eq("clerk_user_id", value: userId)
                 .eq("meet", value: meet)
                 .order("session_number")
                 .order("start_time")
                 .execute()
-            
+
             let row = try JSONDecoder().decode([SessionsRow].self, from: response.data)
-            
+
             self.saved.removeAll { $0.meet == meet }
             self.saved.append(contentsOf: row)
         } catch {
@@ -48,5 +73,39 @@ class SavedViewModel: ObservableObject {
             self.error = error
         }
         isLoading = false
+    }
+    
+    func saveSession(meet: String, sessionNumber: Int, platform: String, weightClass: String, startTime: String, date: Date, athleteNames: [String], notes: String) async throws {
+        guard let userId = Clerk.shared.user?.id else {
+            throw NSError(domain: "SavedViewModel", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        let dateString = dateFormatter.string(from: date)
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+
+        let session = SaveSessionRequest(
+            id: UUID().uuidString,
+            clerk_user_id: userId,
+            meet: meet,
+            session_number: sessionNumber,
+            platform: platform,
+            weight_class: weightClass,
+            start_time: startTime,
+            date: dateString,
+            athlete_names: athleteNames,
+            notes: notes
+        )
+
+        let jsonData = try encoder.encode(session)
+
+        try await supabase
+            .from("user_saved_sessions")
+            .insert(jsonData)
+            .execute()
     }
 }

@@ -468,18 +468,14 @@ private struct AthleteDisclosureRow: View {
                 HStack {
                     Text("Session:")
                         .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                    
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    Spacer()
-                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
 
+                    Spacer()
+
+                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: dateTimeText)) {
                         Text("Session \(athlete.session_number ?? 0) • \(athlete.session_platform ?? "TBD") Platform")
-                            .foregroundStyle(.blue)
                     }
+                    .foregroundStyle(.blue)
+                    .frame(width: 250, alignment: .trailing)
                 }
                 HStack {
                     Text("Date & Time:")
@@ -557,19 +553,6 @@ private struct AthleteDisclosureRow: View {
                             }
                             .frame(width: 220)
                         }
-                        
-                        NavigationLink(destination: MeetResultsView(name: athlete.name)) {
-                            HStack {
-                                Spacer()
-                                Spacer()
-                                Spacer()
-                                Text("See All Meet Results")
-                                Spacer()
-                                Spacer()
-                            }
-                        }
-                        .padding(.top, 10)
-                        .foregroundStyle(.blue)
                     }
                 }
             }

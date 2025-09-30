@@ -17,8 +17,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
         Purchases.logLevel = .debug
-        Purchases.configure(withAPIKey: "appl_UriFuFjiRHwcmgkTgoAgENezgcv", appUserID: "user_2vgHItHfCrbQXV3wpqUkKKOmfDL")
-        
+        Purchases.configure(withAPIKey: "appl_UriFuFjiRHwcmgkTgoAgENezgcv")
+
         return true
     }
 }
@@ -28,17 +28,41 @@ class CustomerInfoManager: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var hasProAccess = false
-    
+
+    @MainActor
+    func loginToRevenueCat(clerkUserId: String) async {
+        do {
+            let (customerInfo, _) = try await Purchases.shared.logIn(clerkUserId)
+            self.customerInfo = customerInfo
+            hasProAccess = !customerInfo.entitlements.active.isEmpty
+        } catch {
+            errorMessage = error.localizedDescription
+            print("Error logging in to RevenueCat: \(error)")
+        }
+    }
+
+    @MainActor
+    func logoutFromRevenueCat() async {
+        do {
+            let customerInfo = try await Purchases.shared.logOut()
+            self.customerInfo = customerInfo
+            hasProAccess = false
+        } catch {
+            errorMessage = error.localizedDescription
+            print("Error logging out from RevenueCat: \(error)")
+        }
+    }
+
     @MainActor
     func fetchCustomerInfo() async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
             let customerInfo = try await Purchases.shared.customerInfo()
-            
+
             self.customerInfo = customerInfo
-            
+
             if !customerInfo.entitlements.active.isEmpty {
                 hasProAccess = true
             } else {
@@ -48,7 +72,7 @@ class CustomerInfoManager: ObservableObject {
             errorMessage = error.localizedDescription
             print("Error fetching customer info: \(error)")
         }
-        
+
         isLoading = false
     }
 }
