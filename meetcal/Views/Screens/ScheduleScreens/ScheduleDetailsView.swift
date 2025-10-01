@@ -320,17 +320,11 @@ struct TopView: View {
                 } else {
                     Button("Unsave Session") {
                         Task {
-                            do {
-                                await saveModel.unsaveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor)
-                                await saveModel.loadSaved(meet: selectedMeet)
-                                alertTitle = "Session Unsaved"
-                                alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"
-                                alertShowing = true
-                            } catch {
-                                alertTitle = "Error"
-                                alertMessage = "Failed to unsave session: \(error.localizedDescription)"
-                                alertShowing = true
-                            }
+                            await saveModel.unsaveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor)
+                            await saveModel.loadSaved(meet: selectedMeet)
+                            alertTitle = "Session Unsaved"
+                            alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"
+                            alertShowing = true
                         }
                     }
                     .frame(maxWidth: .infinity)

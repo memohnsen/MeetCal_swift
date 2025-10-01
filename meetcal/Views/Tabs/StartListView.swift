@@ -42,6 +42,7 @@ struct StartListView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = StartListModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
+    @StateObject private var saveModel = SavedViewModel()
     
     @State var isAgeDropdownShowing: Bool = false
     @State var isWeightDropdownShowing: Bool = false
@@ -164,6 +165,63 @@ struct StartListView: View {
         }
     }
     
+    // Get athlete names for a specific session
+    private func getAthleteNames(for session: ScheduleRow) -> [String] {
+        filteredAthletes
+            .filter { athlete in
+                athlete.session_number == session.session_id &&
+                athlete.session_platform == session.platform
+            }
+            .map { $0.name }
+    }
+
+    // Save all filtered sessions to the app database
+    func saveFilteredSessions() {
+        let sessions = uniqueFilteredSessions
+        if sessions.isEmpty {
+            alertTitle = "Nothing to Save"
+            alertMessage = "No sessions were found for the current filters."
+            alertShowing = true
+            return
+        }
+
+        Task {
+            var successCount = 0
+            var failCount = 0
+
+            for session in sessions {
+                let athleteNames = getAthleteNames(for: session)
+
+                do {
+                    try await saveModel.saveSession(
+                        meet: selectedMeet,
+                        sessionNumber: session.session_id,
+                        platform: session.platform,
+                        weightClass: session.weight_class,
+                        startTime: session.start_time,
+                        date: session.date,
+                        athleteNames: athleteNames,
+                        notes: ""
+                    )
+                    successCount += 1
+                } catch {
+                    print("Failed to save session \(session.session_id) \(session.platform): \(error.localizedDescription)")
+                    failCount += 1
+                }
+            }
+
+            await saveModel.loadSaved(meet: selectedMeet)
+
+            alertTitle = failCount == 0 ? "Sessions Saved" : "Saved with Issues"
+            if failCount == 0 {
+                alertMessage = "Saved \(successCount) session\(successCount == 1 ? "" : "s") to your library."
+            } else {
+                alertMessage = "Saved \(successCount) of \(sessions.count) sessions. \(failCount) failed."
+            }
+            alertShowing = true
+        }
+    }
+
     // Add all unique sessions for the currently filtered athletes to Calendar
     func addFilteredSessionsToCalendar() {
         let sessions = uniqueFilteredSessions
@@ -324,33 +382,40 @@ struct StartListView: View {
                             }
                         
                         VStack(spacing: 16) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Save Sessions")
-                                    Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") in the app")
-                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                            Button{
+                                saveFilteredSessions()
+                                saveButtonClicked = false
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Save Sessions")
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                        Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") in the app")
+                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(colorScheme == .light ? .black : .white)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
                             }
-                            .onTapGesture{
-                                
-                            }
-                            
+
                             Divider()
                             
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Save to Calendar")
-                                    Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") directly to your iCal")
-                                        .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
-                            .onTapGesture{
+                            Button {
                                 addFilteredSessionsToCalendar()
                                 saveButtonClicked = false
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Save to Calendar")
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                        Text("Save \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s") directly to your iCal")
+                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                                }
                             }
                         }
                         .padding()

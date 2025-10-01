@@ -70,6 +70,22 @@ struct SessionsRow: Decodable, Identifiable, Hashable, Sendable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         return formatter.date(from: date) ?? Date()
     }
+
+    var formattedDate: String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateStyle = .full
+        outputFormatter.timeStyle = .none
+        outputFormatter.locale = Locale(identifier: "en_US")
+
+        if let dateObj = inputFormatter.date(from: date) {
+            return outputFormatter.string(from: dateObj)
+        }
+        return date
+    }
 }
 
 nonisolated struct SaveSessionRequest: Encodable {

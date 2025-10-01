@@ -204,7 +204,7 @@ struct SavedView: View {
                                                 startTime: session.start_time)) {
                                                     HStack{
                                                         VStack(alignment: .leading) {
-                                                            Text("Session \(String(session.session_number)) • \(session.date)")
+                                                            Text("Session \(String(session.session_number)) • \(session.formattedDate)")
                                                                 .padding(.bottom, 6)
                                                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                                                                 .font(.headline)
