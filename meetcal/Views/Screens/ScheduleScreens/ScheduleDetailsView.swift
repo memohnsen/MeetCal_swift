@@ -50,7 +50,7 @@ struct ScheduleDetailsView: View {
             }
             .toolbar(.hidden, for: .tabBar)
         }
-        .task {
+        .task(id: selectedMeet) {
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
             await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
             await viewModel.loadAllResults()
@@ -63,18 +63,27 @@ struct TopView: View {
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: MeetsScheduleModel
     @StateObject private var saveModel = SavedViewModel()
-    
+
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
-    
+
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
+    var saved: [SessionsRow] { saveModel.saved }
 
     let date: Date
     let sessionNum: Int
     let platformColor: String
     let weightClass: String
     let startTime: String
+
+    var isSessionSaved: Bool {
+        saved.contains { session in
+            session.meet == selectedMeet &&
+            session.session_number == sessionNum &&
+            session.platform == platformColor
+        }
+    }
     
     func convert24hourTo12hour(time24hour: String) -> String? {
         let inputFormatter = DateFormatter()
@@ -286,26 +295,51 @@ struct TopView: View {
  
 
             HStack {
-                Button("Save Session") {
-                    Task {
-                        do {
-                            try await saveModel.saveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor, weightClass: weightClass, startTime: startTime, date: date, athleteNames: [], notes: "")
-                            alertTitle = "Session Saved"
-                            alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
-                            alertShowing = true
-                        } catch {
-                            alertTitle = "Error"
-                            alertMessage = "Failed to save session: \(error.localizedDescription)"
-                            alertShowing = true
+                if !isSessionSaved {
+                    Button("Save Session") {
+                        Task {
+                            do {
+                                try await saveModel.saveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor, weightClass: weightClass, startTime: startTime, date: date, athleteNames: [], notes: "")
+                                await saveModel.loadSaved(meet: selectedMeet)
+                                alertTitle = "Session Saved"
+                                alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
+                                alertShowing = true
+                            } catch {
+                                alertTitle = "Error"
+                                alertMessage = "Failed to save session: \(error.localizedDescription)"
+                                alertShowing = true
+                            }
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .foregroundStyle(.white)
+                    .background(.blue)
+                    .cornerRadius(12)
+                    .padding(.vertical, 6)
+                } else {
+                    Button("Unsave Session") {
+                        Task {
+                            do {
+                                await saveModel.unsaveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor)
+                                await saveModel.loadSaved(meet: selectedMeet)
+                                alertTitle = "Session Unsaved"
+                                alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"
+                                alertShowing = true
+                            } catch {
+                                alertTitle = "Error"
+                                alertMessage = "Failed to unsave session: \(error.localizedDescription)"
+                                alertShowing = true
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .foregroundStyle(.white)
+                    .background(.blue)
+                    .cornerRadius(12)
+                    .padding(.vertical, 6)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .foregroundStyle(.white)
-                .background(.blue)
-                .cornerRadius(12)
-                .padding(.vertical, 6)
                 
                 Button("Add to Calendar") {
                     addToCal()
@@ -324,6 +358,9 @@ struct TopView: View {
             Button("OK") { }
         } message: {
             Text(alertMessage)
+        }
+        .task(id: selectedMeet) {
+            await saveModel.loadSaved(meet: selectedMeet)
         }
     }
 }

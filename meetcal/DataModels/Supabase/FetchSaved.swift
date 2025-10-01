@@ -168,4 +168,23 @@ class SavedViewModel: ObservableObject {
             self.error = error
         }
     }
+    
+    func unsaveSession(meet: String, sessionNumber: Int, platform: String) async {
+        error = nil
+        let userId = Clerk.shared.user?.id
+
+        do {
+            try await supabase
+                .from("user_saved_sessions")
+                .delete()
+                .eq("clerk_user_id", value: userId)
+                .eq("meet", value: meet)
+                .eq("session_number", value: sessionNumber)
+                .eq("platform", value: platform)
+                .execute()
+        } catch {
+            print("Error: \(error)")
+            self.error = error
+        }
+    }
 }

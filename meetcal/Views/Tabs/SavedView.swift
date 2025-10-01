@@ -249,7 +249,7 @@ struct SavedView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                        .cornerRadius(12)
+                        .cornerRadius(32)
                         .padding(.horizontal)
                         .padding(.vertical, 6)
                         .foregroundStyle(.black)
