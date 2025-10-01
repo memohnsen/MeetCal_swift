@@ -21,6 +21,55 @@ struct SessionsRow: Decodable, Identifiable, Hashable, Sendable {
     let date: String
     let notes: String?
     let athlete_names: [String]?
+
+    var formattedStartTime: String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateStyle = .none
+        outputFormatter.timeStyle = .short
+        outputFormatter.locale = Locale(identifier: "en_US")
+
+        if let time = inputFormatter.date(from: start_time) {
+            return outputFormatter.string(from: time)
+        }
+        return start_time
+    }
+
+    var weighInTime: String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateStyle = .none
+        outputFormatter.timeStyle = .short
+        outputFormatter.locale = Locale(identifier: "en_US")
+
+        if let time = inputFormatter.date(from: start_time) {
+            let weighInTime = time.addingTimeInterval(-7200)
+            return outputFormatter.string(from: weighInTime)
+        }
+        return start_time
+    }
+
+    func dateAsDate(in timeZone: TimeZone) -> Date {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = timeZone
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.date(from: date) ?? Date()
+    }
+
+    var dateAsDate: Date {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.date(from: date) ?? Date()
+    }
 }
 
 nonisolated struct SaveSessionRequest: Encodable {
@@ -66,8 +115,7 @@ class SavedViewModel: ObservableObject {
 
             let row = try JSONDecoder().decode([SessionsRow].self, from: response.data)
 
-            self.saved.removeAll { $0.meet == meet }
-            self.saved.append(contentsOf: row)
+            self.saved = row
         } catch {
             print("Error: \(error)")
             self.error = error
@@ -102,5 +150,22 @@ class SavedViewModel: ObservableObject {
             .from("user_saved_sessions")
             .insert(session)
             .execute()
+    }
+    
+    func deleteAllSessions(meet: String) async {
+        error = nil
+        let userId = Clerk.shared.user?.id
+        
+        do {
+            try await supabase
+                .from("user_saved_sessions")
+                .delete()
+                .eq("clerk_user_id", value: userId)
+                .eq("meet", value: meet)
+                .execute()
+        } catch {
+            print("Error: \(error)")
+            self.error = error
+        }
     }
 }

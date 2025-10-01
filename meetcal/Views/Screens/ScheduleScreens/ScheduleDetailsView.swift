@@ -291,7 +291,7 @@ struct TopView: View {
                         do {
                             try await saveModel.saveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor, weightClass: weightClass, startTime: startTime, date: date, athleteNames: [], notes: "")
                             alertTitle = "Session Saved"
-                            alertMessage = "Session \(sessionNum) has been saved successfully!"
+                            alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
                             alertShowing = true
                         } catch {
                             alertTitle = "Error"
