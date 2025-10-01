@@ -23,7 +23,7 @@ struct SessionsRow: Decodable, Identifiable, Hashable, Sendable {
     let athlete_names: [String]?
 }
 
-struct SaveSessionRequest: Encodable, Sendable {
+nonisolated struct SaveSessionRequest: Encodable {
     let id: String
     let clerk_user_id: String
     let meet: String
@@ -85,9 +85,6 @@ class SavedViewModel: ObservableObject {
         dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
         let dateString = dateFormatter.string(from: date)
 
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-
         let session = SaveSessionRequest(
             id: UUID().uuidString,
             clerk_user_id: userId,
@@ -101,11 +98,9 @@ class SavedViewModel: ObservableObject {
             notes: notes
         )
 
-        let jsonData = try encoder.encode(session)
-
         try await supabase
             .from("user_saved_sessions")
-            .insert(jsonData)
+            .insert(session)
             .execute()
     }
 }
