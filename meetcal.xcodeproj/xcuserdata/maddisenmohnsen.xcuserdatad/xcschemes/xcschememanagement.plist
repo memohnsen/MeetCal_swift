@@ -4,10 +4,33 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Promises (Playground).xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>meetcal.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>2</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>7111C83E2E663F6F0023BA6F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7111C84F2E663F700023BA6F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7111C8592E663F700023BA6F</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

@@ -32,17 +32,7 @@ struct ProfileView: View {
                     }
                     .cardStyling()
                     .foregroundStyle(colorScheme == .light ? .black : .white)
-                    .padding(.bottom, 12)
-
-                    Toggle(isOn: $localNotifs) {
-                        Text("Session Reminders")
-                        Text("Get notified 1 hour before your sessions")
-                            .font(.system(size: 14))
-                            .padding(.top, 0.5)
-                    }
-                    .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                    .cardStyling()
-                    .disabled(!customerManager.hasProAccess)
+                    .padding(.bottom, 8)
                     
                     VStack {
                         HStack {
@@ -81,7 +71,6 @@ struct ProfileView: View {
                         }
                     }
                     .cardStyling()
-                    .padding(.top, 12)
                     
                     HStack {
                         Link("Privacy Policy", destination: URL(string: "https://www.meetcal.app/privacy")!)

@@ -10,6 +10,7 @@ import Foundation
 import RevenueCatUI
 import RevenueCat
 import EventKit
+import UserNotifications
 
 struct ScheduleDetailsView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
@@ -63,10 +64,12 @@ struct TopView: View {
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: MeetsScheduleModel
     @StateObject private var saveModel = SavedViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
 
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
+    @State private var notificationIdentifier: String?
 
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
@@ -273,6 +276,47 @@ struct TopView: View {
         }
     }
     
+    var notifTime: TimeInterval {
+        let meetTimeZoneIdentifier = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "America/Chicago"
+        guard let meetTimeZone = TimeZone(identifier: meetTimeZoneIdentifier) else {
+            return 5400
+        }
+        
+        // Create a calendar with the meet's time zone
+        var meetCalendar = Calendar.current
+        meetCalendar.timeZone = meetTimeZone
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.timeZone = meetTimeZone
+        
+        guard let timeDate = timeFormatter.date(from: startTime) else {
+            return 5400
+        }
+        
+        let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
+        let dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
+        
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        combinedComponents.second = timeComponents.second
+        combinedComponents.timeZone = meetTimeZone
+        
+        guard let sessionDateTime = meetCalendar.date(from: combinedComponents) else {
+            return 5400
+        }
+        
+        let notificationTime = sessionDateTime.addingTimeInterval(-5400)
+        let timeInterval = notificationTime.timeIntervalSinceNow
+        
+        return max(timeInterval, 1)
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text("Session \(sessionNum) • \(convert24hourTo12hour(time24hour: startTime) ?? "TBD") \(timeZoneShortHand())")
@@ -304,6 +348,38 @@ struct TopView: View {
                                 alertTitle = "Session Saved"
                                 alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
                                 alertShowing = true
+                                
+                                // Fetch customer info first, then check Pro access
+                                await customerManager.fetchCustomerInfo()
+                                
+                                if customerManager.hasProAccess {
+                                    // Check if notifications are authorized
+                                    let settings = await UNUserNotificationCenter.current().notificationSettings()
+                                    guard settings.authorizationStatus == .authorized else {
+                                        print("Notifications not authorized")
+                                        return
+                                    }
+                                    
+                                    let content = UNMutableNotificationContent()
+                                    content.title = "Session \(sessionNum) \(platformColor) starts in 90 minutes"
+                                    content.subtitle = "Make sure to secure your platform!"
+                                    content.sound = UNNotificationSound.default
+                                    
+                                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: notifTime, repeats: false)
+                                    
+                                    let identifier = "\(selectedMeet)-\(sessionNum)-\(platformColor)"
+                                    notificationIdentifier = identifier
+                                    let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+                                    
+                                    try await UNUserNotificationCenter.current().add(request)
+                                    let notificationDate = Date().addingTimeInterval(notifTime)
+                                    let formatter = DateFormatter()
+                                    formatter.dateFormat = "MMM d, yyyy 'at' h:mm:ss a zzz"
+                                    formatter.locale = Locale(identifier: "en_US")
+                                    print("Notification set for: \(formatter.string(from: notificationDate)) (\(Int(notifTime / 60)) minutes from now)")
+                                } else {
+                                    print("Not a pro user")
+                                }
                             } catch {
                                 alertTitle = "Error"
                                 alertMessage = "Failed to save session: \(error.localizedDescription)"
@@ -322,6 +398,12 @@ struct TopView: View {
                         Task {
                             await saveModel.unsaveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor)
                             await saveModel.loadSaved(meet: selectedMeet)
+                            
+                            let identifier = "\(selectedMeet)-\(sessionNum)-\(platformColor)"
+                            let center = UNUserNotificationCenter.current()
+                            center.removePendingNotificationRequests(withIdentifiers: [identifier])
+                            notificationIdentifier = nil
+                            
                             alertTitle = "Session Unsaved"
                             alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"
                             alertShowing = true

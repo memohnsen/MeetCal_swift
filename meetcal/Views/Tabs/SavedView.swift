@@ -9,6 +9,7 @@ import SwiftUI
 import RevenueCat
 import RevenueCatUI
 import EventKit
+import UserNotifications
 
 struct SavedView: View {
     @AppStorage("selectedMeet") private var selectedMeet = ""
@@ -260,7 +261,7 @@ struct SavedView: View {
                             Button {
                                 addAllToCal()
                             } label: {
-                                Text("Add to Cal")
+                                Image(systemName: "calendar.badge.plus")
                             }
                         }
                         ToolbarSpacer()
@@ -269,6 +270,15 @@ struct SavedView: View {
                                 Task {
                                     await viewModel.deleteAllSessions(meet: selectedMeet)
                                     await viewModel.loadSaved(meet: selectedMeet)
+                                    
+                                    let center = UNUserNotificationCenter.current()
+                                    let requests = await center.pendingNotificationRequests()
+                                    let identifiersToRemove = requests
+                                        .map { $0.identifier }
+                                        .filter { $0.hasPrefix(selectedMeet) }
+                                    
+                                    center.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
+                                    print(identifiersToRemove)
                                 }
                                 alertShowing = true
                                 alertTitle = "Sessions Deleted"

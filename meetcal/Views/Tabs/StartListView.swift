@@ -7,6 +7,7 @@
 
 import SwiftUI
 import EventKit
+import UserNotifications
 
 private struct AgeBand: Identifiable, Hashable {
     let id = UUID()
@@ -43,6 +44,7 @@ struct StartListView: View {
     @StateObject private var viewModel = StartListModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var saveModel = SavedViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     
     @State var isAgeDropdownShowing: Bool = false
     @State var isWeightDropdownShowing: Bool = false
@@ -335,6 +337,108 @@ struct StartListView: View {
         return event
     }
     
+    // Schedule notifications for all filtered sessions
+    func scheduleNotificationsForFilteredSessions() async {
+        // Ensure customer info is fetched first
+        await customerManager.fetchCustomerInfo()
+        
+        // Only schedule notifications for Pro users
+        guard customerManager.hasProAccess else {
+            print("Notifications are a Pro feature")
+            return
+        }
+        
+        let sessions = uniqueFilteredSessions
+        
+        // Check if notifications are authorized first
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized else {
+            print("Notifications not authorized")
+            return
+        }
+        
+        for session in sessions {
+            scheduleNotification(for: session)
+        }
+    }
+    
+    // Schedule a notification for a specific session
+    private func scheduleNotification(for session: ScheduleRow) {
+        let timeInterval = calculateNotificationTime(for: session)
+        
+        // Only schedule if the notification time is in the future
+        guard timeInterval > 1 else {
+            print("Session \(session.session_id) \(session.platform) is too soon or has passed, skipping notification")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Session \(session.session_id) \(session.platform) starts in 90 minutes"
+        content.subtitle = "Make sure to secure your platform!"
+        content.sound = UNNotificationSound.default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
+        
+        let identifier = "\(selectedMeet)-\(session.session_id)-\(session.platform)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to schedule notification for session \(session.session_id) \(session.platform): \(error.localizedDescription)")
+            } else {
+                let notificationDate = Date().addingTimeInterval(timeInterval)
+                let formatter = DateFormatter()
+                formatter.dateFormat = "MMM d, yyyy 'at' h:mm:ss a zzz"
+                formatter.locale = Locale(identifier: "en_US")
+                print("Notification scheduled for session \(session.session_id) \(session.platform): \(formatter.string(from: notificationDate)) (\(Int(timeInterval / 60)) minutes from now)")
+            }
+        }
+    }
+    
+    // Calculate notification time for a specific session (90 minutes before)
+    private func calculateNotificationTime(for session: ScheduleRow) -> TimeInterval {
+        // Get the meet's time zone
+        let meetTimeZoneIdentifier = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "America/Chicago"
+        guard let meetTimeZone = TimeZone(identifier: meetTimeZoneIdentifier) else {
+            return 5400 // Default to 90 minutes if timezone is invalid
+        }
+        
+        // Create a calendar with the meet's time zone
+        var meetCalendar = Calendar.current
+        meetCalendar.timeZone = meetTimeZone
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+        timeFormatter.timeZone = meetTimeZone
+        
+        guard let timeDate = timeFormatter.date(from: session.start_time) else {
+            return 5400
+        }
+        
+        let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
+        let dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: session.date)
+        
+        // Combine date and time with the meet's timezone
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        combinedComponents.second = timeComponents.second
+        combinedComponents.timeZone = meetTimeZone
+        
+        guard let sessionDateTime = meetCalendar.date(from: combinedComponents) else {
+            return 5400
+        }
+        
+        let notificationTime = sessionDateTime.addingTimeInterval(-5400) // 90 minutes before
+        let timeInterval = notificationTime.timeIntervalSinceNow
+        
+        return max(timeInterval, 1)
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -384,6 +488,9 @@ struct StartListView: View {
                         VStack(spacing: 16) {
                             Button{
                                 saveFilteredSessions()
+                                Task {
+                                    await scheduleNotificationsForFilteredSessions()
+                                }
                                 saveButtonClicked = false
                             } label: {
                                 HStack {
