@@ -9,6 +9,8 @@ import SwiftUI
 import SwiftData
 import Clerk
 import Combine
+import FirebaseCore
+
 
 @main
 struct meetcalApp: App {
@@ -31,21 +33,23 @@ struct meetcalApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.clerk, clerk)
-                .environmentObject(customerManager)
-                .task {
-                  clerk.configure(publishableKey: "pk_live_Y2xlcmsubWVldGNhbC5hcHAk")
-                  try? await clerk.load()
-
-                  // Sync RevenueCat with Clerk user after initial load
-                  await syncRevenueCatWithClerk()
-                }
-                .onChange(of: clerk.user) { oldUser, newUser in
-                    Task {
+            NavigationView {
+                ContentView()
+                    .environment(\.clerk, clerk)
+                    .environmentObject(customerManager)
+                    .task {
+                        clerk.configure(publishableKey: "pk_live_Y2xlcmsubWVldGNhbC5hcHAk")
+                        try? await clerk.load()
+                        
+                        // Sync RevenueCat with Clerk user after initial load
                         await syncRevenueCatWithClerk()
                     }
-                }
+                    .onChange(of: clerk.user) { oldUser, newUser in
+                        Task {
+                            await syncRevenueCatWithClerk()
+                        }
+                    }
+            }
         }
         .modelContainer(sharedModelContainer)
     }

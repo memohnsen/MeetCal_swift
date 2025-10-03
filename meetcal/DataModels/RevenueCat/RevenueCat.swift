@@ -8,20 +8,8 @@
 import RevenueCat
 import RevenueCatUI
 import SwiftUI
-import UIKit
 import Combine
 import Clerk
-
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
-        Purchases.logLevel = .debug
-        Purchases.configure(withAPIKey: "appl_UriFuFjiRHwcmgkTgoAgENezgcv")
-
-        return true
-    }
-}
 
 class CustomerInfoManager: ObservableObject {
     @Published var customerInfo: CustomerInfo?

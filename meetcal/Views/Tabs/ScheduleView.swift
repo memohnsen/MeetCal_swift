@@ -10,12 +10,16 @@ import Clerk
 
 struct ScheduleView: View {
     @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @AppStorage("has_launched_before") var hasLaunchedBefore = false
+
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
+    
     @StateObject private var viewModel = MeetsScheduleModel()
     
     @State private var authIsPresented = false
     @State private var showingMeetsOverlay: Bool = false
+    @State private var onboardingSheetShowing: Bool = false
     @State private var platformColor: String = ""
     
     var schedule: [ScheduleRow] { viewModel.schedule }
@@ -123,7 +127,17 @@ struct ScheduleView: View {
             }
         }
         .sheet(isPresented: $authIsPresented) {
-          AuthView()
+            AuthView()
+        }
+        .sheet(isPresented: $onboardingSheetShowing) {
+            OnboardingView()
+                .presentationDetents([.height(275)])
+        }
+        .onChange(of: authIsPresented) { oldValue, newValue in
+            if oldValue == true && newValue == false && clerk.user != nil && !hasLaunchedBefore {
+                onboardingSheetShowing = true
+                hasLaunchedBefore = true
+            }
         }
         .task {
             await viewModel.loadMeets()
