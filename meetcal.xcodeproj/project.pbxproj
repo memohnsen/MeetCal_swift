@@ -45,6 +45,7 @@
 		7111C83F2E663F6F0023BA6F /* meetcal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = meetcal.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7111C8502E663F700023BA6F /* meetcalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = meetcalTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7111C85A2E663F700023BA6F /* meetcalUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = meetcalUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		71B59F622E90885800B3F65B /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -121,6 +122,7 @@
 		7111C8362E663F6F0023BA6F = {
 			isa = PBXGroup;
 			children = (
+				71B59F622E90885800B3F65B /* Config.xcconfig */,
 				7111C8412E663F6F0023BA6F /* meetcal */,
 				7111C8532E663F700023BA6F /* meetcalTests */,
 				7111C85D2E663F700023BA6F /* meetcalUITests */,
@@ -436,6 +438,7 @@
 		};
 		7111C8662E663F700023BA6F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 71B59F622E90885800B3F65B /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -500,6 +503,7 @@
 		};
 		7111C8672E663F700023BA6F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 71B59F622E90885800B3F65B /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;

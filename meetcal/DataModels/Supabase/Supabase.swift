@@ -10,8 +10,8 @@ import Foundation
 import Supabase
 import Clerk
 
-let supabaseURL = "https://ztziuiiharxtvzitwzfv.supabase.co"
-let supabaseKey = "sb_publishable_SQ-w0vWM9q3r5eF6PCAFCQ_e12p8AmT"
+let supabaseURL = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as! String
+let supabaseKey = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_KEY") as! String
 
 let supabase = SupabaseClient(
   supabaseURL: URL(string: supabaseURL)!,
