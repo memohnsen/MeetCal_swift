@@ -6,39 +6,6 @@
 	<string></string>
 	<key>CFBundleIconFile</key>
 	<string></string>
-	<key>UIApplicationShortcutItems</key>
-	<array>
-		<dict>
-			<key>UIApplicationShortcutItemIconSymbolName</key>
-			<string>list.bullet</string>
-			<key>UIApplicationShortcutItemSubtitle</key>
-			<string>View competition qualifying totals</string>
-			<key>UIApplicationShortcutItemTitle</key>
-			<string>Qualifying Totals</string>
-			<key>UIApplicationShortcutItemType</key>
-			<string>totals</string>
-		</dict>
-		<dict>
-			<key>UIApplicationShortcutItemIconSymbolName</key>
-			<string>star.fill</string>
-			<key>UIApplicationShortcutItemSubtitle</key>
-			<string>Browse WSO records</string>
-			<key>UIApplicationShortcutItemTitle</key>
-			<string>WSO Records</string>
-			<key>UIApplicationShortcutItemType</key>
-			<string>wso</string>
-		</dict>
-		<dict>
-			<key>UIApplicationShortcutItemIconSymbolName</key>
-			<string>trophy.fill</string>
-			<key>UIApplicationShortcutItemSubtitle</key>
-			<string>Browse competition records</string>
-			<key>UIApplicationShortcutItemTitle</key>
-			<string>American Records</string>
-			<key>UIApplicationShortcutItemType</key>
-			<string>records</string>
-		</dict>
-	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

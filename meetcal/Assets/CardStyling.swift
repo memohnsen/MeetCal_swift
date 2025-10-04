@@ -15,7 +15,7 @@ struct CardStyling: ViewModifier {
             .frame(maxWidth: .infinity)
             .padding()
             .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-            .cornerRadius(12)
+            .cornerRadius(32)
     }
 }
 

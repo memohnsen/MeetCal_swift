@@ -19,6 +19,8 @@ struct CompDataView: View {
             List {
                 NavigationLink("Event Info", destination: EventInfoView())
                 
+                NavigationLink("Weightlifting Wrapped", destination: WLWrapped())
+                
                 if customerManager.hasProAccess {
                     NavigationLink(destination: QualifyingTotalsView()) {
                         Text("Qualifying Totals")
@@ -29,6 +31,24 @@ struct CompDataView: View {
                     } label: {
                         HStack {
                             Text("Qualifying Totals")
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.gray.opacity(0.5))
+                        }
+                    }
+                }
+                
+                if customerManager.hasProAccess {
+                    NavigationLink(destination: NationalRankingsView()) {
+                        Text("National Rankings")
+                    }
+                } else {
+                    Button {
+                        navigateToPaywall = true
+                    } label: {
+                        HStack {
+                            Text("National Rankings")
                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                             Spacer()
                             Image(systemName: "chevron.right")
