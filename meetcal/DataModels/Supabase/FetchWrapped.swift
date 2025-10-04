@@ -56,7 +56,7 @@ class WrappedModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("name", value: name)
+                .eq("name", value: name.capitalized)
                 .gte("date", value: startOf2024)
                 .execute()
             
@@ -74,6 +74,8 @@ class WrappedModel: ObservableObject {
         isLoading = true
         error = nil
 
+        print("Loading rankings for weight class: \(age)")
+
         do {
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -88,10 +90,12 @@ class WrappedModel: ObservableObject {
 
             let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
 
+            print("Loaded \(rows.count) rankings for \(age)")
+
             self.classRankings.removeAll()
             self.classRankings.append(contentsOf: rows)
         } catch {
-            print("Error: \(error)")
+            print("Error loading rankings: \(error)")
             self.error = error
         }
         isLoading = false
@@ -116,7 +120,7 @@ class WrappedModel: ObservableObject {
 
         let sortedAthletes = athleteMaxTotals.sorted { $0.value > $1.value }
 
-        if let ranking = sortedAthletes.firstIndex(where: { $0.key == athleteName }) {
+        if let ranking = sortedAthletes.firstIndex(where: { $0.key.lowercased() == athleteName.lowercased() }) {
             return ranking + 1
         }
 

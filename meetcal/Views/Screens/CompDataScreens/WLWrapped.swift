@@ -21,6 +21,7 @@ struct WLWrapped: View {
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
     @State private var hasSearched: Bool = false
+    @State private var shareImage: UIImage?
 
     var athleteResults: [AthleteResults] { viewModel.athleteResults }
     
@@ -148,7 +149,7 @@ struct WLWrapped: View {
                                 Image(systemName: "magnifyingglass")
                                     .font(.system(size: 60))
                                     .foregroundStyle(.blue)
-                                Text("Search for an athlete to see their wrapped stats")
+                                Text("Search for an athlete to see their Weightlifting Wrapped stats")
                                     .font(.title2)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -380,7 +381,7 @@ struct WLWrapped: View {
                                 Image(systemName: "person.fill.questionmark")
                                     .font(.system(size: 60))
                                     .foregroundStyle(.gray)
-                                Text("No data available for \"\(searchText)\" in 2025")
+                                Text("No data available for \"\(searchText)\" in 2024-2025")
                                     .font(.title2)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -402,8 +403,20 @@ struct WLWrapped: View {
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search for an athlete...")
             .toolbar {
                 ToolbarItem(placement: .bottomBar) {
-                    Image(systemName: "square.and.arrow.up")
+                    Button {
+                        shareImage = captureSnapshot()
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .disabled(viewModel.currentYearResults.isEmpty)
                 }
+            }
+            .sheet(item: Binding(
+                get: { shareImage.map { ShareableImage(image: $0) } },
+                set: { _ in shareImage = nil }
+            )) { shareable in
+                ShareSheet(items: [shareable.image])
+                    .presentationDetents([.medium, .large])
             }
             .task {
                 AnalyticsManager.shared.trackScreenView("Weightlifting Wrapped")
@@ -419,7 +432,6 @@ struct WLWrapped: View {
                         isGenerating = false
                         hasSearched = true
 
-                        // Track athlete search
                         AnalyticsManager.shared.trackAthleteSearched(
                             athleteName: newValue.trimmingCharacters(in: .whitespacesAndNewlines),
                             found: false // Will update after results load
@@ -427,7 +439,6 @@ struct WLWrapped: View {
 
                         await viewModel.loadResults(name: newValue.trimmingCharacters(in: .whitespacesAndNewlines))
 
-                        // Update search tracking with actual results
                         let found = viewModel.currentYearResults.count > 0
                         AnalyticsManager.shared.trackAthleteSearched(
                             athleteName: newValue.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -472,7 +483,7 @@ struct WLWrapped: View {
         You are a witty olympic weightlifting coach giving a humorous year-in-review roast to an athlete named \(searchText). Be playful and sarcastic, and a little mean. Use their stats to create funny observations.
 
         Stats for this year:
-        - Competitions: \(viewModel.currentYearResults.count)
+        - Competition Count: \(viewModel.currentYearResults.count)
         - Overall make rate: \(Int(stats.totalRate))%
         - Snatch make rate: \(Int(stats.snatchAverage))%
         - Clean & Jerk make rate: \(Int(stats.cjAverage))%
@@ -481,7 +492,7 @@ struct WLWrapped: View {
         - Best lift type: \(bestLift)
 
         Comparison to last year:
-        - Competitions change: \(viewModel.currentYearResults.count - viewModel.previousYearResults.count)
+        - Competition Count change: \(viewModel.currentYearResults.count - viewModel.previousYearResults.count)
         - Make rate change: \(Int(changeInMakeRate(thisYear: stats.totalRate, pastYear: pastStats.totalRate)))%
         - Best snatch improvement: \(bestSnatchThisYear - bestSnatchPastYear)kg
         - Best C&J improvement: \(bestCJThisYear - bestCJPastYear)kg
@@ -491,7 +502,6 @@ struct WLWrapped: View {
 
         let session = LanguageModelSession(instructions: prompt)
 
-        // Track roast generation attempt
         AnalyticsManager.shared.trackScreenView("Roast Generation")
 
         do {
@@ -499,7 +509,6 @@ struct WLWrapped: View {
             roastText = response.content
             roastedClicked = true
 
-            // Track successful roast generation
             PostHogSDK.shared.capture("roast_generated", properties: [
                 "athlete_name": searchText,
                 "competitions_count": viewModel.currentYearResults.count,
@@ -509,7 +518,6 @@ struct WLWrapped: View {
             errorMessage = "Failed to generate roast: \(error.localizedDescription)"
             showError = true
 
-            // Track roast generation failure
             PostHogSDK.shared.capture("roast_generation_failed", properties: [
                 "error": error.localizedDescription,
                 "athlete_name": searchText
@@ -529,6 +537,226 @@ struct WLWrapped: View {
         }
         return "\(number)\(suffix)"
     }
+
+    @MainActor
+    private func captureSnapshot() -> UIImage? {
+        let stats = makeRateThisYear()
+        let pastStats = makeRatePastYear()
+        let athleteName = searchText
+        let currentCount = viewModel.currentYearResults.count
+        let previousCount = viewModel.previousYearResults.count
+        let snatchThisYear = bestSnatchThisYear
+        let snatchPastYear = bestSnatchPastYear
+        let cjThisYear = bestCJThisYear
+        let cjPastYear = bestCJPastYear
+        let lift = bestLift
+        let weightClass = viewModel.currentYearResults.last?.age
+        let ranking = weightClass != nil ? viewModel.calculateNationalRanking(for: searchText, in: weightClass!, year: 2025) : nil
+
+        let view = VStack(spacing: 0) {
+            Text(athleteName.capitalized)
+                .font(.largeTitle)
+                .bold()
+                .padding(.top)
+
+            Text("Weightlifting Wrapped 2025")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+                .padding(.bottom)
+
+            Grid {
+                GridRow {
+                    HStack {
+                        VStack {
+                            Text("Meet Count")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(currentCount)")
+                                .padding(.bottom, 2)
+
+                            if currentCount > previousCount {
+                                Text("+\(currentCount - previousCount)")
+                                    .foregroundStyle(.green)
+                            } else if currentCount < previousCount {
+                                Text("\(currentCount - previousCount)")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+
+                    HStack {
+                        VStack {
+                            Text("Make Rate")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(Int(stats.totalRate))%")
+                                .padding(.bottom, 2)
+
+                            if changeInMakeRate(thisYear: stats.totalRate, pastYear: pastStats.totalRate) > 0 {
+                                Text("+\(Int(changeInMakeRate(thisYear: stats.totalRate, pastYear: pastStats.totalRate)))%")
+                                    .foregroundStyle(.green)
+                            } else if changeInMakeRate(thisYear: stats.totalRate, pastYear: pastStats.totalRate) < 0 {
+                                Text("\(Int(changeInMakeRate(thisYear: stats.totalRate, pastYear: pastStats.totalRate)))%")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+                }
+                GridRow {
+                    HStack {
+                        VStack {
+                            Text("Best Snatch")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(snatchThisYear)kg / \(Int(snatchPounds(lift: snatchThisYear)))lbs")
+                                .padding(.bottom, 2)
+
+                            if snatchThisYear - snatchPastYear > 0 {
+                                Text("+\(Int(snatchThisYear - snatchPastYear))kg / +\(Int(snatchPounds(lift: snatchThisYear)) - Int(snatchPounds(lift: snatchPastYear)))lbs")
+                                    .foregroundStyle(.green)
+                            } else if snatchThisYear - snatchPastYear < 0 {
+                                Text("\(Int(snatchThisYear - snatchPastYear))kg / \(Int(snatchPounds(lift: snatchThisYear)) - Int(snatchPounds(lift: snatchPastYear)))lbs")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+
+                    HStack {
+                        VStack {
+                            Text("Best CJ")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(cjThisYear)kg / \(Int(cjPounds(lift: cjThisYear)))lbs")
+                                .padding(.bottom, 2)
+
+                            if cjThisYear - cjPastYear > 0 {
+                                Text("+\(Int(cjThisYear - cjPastYear))kg / +\(Int(snatchPounds(lift: cjThisYear)) - Int(snatchPounds(lift: cjPastYear)))lbs")
+                                    .foregroundStyle(.green)
+                            } else if cjThisYear - cjPastYear < 0 {
+                                Text("\(Int(cjThisYear - cjPastYear))kg / \(Int(snatchPounds(lift: cjThisYear)) - Int(snatchPounds(lift: cjPastYear)))lbs")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+                }
+                GridRow {
+                    HStack {
+                        VStack {
+                            Text("Snatch Make Rate")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(Int(stats.snatchAverage))%")
+                                .padding(.bottom, 2)
+
+                            if changeInMakeRate(thisYear: stats.snatchAverage, pastYear: pastStats.snatchAverage) > 0 {
+                                Text("+\(Int(changeInMakeRate(thisYear: stats.snatchAverage, pastYear: pastStats.snatchAverage)))%")
+                                    .foregroundStyle(.green)
+                            } else if changeInMakeRate(thisYear: stats.snatchAverage, pastYear: pastStats.snatchAverage) < 0 {
+                                Text("\(Int(changeInMakeRate(thisYear: stats.snatchAverage, pastYear: pastStats.snatchAverage)))%")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+
+                    HStack {
+                        VStack {
+                            Text("CJ Make Rate")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(Int(stats.cjAverage))%")
+                                .padding(.bottom, 2)
+
+                            if changeInMakeRate(thisYear: stats.cjAverage, pastYear: pastStats.cjAverage) > 0 {
+                                Text("+\(Int(changeInMakeRate(thisYear: stats.cjAverage, pastYear: pastStats.cjAverage)))%")
+                                    .foregroundStyle(.green)
+                            } else if changeInMakeRate(thisYear: stats.cjAverage, pastYear: pastStats.cjAverage) < 0 {
+                                Text("\(Int(changeInMakeRate(thisYear: stats.cjAverage, pastYear: pastStats.cjAverage)))%")
+                                    .foregroundStyle(.red)
+                            } else {
+                                Text("No Change")
+                            }
+                        }
+                    }
+                    .cardStyling()
+                }
+                GridRow {
+                    HStack {
+                        VStack {
+                            Text("Best Lift")
+                                .bold()
+                                .padding(.bottom, 2)
+                            Text("\(lift)")
+                        }
+                    }
+                    .cardStyling()
+
+                    HStack {
+                        VStack {
+                            Text("National Ranking")
+                                .bold()
+                                .padding(.bottom, 2)
+
+                            if let ranking = ranking {
+                                Text(ordinalString(for: ranking))
+                                    .padding(.bottom, 2)
+                            } else {
+                                Text("N/A")
+                                    .padding(.bottom, 2)
+                            }
+                        }
+                    }
+                    .cardStyling()
+                }
+            }
+            .padding()
+        }
+        .frame(width: 400)
+        .background(Color(.systemGroupedBackground))
+
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = UIScreen.main.scale
+
+        guard let image = renderer.uiImage else {
+            print("ImageRenderer failed to create uiImage")
+            return nil
+        }
+
+        print("Successfully created image with size: \(image.size)")
+        return image
+    }
+}
+
+struct ShareableImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.excludedActivityTypes = []
+
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {
