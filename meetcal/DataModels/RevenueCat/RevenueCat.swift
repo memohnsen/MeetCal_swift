@@ -51,11 +51,24 @@ class CustomerInfoManager: ObservableObject {
 
             self.customerInfo = customerInfo
 
+            let wasProUser = hasProAccess
             if !customerInfo.entitlements.active.isEmpty {
                 hasProAccess = true
+
+                // Track new subscription (if wasn't pro before)
+                if !wasProUser {
+                    AnalyticsManager.shared.trackSubscriptionStarted(tier: "pro")
+                }
             } else {
+                if wasProUser {
+                    // Track subscription cancellation
+                    AnalyticsManager.shared.trackSubscriptionCancelled()
+                }
                 hasProAccess = false
             }
+
+            // Set user property for subscription status
+            AnalyticsManager.shared.setSubscriptionStatus(hasProAccess ? "pro" : "free")
         } catch {
             errorMessage = error.localizedDescription
             print("Error fetching customer info: \(error)")

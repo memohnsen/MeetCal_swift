@@ -130,6 +130,8 @@ struct WSORecordsView: View {
                     }
                 ))
         .task {
+            AnalyticsManager.shared.trackScreenView("WSO Records")
+            AnalyticsManager.shared.trackRecordsViewed(type: "wso")
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
         }
         .task {

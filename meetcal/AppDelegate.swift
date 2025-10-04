@@ -9,6 +9,7 @@ import UIKit
 import RevenueCat
 import FirebaseCore
 import FirebaseMessaging
+import PostHog
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(_ application: UIApplication,
@@ -17,6 +18,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         Purchases.logLevel = .debug
         let revenueCatKey = Bundle.main.object(forInfoDictionaryKey: "REVENUECAT_API_KEY") as! String
         Purchases.configure(withAPIKey: revenueCatKey)
+        
+        let POSTHOG_API_KEY = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as! String
+        let POSTHOG_HOST = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_HOST") as! String
+        let config = PostHogConfig(apiKey: POSTHOG_API_KEY, host: POSTHOG_HOST)
+        PostHogSDK.shared.setup(config)
 
         FirebaseApp.configure()
 
@@ -30,8 +36,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
                 print("Notification permission granted")
+                AnalyticsManager.shared.trackNotificationPermissionGranted()
+                AnalyticsManager.shared.setNotificationEnabled(true)
             } else if let error = error {
                 print("Error requesting notification permission: \(error)")
+                AnalyticsManager.shared.trackNotificationPermissionDenied()
+                AnalyticsManager.shared.setNotificationEnabled(false)
             }
         }
 
@@ -72,6 +82,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
         print("Notification tapped with userInfo: \(userInfo)")
+
+        // Track notification opened
+        let notificationType = userInfo["type"] as? String ?? "unknown"
+        AnalyticsManager.shared.trackNotificationOpened(type: notificationType)
+
         completionHandler()
     }
 }

@@ -130,6 +130,8 @@ struct AmericanRecordsView: View {
                     }
                 ))
         .task {
+            AnalyticsManager.shared.trackScreenView("American Records")
+            AnalyticsManager.shared.trackRecordsViewed(type: "american")
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
         }
         .task {

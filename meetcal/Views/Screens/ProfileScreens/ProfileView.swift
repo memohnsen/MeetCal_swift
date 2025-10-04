@@ -88,6 +88,7 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
             .task{
+                AnalyticsManager.shared.trackScreenView("Profile")
                 await customerManager.fetchCustomerInfo()
             }
         }

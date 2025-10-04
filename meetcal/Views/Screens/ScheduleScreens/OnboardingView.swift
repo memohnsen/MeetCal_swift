@@ -40,13 +40,19 @@ struct OnboardingView: View {
     
     private func requestNotificationAccess() {
         let center = UNUserNotificationCenter.current()
-        
+
+        AnalyticsManager.shared.trackNotificationPermissionRequested()
+
         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             DispatchQueue.main.async {
                 if granted {
                     print("Notification access granted")
+                    AnalyticsManager.shared.trackNotificationPermissionGranted()
+                    AnalyticsManager.shared.setNotificationEnabled(true)
                 } else {
                     print("Notification access denied: \(error?.localizedDescription ?? "Unknown error")")
+                    AnalyticsManager.shared.trackNotificationPermissionDenied()
+                    AnalyticsManager.shared.setNotificationEnabled(false)
                 }
             }
         }
@@ -55,6 +61,8 @@ struct OnboardingView: View {
     private func requestPermissions() {
         requestCalendarAccess()
         requestNotificationAccess()
+        AnalyticsManager.shared.trackOnboardingCompleted()
+        AnalyticsManager.shared.setOnboardingCompleted(true)
         dismiss()
     }
         
@@ -277,6 +285,11 @@ struct OnboardingView: View {
                     .padding(.top)
                 }
                 .padding(.horizontal)
+            }
+        }
+        .onAppear {
+            if pageCounter == 1 {
+                AnalyticsManager.shared.trackOnboardingStarted()
             }
         }
     }

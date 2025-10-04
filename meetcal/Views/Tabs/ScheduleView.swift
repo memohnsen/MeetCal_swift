@@ -140,6 +140,7 @@ struct ScheduleView: View {
             }
         }
         .task {
+            AnalyticsManager.shared.trackScreenView("Schedule")
             await viewModel.loadMeets()
             if selectedMeet.isEmpty, let first = viewModel.meets.first {
                 selectedMeet = first

@@ -48,6 +48,16 @@ struct meetcalApp: App {
                         Task {
                             await syncRevenueCatWithClerk()
                         }
+
+                        // Track authentication events
+                        if let newUser = newUser, oldUser == nil {
+                            // User just signed in or signed up
+                            AnalyticsManager.shared.identifyUser(userId: newUser.id)
+                            AnalyticsManager.shared.trackUserSignedIn(method: "clerk")
+                        } else if newUser == nil, oldUser != nil {
+                            // User just signed out
+                            AnalyticsManager.shared.trackUserSignedOut()
+                        }
                     }
             }
         }

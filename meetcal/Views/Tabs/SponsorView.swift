@@ -40,6 +40,10 @@ struct SponsorView: View {
                 }
             }
         }
+        .onAppear {
+            AnalyticsManager.shared.trackScreenView("Sponsors")
+            AnalyticsManager.shared.trackSponsorTabViewed()
+        }
     }
 }
 
@@ -51,7 +55,7 @@ struct SponsorCard: View {
     let code: String
     let image: String
     let link: String
-    
+
     var body: some View {
         Link(destination: URL(string: link)!) {
             VStack(alignment: .leading, spacing: 10) {
@@ -80,8 +84,11 @@ struct SponsorCard: View {
                 .foregroundStyle(colorScheme == .light ? .black : .white)
             }
             .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-            .cornerRadius(12)
+            .cornerRadius(32)
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            AnalyticsManager.shared.trackSponsorClicked(sponsorName: title)
+        })
     }
 }
 

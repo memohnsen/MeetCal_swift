@@ -59,6 +59,15 @@ struct SavedView: View {
                         if failCount == 0 {
                             alertTitle = "Success"
                             alertMessage = "Added \(successCount) session(s) to your calendar"
+
+                            // Track calendar additions
+                            for session in saved {
+                                AnalyticsManager.shared.trackMeetAddedToCalendar(
+                                    meetId: selectedMeet,
+                                    meetName: selectedMeet,
+                                    sessionType: "Session \(session.session_number) - \(session.platform)"
+                                )
+                            }
                         } else {
                             alertTitle = "Partial Success"
                             alertMessage = "Added \(successCount) session(s). Failed to add \(failCount) session(s)."
@@ -303,6 +312,7 @@ struct SavedView: View {
                 }
             }
             .task {
+                AnalyticsManager.shared.trackScreenView("Saved")
                 await viewModel.loadSaved(meet: selectedMeet)
             }
             .onChange(of: selectedMeet) {

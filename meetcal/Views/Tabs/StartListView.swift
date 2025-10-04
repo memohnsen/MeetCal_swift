@@ -155,6 +155,29 @@ struct StartListView: View {
         let clubParam: String? = (selectedClub == "All Clubs") ? nil : selectedClub
         let weightParam: String? = (selectedWeight == "All Weight Classes") ? nil : selectedWeight
         let genderParam: String? = (selectedGender == "All Genders") ? nil : selectedGender
+
+        // Track filters applied
+        var filterValues: [String: Any] = [:]
+        if let age = selectedAgeBand.range {
+            filterValues["age_range"] = "\(age.lowerBound)-\(age.upperBound)"
+        }
+        if let gender = genderParam {
+            filterValues["gender"] = gender
+        }
+        if let weight = weightParam {
+            filterValues["weight_class"] = weight
+        }
+        if let club = clubParam {
+            filterValues["club"] = club
+        }
+        if let adap = adapParam {
+            filterValues["adaptive"] = adap
+        }
+
+        if !filterValues.isEmpty {
+            AnalyticsManager.shared.trackFiltersApplied(type: "start_list", values: filterValues)
+        }
+
         Task {
             await viewModel.loadFilteredStartList(
                 meet: selectedMeet,
@@ -206,6 +229,12 @@ struct StartListView: View {
                         notes: ""
                     )
                     successCount += 1
+
+                    // Track meet saved
+                    AnalyticsManager.shared.trackMeetSaved(
+                        meetId: selectedMeet,
+                        meetName: selectedMeet
+                    )
                 } catch {
                     print("Failed to save session \(session.session_id) \(session.platform): \(error.localizedDescription)")
                     failCount += 1
@@ -278,6 +307,15 @@ struct StartListView: View {
                 self.alertTitle = failureCount == 0 ? "Added to Calendar" : "Added with Issues"
                 if failureCount == 0 {
                     self.alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s") to your calendar."
+
+                    // Track calendar additions
+                    for session in sessions {
+                        AnalyticsManager.shared.trackMeetAddedToCalendar(
+                            meetId: self.selectedMeet,
+                            meetName: self.selectedMeet,
+                            sessionType: "Session \(session.session_id) - \(session.platform)"
+                        )
+                    }
                 } else {
                     self.alertMessage = "Added \(successCount) of \(sessions.count) sessions. \(failureCount) failed."
                 }
@@ -365,10 +403,15 @@ struct StartListView: View {
     // Schedule a notification for a specific session
     private func scheduleNotification(for session: ScheduleRow) {
         let timeInterval = calculateNotificationTime(for: session)
-        
-        // Only schedule if the notification time is in the future
-        guard timeInterval > 1 else {
-            print("Session \(session.session_id) \(session.platform) is too soon or has passed, skipping notification")
+
+        // Only schedule if the notification time is at least 60 seconds in the future
+        // This prevents notifications for sessions that have passed or are starting very soon
+        guard timeInterval > 60 else {
+            if timeInterval < 0 {
+                print("Session \(session.session_id) \(session.platform) has already passed, skipping notification")
+            } else {
+                print("Session \(session.session_id) \(session.platform) starts too soon (less than 90 minutes), skipping notification")
+            }
             return
         }
         
@@ -400,25 +443,25 @@ struct StartListView: View {
         // Get the meet's time zone
         let meetTimeZoneIdentifier = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "America/Chicago"
         guard let meetTimeZone = TimeZone(identifier: meetTimeZoneIdentifier) else {
-            return 5400 // Default to 90 minutes if timezone is invalid
+            return -1 // Return negative to indicate invalid
         }
-        
+
         // Create a calendar with the meet's time zone
         var meetCalendar = Calendar.current
         meetCalendar.timeZone = meetTimeZone
-        
+
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
         timeFormatter.locale = Locale(identifier: "en_US_POSIX")
         timeFormatter.timeZone = meetTimeZone
-        
+
         guard let timeDate = timeFormatter.date(from: session.start_time) else {
-            return 5400
+            return -1 // Return negative to indicate invalid
         }
-        
+
         let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
         let dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: session.date)
-        
+
         // Combine date and time with the meet's timezone
         var combinedComponents = DateComponents()
         combinedComponents.year = dateComponents.year
@@ -428,15 +471,16 @@ struct StartListView: View {
         combinedComponents.minute = timeComponents.minute
         combinedComponents.second = timeComponents.second
         combinedComponents.timeZone = meetTimeZone
-        
+
         guard let sessionDateTime = meetCalendar.date(from: combinedComponents) else {
-            return 5400
+            return -1 // Return negative to indicate invalid
         }
-        
+
         let notificationTime = sessionDateTime.addingTimeInterval(-5400) // 90 minutes before
         let timeInterval = notificationTime.timeIntervalSinceNow
-        
-        return max(timeInterval, 1)
+
+        // Return the actual time interval (can be negative if in the past)
+        return timeInterval
     }
     
     var body: some View {
@@ -457,6 +501,15 @@ struct StartListView: View {
                     }
                 }
                 .searchable(text: $searchText, prompt: "Search for an athlete")
+                .onChange(of: searchText) { oldValue, newValue in
+                    if !newValue.isEmpty && newValue.count > 2 {
+                        // Track search when user types 3+ characters
+                        AnalyticsManager.shared.trackSearchPerformed(
+                            query: newValue,
+                            resultsCount: filteredAthletes.count
+                        )
+                    }
+                }
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Start List")
@@ -572,6 +625,7 @@ struct StartListView: View {
             }
         }
         .task{
+            AnalyticsManager.shared.trackScreenView("Start List")
             await viewModel.loadStartList(meet: selectedMeet)
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel2.loadMeetDetails(meetName: selectedMeet)

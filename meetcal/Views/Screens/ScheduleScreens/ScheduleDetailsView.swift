@@ -279,25 +279,25 @@ struct TopView: View {
     var notifTime: TimeInterval {
         let meetTimeZoneIdentifier = meetDetails.first(where: { $0.name == selectedMeet })?.time_zone ?? "America/Chicago"
         guard let meetTimeZone = TimeZone(identifier: meetTimeZoneIdentifier) else {
-            return 5400
+            return -1 // Return negative to indicate invalid
         }
-        
+
         // Create a calendar with the meet's time zone
         var meetCalendar = Calendar.current
         meetCalendar.timeZone = meetTimeZone
-        
+
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
         timeFormatter.locale = Locale(identifier: "en_US_POSIX")
         timeFormatter.timeZone = meetTimeZone
-        
+
         guard let timeDate = timeFormatter.date(from: startTime) else {
-            return 5400
+            return -1 // Return negative to indicate invalid
         }
-        
+
         let timeComponents = meetCalendar.dateComponents([.hour, .minute, .second], from: timeDate)
         let dateComponents = meetCalendar.dateComponents([.year, .month, .day], from: date)
-        
+
         var combinedComponents = DateComponents()
         combinedComponents.year = dateComponents.year
         combinedComponents.month = dateComponents.month
@@ -306,15 +306,16 @@ struct TopView: View {
         combinedComponents.minute = timeComponents.minute
         combinedComponents.second = timeComponents.second
         combinedComponents.timeZone = meetTimeZone
-        
+
         guard let sessionDateTime = meetCalendar.date(from: combinedComponents) else {
-            return 5400
+            return -1 // Return negative to indicate invalid
         }
-        
-        let notificationTime = sessionDateTime.addingTimeInterval(-5400)
+
+        let notificationTime = sessionDateTime.addingTimeInterval(-5400) // 90 minutes before
         let timeInterval = notificationTime.timeIntervalSinceNow
-        
-        return max(timeInterval, 1)
+
+        // Return the actual time interval (can be negative if in the past)
+        return timeInterval
     }
     
     var body: some View {
@@ -359,24 +360,33 @@ struct TopView: View {
                                         print("Notifications not authorized")
                                         return
                                     }
-                                    
-                                    let content = UNMutableNotificationContent()
-                                    content.title = "Session \(sessionNum) \(platformColor) starts in 90 minutes"
-                                    content.subtitle = "Make sure to secure your platform!"
-                                    content.sound = UNNotificationSound.default
-                                    
-                                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: notifTime, repeats: false)
-                                    
-                                    let identifier = "\(selectedMeet)-\(sessionNum)-\(platformColor)"
-                                    notificationIdentifier = identifier
-                                    let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-                                    
-                                    try await UNUserNotificationCenter.current().add(request)
-                                    let notificationDate = Date().addingTimeInterval(notifTime)
-                                    let formatter = DateFormatter()
-                                    formatter.dateFormat = "MMM d, yyyy 'at' h:mm:ss a zzz"
-                                    formatter.locale = Locale(identifier: "en_US")
-                                    print("Notification set for: \(formatter.string(from: notificationDate)) (\(Int(notifTime / 60)) minutes from now)")
+
+                                    // Only schedule notification if session is at least 90 minutes away
+                                    if notifTime > 60 {
+                                        let content = UNMutableNotificationContent()
+                                        content.title = "Session \(sessionNum) \(platformColor) starts in 90 minutes"
+                                        content.subtitle = "Make sure to secure your platform!"
+                                        content.sound = UNNotificationSound.default
+
+                                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: notifTime, repeats: false)
+
+                                        let identifier = "\(selectedMeet)-\(sessionNum)-\(platformColor)"
+                                        notificationIdentifier = identifier
+                                        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+                                        try await UNUserNotificationCenter.current().add(request)
+                                        let notificationDate = Date().addingTimeInterval(notifTime)
+                                        let formatter = DateFormatter()
+                                        formatter.dateFormat = "MMM d, yyyy 'at' h:mm:ss a zzz"
+                                        formatter.locale = Locale(identifier: "en_US")
+                                        print("Notification set for: \(formatter.string(from: notificationDate)) (\(Int(notifTime / 60)) minutes from now)")
+                                    } else {
+                                        if notifTime < 0 {
+                                            print("Session \(sessionNum) \(platformColor) has already passed, skipping notification")
+                                        } else {
+                                            print("Session \(sessionNum) \(platformColor) starts too soon (less than 90 minutes), skipping notification")
+                                        }
+                                    }
                                 } else {
                                     print("Not a pro user")
                                 }

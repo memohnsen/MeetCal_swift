@@ -122,6 +122,8 @@ struct QualifyingTotalsView: View {
             }
         ))
         .task {
+            AnalyticsManager.shared.trackScreenView("Qualifying Totals")
+            AnalyticsManager.shared.trackQualifyingTotalsViewed()
             await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
         }
         .task {

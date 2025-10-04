@@ -127,6 +127,8 @@ struct InternationalRankingsView: View {
             }
         ))
         .task {
+            AnalyticsManager.shared.trackScreenView("International Rankings")
+            AnalyticsManager.shared.trackRankingsViewed(filters: ["meet": appliedMeet, "gender": appliedGender, "age": appliedAge])
             await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
         }
         .task {

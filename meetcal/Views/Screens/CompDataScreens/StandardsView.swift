@@ -104,6 +104,8 @@ struct StandardsView: View {
                 }
         ))
         .task {
+            AnalyticsManager.shared.trackScreenView("Standards")
+            AnalyticsManager.shared.trackStandardsViewed()
             await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
         }
         .task {

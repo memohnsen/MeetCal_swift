@@ -12,24 +12,30 @@ import UserNotifications
 
 struct ContentView: View {
     @State private var search = ""
+    @State private var selectedTab: String = "Schedule"
     @StateObject private var customerManager = CustomerInfoManager()
-    
+
     var body: some View {
-        TabView{
-            Tab("Schedule", systemImage: "calendar") {
+        TabView(selection: $selectedTab){
+            Tab("Schedule", systemImage: "calendar", value: "Schedule") {
                 ScheduleView()
             }
-            Tab("Saved", systemImage: "bookmark.fill") {
+            Tab("Saved", systemImage: "bookmark.fill", value: "Saved") {
                 SavedView()
             }
-            Tab("Sponsors", systemImage: "star.fill") {
+            Tab("Sponsors", systemImage: "star.fill", value: "Sponsors") {
                 SponsorView()
             }
-            Tab("Search", systemImage: "magnifyingglass", role: .search) {
+            Tab("Search", systemImage: "magnifyingglass", value: "Start List", role: .search) {
                 NavigationStack {
                     StartListView()
                 }
                 .searchable(text: $search)
+            }
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            if !oldValue.isEmpty && oldValue != newValue {
+                AnalyticsManager.shared.trackTabSwitched(fromTab: oldValue, toTab: newValue)
             }
         }
         .onAppear{
