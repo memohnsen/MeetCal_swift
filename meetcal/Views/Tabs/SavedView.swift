@@ -194,6 +194,19 @@ struct SavedView: View {
             return false
         }
     }
+    
+    let platformColors = [1: "Red", 2: "White", 3: "Blue", 4: "Stars", 5: "Stripes", 6: "Rogue"]
+    
+    var dataSorted: [SessionsRow] {
+        saved.sorted { first, second in
+            if first.session_number != second.session_number {
+                return first.session_number < second.session_number
+            }
+            let firstKey = platformColors.first(where: { $0.value == first.platform })?.key ?? Int.max
+            let secondKey = platformColors.first(where: { $0.value == second.platform })?.key ?? Int.max
+            return firstKey < secondKey
+        }
+    }
         
     var body: some View {
         NavigationStack {
@@ -203,7 +216,7 @@ struct SavedView: View {
                 
                 ScrollView {
                     VStack {
-                        ForEach(saved) { session in
+                        ForEach(dataSorted) { session in
                             NavigationLink(destination:
                                             ScheduleDetailsView(
                                                 meet: selectedMeet,
@@ -327,4 +340,3 @@ struct SavedView: View {
 #Preview {
     SavedView()
 }
-
