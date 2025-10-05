@@ -21,6 +21,7 @@ struct ScheduleView: View {
     @State private var showingMeetsOverlay: Bool = false
     @State private var onboardingSheetShowing: Bool = false
     @State private var platformColor: String = ""
+    @State private var selectedTabIndex: Int = 0
     
     var schedule: [ScheduleRow] { viewModel.schedule }
     var meets: [String] { viewModel.meets }
@@ -33,83 +34,114 @@ struct ScheduleView: View {
         let unique = Array(Set(days))
         return unique.sorted()
     }
-
+    
     var body: some View {
         NavigationStack{
             if clerk.user != nil {
-                VStack {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Selected Meet")
-                                .bold()
-                                .padding(.bottom, 0.5)
-                            Text(selectedMeet)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.down")
-                            .secondaryText()
-                            .bold()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                    .onTapGesture {
-                        showingMeetsOverlay = true
-                    }
-                    .frame(height: 100)
-                    .padding(.top, 0)
-                    
-                    if viewModel.schedule.count == 0 {
-                        Spacer()
-                    }
-                    
+                ZStack {
                     VStack {
-                        if viewModel.isLoading {
-                            VStack {
-                                Spacer()
-                                ProgressView("Loading...")
-                                Spacer()
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Selected Meet")
+                                    .bold()
+                                    .padding(.bottom, 0.5)
+                                Text(selectedMeet)
                             }
-                            .padding(.top, -10)
-                            .navigationTitle("Loading...")
-                            .navigationBarTitleDisplayMode(.inline)
-                        } else if uniqueDays.count == 0 {
-                            VStack {
-                                Spacer()
-                                Image("meetcal-logo")
-                                    .resizable()
-                                    .frame(width: 140, height: 140)
-                                    .shadow(radius: 8)
-                                Text("No data for has been loaded yet for this meet.")
-                                Text("Check back soon!")
-                                Spacer()
-                            }
-                            .padding(.top, -10)
-                            .navigationTitle("TBD")
-                            .navigationBarTitleDisplayMode(.inline)
-                        } else {
-                            TabView {
-                                ForEach(uniqueDays, id: \.self) { day in
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .secondaryText()
+                                .bold()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                        .onTapGesture {
+                            showingMeetsOverlay = true
+                        }
+                        .frame(height: 100)
+                        .padding(.top, 0)
+                        
+                        if viewModel.schedule.count == 0 {
+                            Spacer()
+                        }
+                        
+                        VStack {
+                            if viewModel.isLoading {
+                                VStack {
+                                    Spacer()
+                                    ProgressView("Loading...")
+                                    Spacer()
+                                }
+                                .padding(.top, -10)
+                                .navigationTitle("Loading...")
+                                .navigationBarTitleDisplayMode(.inline)
+                            } else if uniqueDays.count == 0 {
+                                VStack {
+                                    Spacer()
+                                    Image("meetcal-logo")
+                                        .resizable()
+                                        .frame(width: 140, height: 140)
+                                        .shadow(radius: 8)
+                                    Text("No data for has been loaded yet for this meet.")
+                                    Text("Check back soon!")
+                                    Spacer()
+                                }
+                                .padding(.top, -10)
+                                .navigationTitle("TBD")
+                                .navigationBarTitleDisplayMode(.inline)
+                            } else {
+                                TabView(selection: $selectedTabIndex) {
+                                    ForEach(Array(uniqueDays.enumerated()), id: \.element) { index, day in
+                                        let calendar = Calendar.current
+                                        let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
+                                        DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
+                                            .background(Color.clear)
+                                            .safeAreaInset(edge: .bottom) {
+                                                Color.clear
+                                                    .frame(height: 40)
+                                            }
+                                            .safeAreaPadding(.top, 28)
+                                            .tag(index)
+                                    }
+                                }
+                                .tabViewStyle(.page(indexDisplayMode: .never))
+                                .background(Color.clear)
+                                .ignoresSafeArea(edges: .bottom)
+                                .onAppear {
                                     let calendar = Calendar.current
-                                    let rowsForDay = schedule.filter{ calendar.isDate($0.date, inSameDayAs: day )}
-                                    DaySessionsView(day: day, schedule: rowsForDay, meetDetails: meetDetails, isLoading: isLoading)
-                                        .background(Color.clear)
-                                        .safeAreaInset(edge: .bottom) {
-                                            Color.clear
-                                                .frame(height: 40)
-                                        }
-                                        .safeAreaPadding(.top, 28)
+                                    let today = calendar.startOfDay(for: Date())
+                                    if let todayIndex = uniqueDays.firstIndex(where: { calendar.isDate($0, inSameDayAs: today) }) {
+                                        selectedTabIndex = todayIndex
+                                    } else {
+                                        selectedTabIndex = 0
+                                    }
                                 }
                             }
-                            .tabViewStyle(.page(indexDisplayMode: .never))
-                            .background(Color.clear)
-                            .ignoresSafeArea(edges: .bottom)
+                        }
+                    }
+                    .background(Color(.systemGroupedBackground).ignoresSafeArea())
+
+                    if uniqueDays.count > 1 {
+                        VStack {
+                            Spacer()
+                            HStack(spacing: 8) {
+                                ForEach(0..<uniqueDays.count, id: \.self) { index in
+                                    Capsule()
+                                        .fill(index == selectedTabIndex ? Color.blue : Color.blue.opacity(0.3))
+                                        .frame(width: index == selectedTabIndex ? 20 : 8, height: 8)
+                                        .animation(.spring(response: 0.3), value: selectedTabIndex)
+                                }
+                            }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(.gray.opacity(0.2))
+                            .cornerRadius(32)
+                            .padding(.bottom, 15)
                         }
                     }
                 }
-                .background(Color(.systemGroupedBackground).ignoresSafeArea())
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         NavigationLink(destination: ProfileView()) {
@@ -124,6 +156,7 @@ struct ScheduleView: View {
                 }
             } else {
                 SignInView(action: { authIsPresented = true })
+                    .toolbar(.hidden, for: .tabBar)
             }
         }
         .sheet(isPresented: $authIsPresented) {
@@ -204,7 +237,6 @@ struct ScheduleView: View {
                     .cornerRadius(16)
                     .shadow(radius: 20)
                     .padding(.horizontal, 30)
-                    .toolbar(.hidden, for: .tabBar)
                     .refreshable{
                         await viewModel.loadMeets()
                     }
