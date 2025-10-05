@@ -4,13 +4,14 @@ MeetCal is an iOS app for tracking weightlifting competitions, schedules, and at
 
 ## Features
 
-- **Competition Schedule**: Browse and track upcoming weightlifting meets
-- **Start Lists**: Search for athletes and view competition start lists
-- **Records & Rankings**: Access American records, WSO records, and international rankings
-- **Qualifying Totals**: Check qualifying standards for various competitions
-- **Saved Meets**: Bookmark and save meets to your personal calendar
-- **Push Notifications**: Get reminders for weigh-ins and competition times
-- **Sponsors**: Support the app and view sponsor information
+- **Competition Schedule**: Browse schedules and start lists for all USAW National meets, WSO meets, and USAMW competitions with day-by-day navigation and custom page indicators
+- **Session Details**: View detailed athlete information including age, club, weight class, entry total, and complete USAW meet history for each session
+- **Start List Search**: Search and filter through complete start lists with advanced filtering options
+- **Competition Data**: Access qualifying totals, A/B standards, American records, WSO records, and international rankings
+- **Saved Sessions**: Bookmark important sessions in-app and sync to your calendar with push notifications 90 minutes before session start
+- **WL Wrapped**: Annual year-in-review statistics and competition insights
+- **Authentication**: Secure sign-in with Clerk authentication
+- **Onboarding**: Interactive feature walkthrough for new users
 
 ## Tech Stack
 

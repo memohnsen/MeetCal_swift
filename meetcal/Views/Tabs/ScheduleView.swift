@@ -154,6 +154,7 @@ struct ScheduleView: View {
                         }
                     }
                 }
+                .toolbar(showingMeetsOverlay ? .hidden : .visible, for: .tabBar)
             } else {
                 SignInView(action: { authIsPresented = true })
                     .toolbar(.hidden, for: .tabBar)
