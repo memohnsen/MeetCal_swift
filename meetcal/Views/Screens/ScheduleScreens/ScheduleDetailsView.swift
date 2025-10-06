@@ -13,7 +13,7 @@ import EventKit
 import UserNotifications
 
 struct ScheduleDetailsView: View {
-    @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
     @StateObject private var viewModel = ScheduleDetailsModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -60,7 +60,7 @@ struct ScheduleDetailsView: View {
 }
 
 struct TopView: View {
-    @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: MeetsScheduleModel
     @StateObject private var saveModel = SavedViewModel()

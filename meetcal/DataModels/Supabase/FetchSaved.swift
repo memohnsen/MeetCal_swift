@@ -135,13 +135,11 @@ class SavedViewModel: ObservableObject {
             self.saved = row
 
             // Save to App Group for widget access
-            if let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.meetcal") {
-                let encoder = JSONEncoder()
-                if let encoded = try? encoder.encode(row) {
-                    sharedDefaults.set(encoded, forKey: "savedSessions")
-                    // Tell the widget to reload
-                    WidgetCenter.shared.reloadAllTimelines()
-                }
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(row) {
+                UserDefaults.appGroup.set(encoded, forKey: "savedSessions")
+                // Tell the widget to reload
+                WidgetCenter.shared.reloadAllTimelines()
             }
         } catch {
             print("Error: \(error)")

@@ -7,9 +7,10 @@
 
 import SwiftUI
 import Clerk
+import WidgetKit
 
 struct ScheduleView: View {
-    @AppStorage("selectedMeet", store: UserDefaults(suiteName: "group.com.memohnsen.meetcal")) private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
     @AppStorage("has_launched_before") var hasLaunchedBefore = false
 
     @Environment(\.colorScheme) var colorScheme
@@ -187,6 +188,8 @@ struct ScheduleView: View {
                 await viewModel.loadMeetSchedule(meet: selectedMeet)
                 await viewModel.loadMeetDetails(meetName: selectedMeet)
             }
+            // Reload widget when selected meet changes
+            WidgetCenter.shared.reloadAllTimelines()
         }
         .refreshable {
             await viewModel.loadMeetSchedule(meet: selectedMeet)
@@ -249,7 +252,7 @@ struct ScheduleView: View {
 
 private struct DaySessionsView: View {
     @Environment(\.colorScheme) var colorScheme
-    @AppStorage("selectedMeet", store: UserDefaults(suiteName: "group.com.memohnsen.meetcal")) private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
     
     let day: Date
     let schedule: [ScheduleRow]

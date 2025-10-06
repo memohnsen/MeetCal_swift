@@ -10,9 +10,10 @@ import RevenueCat
 import RevenueCatUI
 import EventKit
 import UserNotifications
+import WidgetKit
 
 struct SavedView: View {
-    @AppStorage("selectedMeet") private var selectedMeet = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = SavedViewModel()
     @StateObject private var meetViewModel = MeetsScheduleModel()
@@ -332,6 +333,8 @@ struct SavedView: View {
                 Task {
                     await viewModel.loadSaved(meet: selectedMeet)
                 }
+                // Reload widget when selected meet changes
+                WidgetCenter.shared.reloadAllTimelines()
             }
         }
     }

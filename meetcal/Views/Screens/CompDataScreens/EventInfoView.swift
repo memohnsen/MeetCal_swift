@@ -9,7 +9,7 @@ import SwiftUI
 
 struct EventInfoView: View {
     @StateObject private var viewModel = MeetsScheduleModel()
-    @AppStorage("selectedMeet") private var selectedMeet = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     

@@ -27,11 +27,7 @@ struct Provider: TimelineProvider {
     private func loadEntry() -> SimpleEntry {
         print("Widget: loadEntry called")
 
-        guard let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.meetcal") else {
-            print("Widget: Failed to access App Group")
-            return SimpleEntry(date: Date(), sessions: [], selectedMeet: "No App Group")
-        }
-
+        let sharedDefaults = UserDefaults.appGroup
         let selectedMeet = sharedDefaults.string(forKey: "selectedMeet") ?? ""
         print("Widget: selectedMeet = \(selectedMeet)")
 
@@ -48,14 +44,17 @@ struct Provider: TimelineProvider {
 
         print("Widget: Decoded \(savedSessions.count) sessions")
 
-        let widgetSessions = savedSessions.map { session in
-            WidgetSession(
-                platform: session.platform,
-                sessionNumber: session.session_number,
-                startTime: session.start_time,
-                weightClass: session.weight_class
-            )
-        }
+        let widgetSessions = savedSessions
+            .map { session in
+                WidgetSession(
+                    platform: session.platform,
+                    sessionNumber: session.session_number,
+                    startTime: session.start_time,
+                    weightClass: session.weight_class,
+                    date: session.date
+                )
+            }
+            .filter { !$0.isPast } // Filter out past sessions
 
         return SimpleEntry(date: Date(), sessions: widgetSessions, selectedMeet: selectedMeet)
     }
@@ -71,6 +70,7 @@ struct SessionsRowForWidget: Codable {
     let session_number: Int
     let start_time: String
     let weight_class: String
+    let date: String
 }
 
 struct WidgetSession: Codable {
@@ -78,6 +78,7 @@ struct WidgetSession: Codable {
     let sessionNumber: Int
     let startTime: String
     let weightClass: String
+    let date: String
 
     var formattedStartTime: String {
         let inputFormatter = DateFormatter()
@@ -93,6 +94,48 @@ struct WidgetSession: Codable {
             return outputFormatter.string(from: time)
         }
         return startTime
+    }
+
+    var sessionDateTime: Date? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        guard let sessionDate = dateFormatter.date(from: date) else {
+            return nil
+        }
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        guard let timeDate = timeFormatter.date(from: startTime) else {
+            return nil
+        }
+
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: sessionDate)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: timeDate)
+
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        combinedComponents.second = timeComponents.second
+        combinedComponents.timeZone = TimeZone(secondsFromGMT: 0)
+
+        return calendar.date(from: combinedComponents)
+    }
+
+    var isPast: Bool {
+        guard let sessionDateTime = sessionDateTime else {
+            return false
+        }
+        return sessionDateTime < Date()
     }
 }
 
@@ -166,6 +209,7 @@ struct MediumWidgetView: View {
                     .foregroundStyle(.blue)
                     .lineLimit(1)
                 Spacer()
+                Spacer()
             }
             .padding(.top)
 
@@ -199,6 +243,7 @@ struct LargeWidgetView: View {
                     .bold()
                     .foregroundStyle(.blue)
                     .lineLimit(1)
+                Spacer()
                 Spacer()
             }
             .padding(.top)
@@ -259,9 +304,9 @@ struct SavedWidget: Widget {
     SimpleEntry(
         date: .now,
         sessions: [
-            WidgetSession(platform: "Red", sessionNumber: 1, startTime: "08:00:00", weightClass: "M81"),
-            WidgetSession(platform: "Stripes", sessionNumber: 2, startTime: "10:30:00", weightClass: "W71"),
-            WidgetSession(platform: "Stars", sessionNumber: 3, startTime: "14:00:00", weightClass: "M102")
+            WidgetSession(platform: "Red", sessionNumber: 1, startTime: "08:00:00", weightClass: "M81", date: "2025-10-04"),
+            WidgetSession(platform: "Blue", sessionNumber: 2, startTime: "10:30:00", weightClass: "W71", date: "2025-10-04"),
+            WidgetSession(platform: "Stars", sessionNumber: 3, startTime: "14:00:00", weightClass: "M102", date: "2025-10-04"),
         ],
         selectedMeet: "2025 New England WSO Championships"
     )
@@ -274,15 +319,15 @@ struct SavedWidget: Widget {
     SimpleEntry(
         date: .now,
         sessions: [
-            WidgetSession(platform: "Red", sessionNumber: 1, startTime: "08:00:00", weightClass: "M81"),
-            WidgetSession(platform: "Blue", sessionNumber: 2, startTime: "10:30:00", weightClass: "W71"),
-            WidgetSession(platform: "Stars", sessionNumber: 3, startTime: "14:00:00", weightClass: "M102"),
-            WidgetSession(platform: "White", sessionNumber: 4, startTime: "16:00:00", weightClass: "W59"),
-            WidgetSession(platform: "Stripes", sessionNumber: 5, startTime: "18:30:00", weightClass: "M89"),
-            WidgetSession(platform: "Rogue", sessionNumber: 6, startTime: "20:00:00", weightClass: "W76"),
-            WidgetSession(platform: "Red", sessionNumber: 7, startTime: "09:00:00", weightClass: "M73"),
-            WidgetSession(platform: "Blue", sessionNumber: 8, startTime: "12:00:00", weightClass: "W64"),
-            WidgetSession(platform: "Stars", sessionNumber: 9, startTime: "15:30:00", weightClass: "M96")
+            WidgetSession(platform: "Red", sessionNumber: 1, startTime: "08:00:00", weightClass: "M81", date: "2025-10-04"),
+            WidgetSession(platform: "Blue", sessionNumber: 2, startTime: "10:30:00", weightClass: "W71", date: "2025-10-04"),
+            WidgetSession(platform: "Stars", sessionNumber: 3, startTime: "14:00:00", weightClass: "M102", date: "2025-10-04"),
+            WidgetSession(platform: "White", sessionNumber: 4, startTime: "16:00:00", weightClass: "W59", date: "2025-10-04"),
+            WidgetSession(platform: "Stripes", sessionNumber: 5, startTime: "18:30:00", weightClass: "M89", date: "2025-10-04"),
+            WidgetSession(platform: "Rogue", sessionNumber: 6, startTime: "20:00:00", weightClass: "W76", date: "2025-10-04"),
+            WidgetSession(platform: "Red", sessionNumber: 7, startTime: "09:00:00", weightClass: "M73", date: "2025-10-04"),
+            WidgetSession(platform: "Blue", sessionNumber: 8, startTime: "12:00:00", weightClass: "W64", date: "2025-10-04"),
+            WidgetSession(platform: "Stars", sessionNumber: 9, startTime: "15:30:00", weightClass: "M96", date: "2025-10-04")
         ],
         selectedMeet: "2025 New England WSO Championships"
     )

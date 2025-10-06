@@ -39,7 +39,7 @@ private let defaultAgeBands: [AgeBand] = [
 ]
 
 struct StartListView: View {
-    @AppStorage("selectedMeet") private var selectedMeet = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var viewModel = StartListModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
@@ -662,7 +662,7 @@ struct StartListView: View {
 }
 
 private struct AthleteDisclosureRow: View {
-    @AppStorage("selectedMeet") private var selectedMeet = ""
+    @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     
     let athlete: AthleteRow
     let schedule: ScheduleRow?
