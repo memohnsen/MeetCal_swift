@@ -9,7 +9,7 @@ import SwiftUI
 import Clerk
 
 struct ScheduleView: View {
-    @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: UserDefaults(suiteName: "group.com.memohnsen.meetcal")) private var selectedMeet: String = ""
     @AppStorage("has_launched_before") var hasLaunchedBefore = false
 
     @Environment(\.colorScheme) var colorScheme
@@ -249,7 +249,7 @@ struct ScheduleView: View {
 
 private struct DaySessionsView: View {
     @Environment(\.colorScheme) var colorScheme
-    @AppStorage("selectedMeet") private var selectedMeet: String = ""
+    @AppStorage("selectedMeet", store: UserDefaults(suiteName: "group.com.memohnsen.meetcal")) private var selectedMeet: String = ""
     
     let day: Date
     let schedule: [ScheduleRow]

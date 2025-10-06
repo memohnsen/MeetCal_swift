@@ -9,8 +9,9 @@ import SwiftUI
 import Supabase
 import Combine
 import Clerk
+import WidgetKit
 
-struct SessionsRow: Decodable, Identifiable, Hashable, Sendable {
+struct SessionsRow: Decodable, Identifiable, Hashable, Sendable, Encodable {
     let id: String
     let clerk_user_id: String
     let meet: String
@@ -132,6 +133,16 @@ class SavedViewModel: ObservableObject {
             let row = try JSONDecoder().decode([SessionsRow].self, from: response.data)
 
             self.saved = row
+
+            // Save to App Group for widget access
+            if let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.meetcal") {
+                let encoder = JSONEncoder()
+                if let encoded = try? encoder.encode(row) {
+                    sharedDefaults.set(encoded, forKey: "savedSessions")
+                    // Tell the widget to reload
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
+            }
         } catch {
             print("Error: \(error)")
             self.error = error
