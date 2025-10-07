@@ -38,7 +38,9 @@ struct SavedView: View {
             eventStore.requestWriteOnlyAccessToEvents { (granted, error) in
                 DispatchQueue.main.async {
                     if let error = error {
+                        #if DEBUG
                         print("Error requesting access: \(error.localizedDescription)")
+                        #endif
                         alertTitle = "Calendar Access Error"
                         alertMessage = error.localizedDescription
                         alertShowing = true
@@ -59,7 +61,7 @@ struct SavedView: View {
 
                         if failCount == 0 {
                             alertTitle = "Success"
-                            alertMessage = "Added \(successCount) session(s) to your calendar"
+                            alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s") to your calendar"
 
                             // Track calendar additions
                             for session in saved {
@@ -71,7 +73,7 @@ struct SavedView: View {
                             }
                         } else {
                             alertTitle = "Partial Success"
-                            alertMessage = "Added \(successCount) session(s). Failed to add \(failCount) session(s)."
+                            alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s"). Failed to add \(failCount) session\(failCount == 1 ? "" : "s")."
                         }
                         alertShowing = true
                     } else {
@@ -141,7 +143,9 @@ struct SavedView: View {
             try eventStore.save(event, span: .thisEvent)
             return true
         } catch {
+            #if DEBUG
             print("Failed to save event: \(error.localizedDescription)")
+            #endif
             return false
         }
     }
@@ -191,7 +195,9 @@ struct SavedView: View {
             try eventStore.save(event, span: .thisEvent)
             return true
         } catch {
+            #if DEBUG
             print("Failed to save event: \(error.localizedDescription)")
+            #endif
             return false
         }
     }
@@ -301,7 +307,9 @@ struct SavedView: View {
                                         .filter { $0.hasPrefix(selectedMeet) }
                                     
                                     center.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
+                                    #if DEBUG
                                     print(identifiersToRemove)
+                                    #endif
                                 }
                                 alertShowing = true
                                 alertTitle = "Sessions Deleted"

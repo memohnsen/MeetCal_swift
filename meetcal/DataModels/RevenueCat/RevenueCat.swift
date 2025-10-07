@@ -25,7 +25,9 @@ class CustomerInfoManager: ObservableObject {
             hasProAccess = !customerInfo.entitlements.active.isEmpty
         } catch {
             errorMessage = error.localizedDescription
+            #if DEBUG
             print("Error logging in to RevenueCat: \(error)")
+            #endif
         }
     }
 
@@ -37,7 +39,9 @@ class CustomerInfoManager: ObservableObject {
             hasProAccess = false
         } catch {
             errorMessage = error.localizedDescription
+            #if DEBUG
             print("Error logging out from RevenueCat: \(error)")
+            #endif
         }
     }
 
@@ -71,7 +75,9 @@ class CustomerInfoManager: ObservableObject {
             AnalyticsManager.shared.setSubscriptionStatus(hasProAccess ? "pro" : "free")
         } catch {
             errorMessage = error.localizedDescription
+            #if DEBUG
             print("Error fetching customer info: \(error)")
+            #endif
         }
 
         isLoading = false

@@ -38,7 +38,8 @@ struct meetcalApp: App {
                     .environment(\.clerk, clerk)
                     .environmentObject(customerManager)
                     .task {
-                        clerk.configure(publishableKey: "pk_live_Y2xlcmsubWVldGNhbC5hcHAk")
+                        let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
+                        clerk.configure(publishableKey: clerkKey)
                         try? await clerk.load()
                         
                         // Sync RevenueCat with Clerk user after initial load

@@ -97,6 +97,24 @@ struct CompDataView: View {
                             }
                         }
                     }
+                    
+                    if customerManager.hasProAccess {
+                        NavigationLink(destination: AdaptiveRecordsView()) {
+                            Text("Adaptive American Records")
+                        }
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("Adaptive American Records")
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.gray.opacity(0.5))
+                            }
+                        }
+                    }
                 }
                     
                 

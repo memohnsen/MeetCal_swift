@@ -236,7 +236,9 @@ struct StartListView: View {
                         meetName: selectedMeet
                     )
                 } catch {
+                    #if DEBUG
                     print("Failed to save session \(session.session_id) \(session.platform): \(error.localizedDescription)")
+                    #endif
                     failCount += 1
                 }
             }
@@ -265,7 +267,9 @@ struct StartListView: View {
         let eventStore = EKEventStore()
 
         let authStatus = EKEventStore.authorizationStatus(for: .event)
+        #if DEBUG
         print("Current auth status: \(authStatus.rawValue)")
+        #endif
 
         eventStore.requestWriteOnlyAccessToEvents { (granted, error) in
             DispatchQueue.main.async {
@@ -296,7 +300,9 @@ struct StartListView: View {
                             try eventStore.save(event, span: .thisEvent)
                             successCount += 1
                         } catch {
+                            #if DEBUG
                             print("Failed to save event for session \(session.session_id) \(session.platform): \(error.localizedDescription)")
+                            #endif
                             failureCount += 1
                         }
                     } else {
@@ -317,7 +323,7 @@ struct StartListView: View {
                         )
                     }
                 } else {
-                    self.alertMessage = "Added \(successCount) of \(sessions.count) sessions. \(failureCount) failed."
+                    self.alertMessage = "Added \(successCount) of \(sessions.count) session\(sessions.count == 1 ? "" : "s"). \(failureCount) failed."
                 }
                 self.alertShowing = true
             }
@@ -382,7 +388,9 @@ struct StartListView: View {
         
         // Only schedule notifications for Pro users
         guard customerManager.hasProAccess else {
+            #if DEBUG
             print("Notifications are a Pro feature")
+            #endif
             return
         }
         
@@ -391,7 +399,9 @@ struct StartListView: View {
         // Check if notifications are authorized first
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         guard settings.authorizationStatus == .authorized else {
+            #if DEBUG
             print("Notifications not authorized")
+            #endif
             return
         }
         
@@ -407,11 +417,13 @@ struct StartListView: View {
         // Only schedule if the notification time is at least 60 seconds in the future
         // This prevents notifications for sessions that have passed or are starting very soon
         guard timeInterval > 60 else {
+            #if DEBUG
             if timeInterval < 0 {
                 print("Session \(session.session_id) \(session.platform) has already passed, skipping notification")
             } else {
                 print("Session \(session.session_id) \(session.platform) starts too soon (less than 90 minutes), skipping notification")
             }
+            #endif
             return
         }
         
@@ -426,6 +438,7 @@ struct StartListView: View {
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
         
         UNUserNotificationCenter.current().add(request) { error in
+            #if DEBUG
             if let error = error {
                 print("Failed to schedule notification for session \(session.session_id) \(session.platform): \(error.localizedDescription)")
             } else {
@@ -435,6 +448,7 @@ struct StartListView: View {
                 formatter.locale = Locale(identifier: "en_US")
                 print("Notification scheduled for session \(session.session_id) \(session.platform): \(formatter.string(from: notificationDate)) (\(Int(timeInterval / 60)) minutes from now)")
             }
+            #endif
         }
     }
     

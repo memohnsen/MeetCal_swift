@@ -485,7 +485,11 @@ struct BottomView: View {
                         .padding(.top, 8)
                     
                     VStack(alignment: .leading) {
-                        Text("Age: \(athlete.age) • Weight Class: \(athlete.weight_class)")
+                        Text("Age: \(athlete.age)")
+                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                            .padding(.top, 0.5)
+                            .font(.system(size: 16))
+                        Text("Weight Class: \(athlete.weight_class)")
                             .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
                             .padding(.top, 0.5)
                             .font(.system(size: 16))
@@ -596,5 +600,5 @@ struct BottomView: View {
 }
 
 #Preview {
-    ScheduleDetailsView(meet: "2025 New England WSO Championships", date: .now, sessionNum: 1, platformColor: "Blue", weightClass: "F 58B", startTime: "8:00")
+    ScheduleDetailsView(meet: "2025 Iowa-Nebraska WSO Championships", date: .now, sessionNum: 1, platformColor: "Red", weightClass: "F 58B", startTime: "8:00")
 }

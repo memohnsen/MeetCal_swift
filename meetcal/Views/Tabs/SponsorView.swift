@@ -61,7 +61,7 @@ struct SponsorCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Image(image)
                     .resizable()
-                    .frame(height: 200)
+                    .frame(height: 150)
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity)
                 
@@ -71,9 +71,9 @@ struct SponsorCard: View {
                             .font(.system(size: 18))
                             .bold()
                         Text(caption)
-                            .font(.system(size: 16))
+                            .font(.system(size: 14))
                         Text(code)
-                            .font(.system(size: 16))
+                            .font(.system(size: 14))
                     }
                     Spacer()
                     Image(systemName: "chevron.right")

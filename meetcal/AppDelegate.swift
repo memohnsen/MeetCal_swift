@@ -15,7 +15,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 
+        #if DEBUG
         Purchases.logLevel = .debug
+        #endif
         let revenueCatKey = Bundle.main.object(forInfoDictionaryKey: "REVENUECAT_API_KEY") as! String
         Purchases.configure(withAPIKey: revenueCatKey)
         
@@ -35,11 +37,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Request notification permissions
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
+                #if DEBUG
                 print("Notification permission granted")
+                #endif
                 AnalyticsManager.shared.trackNotificationPermissionGranted()
                 AnalyticsManager.shared.setNotificationEnabled(true)
             } else if let error = error {
+                #if DEBUG
                 print("Error requesting notification permission: \(error)")
+                #endif
                 AnalyticsManager.shared.trackNotificationPermissionDenied()
                 AnalyticsManager.shared.setNotificationEnabled(false)
             }
@@ -61,7 +67,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        #if DEBUG
         print("Failed to register for remote notifications: \(error)")
+        #endif
     }
 
     // MARK: - MessagingDelegate
@@ -81,7 +89,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // Handle notification tap
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
+        #if DEBUG
         print("Notification tapped with userInfo: \(userInfo)")
+        #endif
 
         // Track notification opened
         let notificationType = userInfo["type"] as? String ?? "unknown"

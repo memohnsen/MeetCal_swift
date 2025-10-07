@@ -144,7 +144,9 @@ struct FeedbackView: View {
         } catch {
             alertTitle = "Error"
             alertMessage = "An unexpected error occurred. Please try again."
+            #if DEBUG
             print("Feedback error: \(error)")
+            #endif
         }
         
         isLoading = false

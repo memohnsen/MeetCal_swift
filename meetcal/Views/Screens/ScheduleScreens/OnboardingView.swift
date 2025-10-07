@@ -22,19 +22,27 @@ struct OnboardingView: View {
         case .notDetermined:
             eventStore.requestFullAccessToEvents { granted, error in
                 DispatchQueue.main.async {
+                    #if DEBUG
                     if granted {
                         print("Calendar access granted")
                     } else {
                         print("Calendar access denied: \(error?.localizedDescription ?? "Unknown error")")
                     }
+                    #endif
                 }
             }
         case .denied, .restricted:
+            #if DEBUG
             print("Calendar access previously denied or restricted")
+            #endif
         case .fullAccess, .writeOnly:
+            #if DEBUG
             print("Calendar access already granted")
+            #endif
         @unknown default:
+            #if DEBUG
             print("Unknown calendar authorization status")
+            #endif
         }
     }
     
@@ -46,11 +54,15 @@ struct OnboardingView: View {
         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             DispatchQueue.main.async {
                 if granted {
+                    #if DEBUG
                     print("Notification access granted")
+                    #endif
                     AnalyticsManager.shared.trackNotificationPermissionGranted()
                     AnalyticsManager.shared.setNotificationEnabled(true)
                 } else {
+                    #if DEBUG
                     print("Notification access denied: \(error?.localizedDescription ?? "Unknown error")")
+                    #endif
                     AnalyticsManager.shared.trackNotificationPermissionDenied()
                     AnalyticsManager.shared.setNotificationEnabled(false)
                 }
