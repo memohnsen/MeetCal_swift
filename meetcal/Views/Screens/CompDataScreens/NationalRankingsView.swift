@@ -75,7 +75,7 @@ struct NationalRankingsView: View {
             prefix = "\(gender)'s Masters (80-84)"
         case "Masters 85":
             prefix = "\(gender)'s Masters (85-89)"
-        case "Maste's 90+":
+        case "Masters 90+":
             prefix = "\(gender)'s Masters (90+)"
 
         default:
