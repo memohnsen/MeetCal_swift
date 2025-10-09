@@ -228,6 +228,7 @@ struct ScheduleView: View {
                                     .onTapGesture{
                                         selectedMeet = meet
                                         showingMeetsOverlay = false
+                                        AnalyticsManager.shared.trackMeetSelected(meetName: meet)
                                     }
                                     
                                     Divider()

@@ -91,6 +91,12 @@ class AnalyticsManager {
         ])
     }
 
+    func trackMeetSelected(meetName: String) {
+        PostHogSDK.shared.capture("meet_selected", properties: [
+            "meet_name": meetName
+        ])
+    }
+
     // MARK: - Search & Browse
     func trackSearchPerformed(query: String, resultsCount: Int) {
         PostHogSDK.shared.capture("search_performed", properties: [

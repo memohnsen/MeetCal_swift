@@ -392,6 +392,22 @@ struct WLWrapped: View {
                             }
                             .padding()
                         }
+                        
+                        HStack {
+                            Text("Share Your Wrapped")
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .foregroundStyle(.white)
+                        .background(.blue)
+                        .cornerRadius(32)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
+                        .padding(.top, 4)
+                        .onTapGesture{
+                            shareImage = captureSnapshot()
+                        }
                     }
                     .padding(.horizontal)
                     .padding(.bottom)
@@ -401,16 +417,6 @@ struct WLWrapped: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.visible, for: .tabBar)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search for an athlete...")
-            .toolbar {
-                ToolbarItem(placement: .bottomBar) {
-                    Button {
-                        shareImage = captureSnapshot()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    .disabled(viewModel.currentYearResults.isEmpty)
-                }
-            }
             .sheet(item: Binding(
                 get: { shareImage.map { ShareableImage(image: $0) } },
                 set: { _ in shareImage = nil }
