@@ -501,23 +501,26 @@ struct StartListView: View {
         NavigationStack {
             VStack {
                 List {
-                    ForEach(filteredAthletes, id: \.member_id) { athlete in
-                        let matchedSchedule = matchSchedule(for: athlete)
-                        let formattedDateTime = matchedSchedule.map(displayDateTime(for:)) ?? "TBD"
-                        
-                        AthleteDisclosureRow(
-                            athlete: athlete,
-                            schedule: matchedSchedule,
-                            dateTimeText: formattedDateTime,
-                            colorScheme: colorScheme,
-                            viewModel: viewModel
-                        )
+                    if filteredAthletes.isEmpty && !searchText.isEmpty {
+                        Text("Cannot find \(searchText) in the Start List.")
+                    } else {
+                        ForEach(filteredAthletes, id: \.member_id) { athlete in
+                            let matchedSchedule = matchSchedule(for: athlete)
+                            let formattedDateTime = matchedSchedule.map(displayDateTime(for:)) ?? "TBD"
+                            
+                            AthleteDisclosureRow(
+                                athlete: athlete,
+                                schedule: matchedSchedule,
+                                dateTimeText: formattedDateTime,
+                                colorScheme: colorScheme,
+                                viewModel: viewModel
+                            )
+                        }
                     }
                 }
                 .searchable(text: $searchText, prompt: "Search for an athlete")
                 .onChange(of: searchText) { oldValue, newValue in
                     if !newValue.isEmpty && newValue.count > 2 {
-                        // Track search when user types 3+ characters
                         AnalyticsManager.shared.trackSearchPerformed(
                             query: newValue,
                             resultsCount: filteredAthletes.count
