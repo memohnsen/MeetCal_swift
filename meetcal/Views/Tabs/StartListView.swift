@@ -8,6 +8,9 @@
 import SwiftUI
 import EventKit
 import UserNotifications
+import Clerk
+import RevenueCat
+import RevenueCatUI
 
 private struct AgeBand: Identifiable, Hashable {
     let id = UUID()
@@ -66,12 +69,18 @@ struct StartListView: View {
     
     @State private var searchText: String = ""
     @State private var clubSearchText: String = ""
+
     @State private var saveButtonClicked: Bool = false
-    @State private var filterClicked: Bool = false
-    
+    @State private var filterClicked: Bool = true
+
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
+
+    @State private var showImagePreview: Bool = false
+    @State private var generatedImage: UIImage?
+    @State private var showShareSheet: Bool = false
+    @State private var navigateToPaywall: Bool = false
     
     var athleteList: [AthleteRow] { viewModel.athletes }
     var scheduleList: [ScheduleRow] { viewModel.schedule }
@@ -497,6 +506,48 @@ struct StartListView: View {
         return timeInterval
     }
     
+    @MainActor
+    private func captureImage() {
+        // Only allow image generation if a specific club is selected
+        guard selectedClub != "All Clubs" else {
+            alertTitle = "Select a Club"
+            alertMessage = "Please select a specific club from the filters to create a shareable schedule."
+            alertShowing = true
+            return
+        }
+
+        let sessions = uniqueFilteredSessions
+        guard !sessions.isEmpty else {
+            alertTitle = "Nothing to Share"
+            alertMessage = "No sessions were found for the current filters."
+            alertShowing = true
+            return
+        }
+
+        let view = ShareSessionView(
+            filteredAthletes: filteredAthletes,
+            sessions: sessions,
+            meetDetails: meetDetails,
+            selectedMeet: selectedMeet,
+            selectedClub: selectedClub
+        )
+
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = UIScreen.main.scale
+        // Set opaque background to avoid alpha channel issues
+        renderer.isOpaque = true
+
+        guard let image = renderer.uiImage else {
+            alertTitle = "Error"
+            alertMessage = "Failed to generate image"
+            alertShowing = true
+            return
+        }
+
+        generatedImage = image
+        showImagePreview = true
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -556,6 +607,11 @@ struct StartListView: View {
                             }
                         
                         VStack(spacing: 16) {
+                            Text("Save & Share Your Sessions")
+                                .bold()
+                            
+                            Divider()
+                            
                             Button{
                                 saveFilteredSessions()
                                 Task {
@@ -594,11 +650,53 @@ struct StartListView: View {
                                         .foregroundStyle(colorScheme == .light ? .black : .white)
                                 }
                             }
+                            
+                            Divider()
+
+                            // MARK: - Change this BELOW
+                            if !customerManager.hasProAccess {
+                                Button {
+                                    captureImage()
+                                    saveButtonClicked = false
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Create Shareable Schedule")
+                                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                                            Text("Create schedule for \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s")")
+                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    }
+                                }
+                            } else {
+                                Button {
+                                    navigateToPaywall = true
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            HStack{
+                                                Text("Create Shareable Schedule")
+                                                Image(systemName: "lock.fill")
+                                                    .resizable()
+                                                    .frame(width: 10, height: 15)
+                                            }
+                                            Text("This is a MeetCal Pro Feature Only.")
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                    }
+                                    .secondaryText()
+                                }
+                            }
                         }
                         .padding()
                         .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
                         .cornerRadius(12)
                         .padding(.horizontal)
+                            
                     }
                 }
             }
@@ -674,6 +772,22 @@ struct StartListView: View {
             Button("OK") { }
         } message: {
             Text(alertMessage)
+        }
+        .sheet(isPresented: $showImagePreview) {
+            ImagePreviewSheet(
+                image: generatedImage,
+                isPresented: $showImagePreview,
+                showShareSheet: $showShareSheet,
+                colorScheme: colorScheme
+            )
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let image = generatedImage {
+                ShareSessionSheet(items: [image])
+            }
+        }
+        .sheet(isPresented: $navigateToPaywall) {
+            PaywallView()
         }
     }
 }
@@ -1347,6 +1461,248 @@ private struct FilterModal: View {
             }
         }
     }
+}
+
+private struct ImagePreviewSheet: View {
+    let image: UIImage?
+    @Binding var isPresented: Bool
+    @Binding var showShareSheet: Bool
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+
+                if let image = image {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .cornerRadius(12)
+                                .shadow(radius: 5)
+                                .padding()
+
+                            Button {
+                                isPresented = false
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    showShareSheet = true
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: "square.and.arrow.up")
+                                    Text("Share Schedule")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .background(.blue)
+                                .cornerRadius(12)
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.top)
+                    }
+                } else {
+                    Text("No image available")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Schedule Preview")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        isPresented = false
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct ShareSessionView: View {
+    let filteredAthletes: [AthleteRow]
+    let sessions: [ScheduleRow]
+    let meetDetails: [MeetDetailsRow]
+    let selectedMeet: String
+    let selectedClub: String
+
+    private func displayDateTime(for row: ScheduleRow) -> (date: String, time: String) {
+        let dateText = row.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "h:mm a"
+        outputFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+        var timeText = "No Time"
+        if let date = inputFormatter.date(from: row.start_time) {
+            timeText = outputFormatter.string(from: date)
+        }
+
+        return (dateText, timeText)
+    }
+
+    private var athletesByDate: [(date: Date, athletes: [(athlete: AthleteRow, session: ScheduleRow)])] {
+        var grouped: [Date: [(athlete: AthleteRow, session: ScheduleRow)]] = [:]
+
+        for athlete in filteredAthletes {
+            if let session = sessions.first(where: { $0.session_id == athlete.session_number && $0.platform == athlete.session_platform }) {
+                if grouped[session.date] == nil {
+                    grouped[session.date] = []
+                }
+                grouped[session.date]?.append((athlete, session))
+            }
+        }
+
+        return grouped.map { (date, athletes) in
+            let sortedAthletes = athletes.sorted { first, second in
+                first.session.start_time < second.session.start_time
+            }
+            return (date, sortedAthletes)
+        }.sorted { $0.date < $1.date }
+    }
+    
+    private func platformColors(text: String) -> Color {
+        if text == "Red" {
+            return Color.red
+        } else if text == "White" {
+            return Color.gray
+        } else if text == "Stars" {
+            return Color.indigo
+        } else if text == "Stripes" {
+            return Color.green
+        } else if text == "Rogue" {
+            return Color.black
+        } else {
+            return Color.blue
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                Text(selectedClub)
+                    .font(.system(size: 28, weight: .bold))
+                    .multilineTextAlignment(.center)
+
+                Text(selectedMeet)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.vertical, 30)
+            .frame(maxWidth: .infinity)
+
+            Grid(horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow {
+                    Text("Name")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Weight Class")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 100, alignment: .center)
+                    Text("Session")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 70, alignment: .center)
+                    Text("Platform")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 70, alignment: .center)
+                    Text("Date")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 90, alignment: .center)
+                    Text("Start Time")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 80, alignment: .center)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+            }
+            
+            Divider()
+                .background(Color.black)
+                .padding(.bottom, 8)
+
+            ForEach(Array(athletesByDate.enumerated()), id: \.offset) { index, dateGroup in
+                VStack(spacing: 0) {
+                    Grid(horizontalSpacing: 12, verticalSpacing: 8) {
+                        ForEach(dateGroup.athletes, id: \.athlete.member_id) { item in
+                            let dateTime = displayDateTime(for: item.session)
+
+                            GridRow {
+                                Text(item.athlete.name.capitalized)
+                                    .font(.system(size: 14))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("\(item.athlete.weight_class)kg")
+                                    .font(.system(size: 14))
+                                    .frame(width: 100, alignment: .center)
+                                Text("\(item.session.session_id)")
+                                    .font(.system(size: 14))
+                                    .frame(width: 70, alignment: .center)
+                                Text(item.session.platform)
+                                    .font(.system(size: 14))
+                                    .frame(width: 70, alignment: .center)
+                                    .background(platformColors(text: item.session.platform))
+                                    .foregroundStyle(.white)
+                                    .cornerRadius(10)
+                                Text(dateTime.date)
+                                    .font(.system(size: 14))
+                                    .frame(width: 90, alignment: .center)
+                                Text(dateTime.time)
+                                    .font(.system(size: 14))
+                                    .frame(width: 80, alignment: .center)
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 2)
+                        }
+                    }
+                }
+
+                if index < athletesByDate.count - 1 {
+                    Divider()
+                        .background(Color.black)
+                        .padding(.vertical, 8)
+                }
+            }
+
+            HStack {
+                Spacer()
+                Text("Generated by MeetCal")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                Image("meetcal-logo")
+                    .resizable()
+                    .frame(width: 30, height: 30)
+                Spacer()
+            }
+            .padding(.vertical, 20)
+        }
+        .frame(width: 850)
+        .background(Color.white)
+    }
+}
+
+struct ShareableSessionImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+struct ShareSessionSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.excludedActivityTypes = []
+
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

@@ -9,7 +9,7 @@ import SwiftUI
 import Supabase
 import Combine
 
-struct AthleteRow: Decodable {
+struct AthleteRow: Decodable, Hashable {
     let member_id: String
     let name: String
     let age: Int
