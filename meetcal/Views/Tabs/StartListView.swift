@@ -599,7 +599,6 @@ struct StartListView: View {
                         }
                 }
             }
-            .toolbar(filterClicked || saveButtonClicked ? .hidden : .visible, for: .tabBar)
             .overlay {
                 if saveButtonClicked {
                     ZStack {
