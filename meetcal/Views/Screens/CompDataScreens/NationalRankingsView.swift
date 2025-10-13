@@ -11,6 +11,7 @@ import Supabase
 
 struct NationalRankingsView: View {
     @StateObject private var viewModel = NationalRankingsModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
@@ -194,6 +195,7 @@ struct NationalRankingsView: View {
 
             availableWeightClasses = getWeightClasses(for: appliedGender, ageGroup: appliedAge)
             await viewModel.loadWeightClasses(age: appliedClass)
+            await customerManager.fetchCustomerInfo()
         }
         .onChange(of: draftGender) {
             availableWeightClasses = getWeightClasses(for: draftGender, ageGroup: draftAge)

@@ -71,7 +71,7 @@ struct StartListView: View {
     @State private var clubSearchText: String = ""
 
     @State private var saveButtonClicked: Bool = false
-    @State private var filterClicked: Bool = true
+    @State private var filterClicked: Bool = false
 
     @State private var alertShowing: Bool = false
     @State private var alertTitle: String = ""
@@ -586,6 +586,9 @@ struct StartListView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Image(systemName: "square.and.arrow.down")
                         .onTapGesture {
+                            Task {
+                                await customerManager.fetchCustomerInfo()
+                            }
                             saveButtonClicked = true
                         }
                 }
@@ -653,8 +656,7 @@ struct StartListView: View {
                             
                             Divider()
 
-                            // MARK: - Change this BELOW
-                            if !customerManager.hasProAccess {
+                            if customerManager.hasProAccess {
                                 Button {
                                     captureImage()
                                     saveButtonClicked = false
@@ -744,6 +746,7 @@ struct StartListView: View {
             await viewModel.loadStartList(meet: selectedMeet)
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
+            await customerManager.fetchCustomerInfo()
         }
         .onChange(of: selectedMeet) {
             Task {

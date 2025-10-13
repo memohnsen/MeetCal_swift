@@ -11,6 +11,7 @@ import Supabase
 
 struct StandardsView: View {
     @StateObject private var viewModel = StandardsViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
@@ -107,6 +108,7 @@ struct StandardsView: View {
             AnalyticsManager.shared.trackScreenView("Standards")
             AnalyticsManager.shared.trackStandardsViewed()
             await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadAgeGroups(for: appliedGender)

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MeetResultsView: View {
     @StateObject private var viewModel = ScheduleDetailsModel()
+    @StateObject private var customerManager = CustomerInfoManager()
 
     let name: String
     
@@ -34,6 +35,7 @@ struct MeetResultsView: View {
         }
         .task {
             await viewModel.loadResults(name: name)
+            await customerManager.fetchCustomerInfo()
         }
     }
 }

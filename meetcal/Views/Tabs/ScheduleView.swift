@@ -17,6 +17,7 @@ struct ScheduleView: View {
     @Environment(\.clerk) private var clerk
     
     @StateObject private var viewModel = MeetsScheduleModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     
     @State private var authIsPresented = false
     @State private var showingMeetsOverlay: Bool = false
@@ -182,6 +183,7 @@ struct ScheduleView: View {
             }
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel.loadMeetDetails(meetName: selectedMeet)
+            await customerManager.fetchCustomerInfo()
         }
         .onChange(of: selectedMeet) {
             Task {

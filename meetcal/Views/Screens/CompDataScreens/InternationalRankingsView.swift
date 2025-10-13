@@ -11,6 +11,7 @@ import Combine
 
 struct InternationalRankingsView: View {
     @StateObject private var viewModel = IntlRankingsViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
@@ -130,6 +131,7 @@ struct InternationalRankingsView: View {
             AnalyticsManager.shared.trackScreenView("International Rankings")
             AnalyticsManager.shared.trackRankingsViewed(filters: ["meet": appliedMeet, "gender": appliedGender, "age": appliedAge])
             await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)

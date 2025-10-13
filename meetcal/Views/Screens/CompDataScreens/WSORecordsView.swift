@@ -11,6 +11,7 @@ import Combine
 
 struct WSORecordsView: View {
     @StateObject private var viewModel = WSOViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
     
     @State private var isModalShowing: Bool = false
@@ -133,6 +134,7 @@ struct WSORecordsView: View {
             AnalyticsManager.shared.trackScreenView("WSO Records")
             AnalyticsManager.shared.trackRecordsViewed(type: "wso")
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadWSO()

@@ -11,6 +11,7 @@ import Combine
 
 struct AmericanRecordsView: View {
     @StateObject private var viewModel = RecordsViewModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
@@ -133,6 +134,7 @@ struct AmericanRecordsView: View {
             AnalyticsManager.shared.trackScreenView("American Records")
             AnalyticsManager.shared.trackRecordsViewed(type: "american")
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)

@@ -206,6 +206,37 @@ struct OnboardingView: View {
                 .padding(.horizontal)
             } else if pageCounter == 5 {
                 VStack(alignment: .leading) {
+                    Text("📸 Start List")
+                        .bold()
+                        .font(.title)
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(.top, 32)
+                    
+                    Text("Pro members can also create and share Start Lists for their club on this page. Easily share when and where you athletes will be lifting.")
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(.top)
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Text("Next")
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .foregroundStyle(.white)
+                    .background(.blue)
+                    .cornerRadius(32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .onTapGesture {
+                        pageCounter += 1
+                    }
+                    .padding(.top)
+                }
+                .padding(.horizontal)
+            } else if pageCounter == 6 {
+                VStack(alignment: .leading) {
                     Text("🏋️‍♀️ Competition Data")
                         .bold()
                         .font(.title)
@@ -235,7 +266,7 @@ struct OnboardingView: View {
                     .padding(.top)
                 }
                 .padding(.horizontal)
-            } else if pageCounter == 6 {
+            } else if pageCounter == 7 {
                 VStack(alignment: .leading) {
                     Text("📲 Saved Sessions")
                         .bold()

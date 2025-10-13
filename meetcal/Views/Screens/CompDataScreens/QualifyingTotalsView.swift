@@ -11,6 +11,7 @@ import Combine
 
 struct QualifyingTotalsView: View {
     @StateObject private var viewModel = QualifyingTotalModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var isModalShowing: Bool = false
@@ -20,16 +21,16 @@ struct QualifyingTotalsView: View {
     
     @State var appliedGender: String = "Men"
     @State var appliedAge: String = "Senior"
-    @State var appliedMeet: String = "USAW Nationals"
+    @State var appliedMeet: String = "Nationals"
     
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
-    @State var draftMeet: String = "USAW Nationals"
+    @State var draftMeet: String = "Nationals"
     
     let genders: [String] = ["Men", "Women"]
     // age group will change based on meet query
     var ageGroups: [String] { viewModel.ageGroups }
-    let meets: [String] = ["USAW Nationals", "Virus Series", "Virus Finals", "Master's Pan Ams", "IMWA Worlds"]
+    let meets: [String] = ["Nationals", "Virus Series", "Virus Finals", "Master's Pan Ams", "IMWA Worlds"]
     
     var body: some View {
         NavigationStack {
@@ -125,6 +126,7 @@ struct QualifyingTotalsView: View {
             AnalyticsManager.shared.trackScreenView("Qualifying Totals")
             AnalyticsManager.shared.trackQualifyingTotalsViewed()
             await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)

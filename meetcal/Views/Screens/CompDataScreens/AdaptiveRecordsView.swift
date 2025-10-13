@@ -11,6 +11,7 @@ import Supabase
 
 struct AdaptiveRecordsView: View {
     @StateObject private var viewModel = AdaptiveRecordsModel()
+    @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
 
     @State private var appliedGender: String = "Men"
@@ -112,6 +113,7 @@ struct AdaptiveRecordsView: View {
         .task {
             AnalyticsManager.shared.trackScreenView("Adaptive Records")
             AnalyticsManager.shared.trackStandardsViewed()
+            await customerManager.fetchCustomerInfo()
         }
         .task {
             await viewModel.loadAdaptiveRecords(gender: appliedGender)
