@@ -9,7 +9,7 @@ import SwiftUI
 import Supabase
 import Combine
 
-private struct MeetsRow: Decodable {
+struct MeetsRow: Decodable, Hashable {
     let name: String
 }
 
@@ -38,6 +38,7 @@ struct MeetDetailsRow: Decodable {
 @MainActor
 class MeetsScheduleModel: ObservableObject {
     @Published var meets: [String] = []
+    @Published var threeWeeksMeets: [MeetsRow] = []
     @Published var isLoading: Bool = false
     @Published var error: Error?
     @Published var schedule: [ScheduleRow] = []
@@ -84,6 +85,37 @@ class MeetsScheduleModel: ObservableObject {
         }
         
         await loadMeetsTask?.value
+    }
+    
+    func loadMeets3Weeks() async {
+        isLoading = true
+        error = nil
+        do {
+            let now = Date()
+            let threeWeeks = now.addingTimeInterval(21 * 24 * 60 * 60)
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let todayString = dateFormatter.string(from: now)
+            let threeWeeksString = dateFormatter.string(from: threeWeeks)
+
+            let response = try await supabase
+                .from("meets")
+                .select("name")
+                .neq("status", value: "completed")
+                .gte("start_date", value: todayString)
+                .lte("start_date", value: threeWeeksString)
+                .order("start_date", ascending: true)
+                .execute()
+                            
+            let row = try JSONDecoder().decode([MeetsRow].self, from: response.data)
+            
+            threeWeeksMeets = row
+        } catch{
+            print("error: \(error)")
+            self.error = error
+        }
+        isLoading = false
     }
     
     func loadMeetSchedule(meet: String) async {

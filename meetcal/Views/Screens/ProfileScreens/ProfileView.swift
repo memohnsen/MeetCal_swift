@@ -17,6 +17,7 @@ struct ProfileView: View {
 
     @State private var localNotifs: Bool = false
     @State private var isCustomerCenterPresented: Bool = false
+    @State private var navigateToPaywall: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -33,6 +34,32 @@ struct ProfileView: View {
                     .cardStyling()
                     .foregroundStyle(colorScheme == .light ? .black : .white)
                     .padding(.bottom, 8)
+                    
+                    if customerManager.hasProAccess {
+                        HStack {
+                            NavigationLink(destination: OfflineModeView()) {
+                                Text("Downloaded Data")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .cardStyling()
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                            .padding(.bottom, 8)
+                        }
+                    } else {
+                        Button {
+                            navigateToPaywall = true
+                        } label: {
+                            HStack {
+                                Text("Downloaded Data")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .cardStyling()
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                            .padding(.bottom, 8)
+                        }
+                    }
                     
                     VStack {
                         HStack {
@@ -87,6 +114,9 @@ struct ProfileView: View {
             .navigationTitle("My Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
+            .sheet(isPresented: $navigateToPaywall) {
+                PaywallView()
+            }
             .task{
                 AnalyticsManager.shared.trackScreenView("Profile")
                 await customerManager.fetchCustomerInfo()

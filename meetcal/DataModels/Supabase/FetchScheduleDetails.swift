@@ -10,6 +10,7 @@ import Supabase
 import Combine
 
 struct AthleteResults: Decodable, Hashable {
+    let id: Int
     let meet: String
     let date: String
     let name: String

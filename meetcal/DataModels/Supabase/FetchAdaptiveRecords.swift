@@ -9,9 +9,10 @@ import Supabase
 import Combine
 import Foundation
 
-// Helper struct to display grouped records by weight class
 struct AdaptiveRecord: Hashable, Identifiable {
-    let id = UUID()
+    let id: Int
+    let age: String
+    let gender: String
     let weightClass: String
     let snatch_best: Float
     let cj_best: Float
@@ -71,6 +72,9 @@ class AdaptiveRecordsModel: ObservableObject {
             // Convert to display format and sort by weight class
             let records = weightClassRecords.map { (weightClass, result) in
                 AdaptiveRecord(
+                    id: result.id,
+                    age: result.age,
+                    gender: gender,
                     weightClass: weightClass,
                     snatch_best: result.snatch_best,
                     cj_best: result.cj_best,
