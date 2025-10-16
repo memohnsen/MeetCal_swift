@@ -6,6 +6,7 @@
 //
 
 import Supabase
+import SwiftData
 import Combine
 import Foundation
 
@@ -26,6 +27,43 @@ class AdaptiveRecordsModel: ObservableObject {
     @Published var error: Error?
     @Published var results: [AthleteResults] = []
     @Published var groupedRecords: [AdaptiveRecord] = []
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveAdapRecordsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "AdaptiveRecords", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Delete existing records first (to avoid duplicates)
+        let fetchDescriptor = FetchDescriptor<AdaptiveRecordModel>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert new records
+        for record in groupedRecords {
+            let entity = AdaptiveRecordModel(
+                id: record.id,
+                age: record.age,
+                gender: record.gender,
+                weight_class: record.weightClass,
+                snatch_best: record.snatch_best,
+                cj_best: record.cj_best,
+                total: record.total,
+                name: record.athleteName,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+
+        try context.save()
+    }
 
     // Extract weight class from age column (e.g., "Women's Masters (35-39) 69kg" -> "69kg")
     private func extractWeightClass(from ageString: String) -> String? {
@@ -99,7 +137,7 @@ class AdaptiveRecordsModel: ObservableObject {
 
             self.results.removeAll()
             self.results.append(contentsOf: rows)
-            self.groupedRecords = records
+            self.groupedRecords.append(contentsOf: records)
         } catch {
             #if DEBUG
             print("Error: \(error)")

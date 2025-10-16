@@ -19,7 +19,7 @@ class AdaptiveRecordModel {
     var total: Float
     var name: String
     var lastSynced: Date
-    
+
     init(id: Int, age: String, gender: String, weight_class: String, snatch_best: Float, cj_best: Float, total: Float, name: String, lastSynced: Date) {
         self.id = id
         self.age = age
