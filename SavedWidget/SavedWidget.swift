@@ -99,7 +99,6 @@ struct WidgetSession: Codable {
     var sessionDateTime: Date? {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
 
         guard let sessionDate = dateFormatter.date(from: date) else {
@@ -108,7 +107,6 @@ struct WidgetSession: Codable {
 
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm:ss"
-        timeFormatter.timeZone = TimeZone(secondsFromGMT: 0)
         timeFormatter.locale = Locale(identifier: "en_US_POSIX")
 
         guard let timeDate = timeFormatter.date(from: startTime) else {
@@ -126,7 +124,6 @@ struct WidgetSession: Codable {
         combinedComponents.hour = timeComponents.hour
         combinedComponents.minute = timeComponents.minute
         combinedComponents.second = timeComponents.second
-        combinedComponents.timeZone = TimeZone(secondsFromGMT: 0)
 
         return calendar.date(from: combinedComponents)
     }
