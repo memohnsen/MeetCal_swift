@@ -126,6 +126,71 @@ struct OfflineModeView: View {
     }
     
     // MARK: - Download Functions
+    
+    func downloadMeets() async {
+        let itemName = "Meets"
+        downloadingItems.insert(itemName)
+        meetsModel.setModelContext(modelContext)
+
+        meetsModel.meets.removeAll()
+
+        await meetsModel.loadMeets()
+
+        do {
+            try meetsModel.saveMeetsToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Meets have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteMeets() {
+        let descriptor = FetchDescriptor<MeetsEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+    }
+    
+    func downloadSched() async {
+        let itemName = "Schedule"
+        downloadingItems.insert(itemName)
+        adaptiveModel.setModelContext(modelContext)
+
+        adaptiveModel.groupedRecords.removeAll()
+
+        await adaptiveModel.loadAdaptiveRecords(gender: "Men")
+        await adaptiveModel.loadAdaptiveRecords(gender: "Women")
+
+        do {
+            try adaptiveModel.saveAdapRecordsToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Adaptive American Records have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteSched() {
+        let descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+    }
 
     func downloadAdapRecords() async {
         let itemName = "Adaptive American Records"
@@ -415,6 +480,12 @@ struct OfflineModeView: View {
         for meet in meets {
             await qtModel.loadAgeGroup(for: "Men", event_name: meet)
             await qtModel.loadAgeGroup(for: "Women", event_name: meet)
+            let ages = qtModel.ageGroups
+            
+            for age in ages {
+                await qtModel.loadTotals(gender: "Men", age_category: age, event_name: meet)
+                await qtModel.loadTotals(gender: "Women", age_category: age, event_name: meet)
+            }
         }
 
         do {
@@ -439,6 +510,50 @@ struct OfflineModeView: View {
         try? modelContext.save()
         refreshID = UUID()
     }
+    
+    func downloadWSO() async {
+        let itemName = "WSO Records"
+        downloadingItems.insert(itemName)
+        wsoModel.setModelContext(modelContext)
+
+        wsoModel.wsoRecords.removeAll()
+
+        await wsoModel.loadWSO()
+        let wso = wsoModel.wso
+
+        for WSO in wso {
+            await wsoModel.loadAgeGroups(gender: "Men", wso: WSO)
+            await wsoModel.loadAgeGroups(gender: "Women", wso: WSO)
+            let ages = wsoModel.ageGroups
+
+            for age in ages {
+                await wsoModel.loadRecords(gender: "Men", ageCategory: age, wso: WSO)
+                await wsoModel.loadRecords(gender: "Women", ageCategory: age, wso: WSO)
+            }
+        }
+
+        do {
+            try wsoModel.saveWSOToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "WSO Records have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteWSO() {
+        let descriptor = FetchDescriptor<WSOEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+    }
 
     var body: some View {
         NavigationStack {
@@ -451,10 +566,12 @@ struct OfflineModeView: View {
                             isDownloaded: isMeetScheduleDownloaded(meet.name),
                             isDownloading: downloadingItems.contains("Schedule-\(meet.name)"),
                             downloadAction: {
-                                // TODO: Implement schedule download
+                                Task {
+                                    await downloadMeets()
+                                }
                             },
                             deleteAction: {
-                                // TODO: Implement schedule delete
+                                deleteMeets()
                             }
                         )
                     }
@@ -541,8 +658,14 @@ struct OfflineModeView: View {
                         title: "Qualifying Totals",
                         isDownloaded: isItemDownloaded("Qualifying Totals"),
                         isDownloading: downloadingItems.contains("Qualifying Totals"),
-                        downloadAction: {},
-                        deleteAction: {}
+                        downloadAction: {
+                            Task {
+                                await downloadQT()
+                            }
+                        },
+                        deleteAction: {
+                            deleteQT()
+                        }
                     )
 
                     ListButtonComponent(
@@ -550,8 +673,14 @@ struct OfflineModeView: View {
                         title: "WSO Records",
                         isDownloaded: isItemDownloaded("WSO Records"),
                         isDownloading: downloadingItems.contains("WSO Records"),
-                        downloadAction: {},
-                        deleteAction: {}
+                        downloadAction: {
+                            Task {
+                                await downloadWSO()
+                            }
+                        },
+                        deleteAction: {
+                            deleteWSO()
+                        }
                     )
                 }
             }

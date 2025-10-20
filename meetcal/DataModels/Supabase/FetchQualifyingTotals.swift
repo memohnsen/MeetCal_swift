@@ -86,7 +86,7 @@ class QualifyingTotalModel: ObservableObject {
             print(response)
             let decoder = JSONDecoder()
             let totalData = try decoder.decode([QualifyingTotal].self, from: response.data)
-            self.totals = totalData.sorted { (a: QualifyingTotal, b: QualifyingTotal) -> Bool in
+            self.totals.append(contentsOf: totalData.sorted { (a: QualifyingTotal, b: QualifyingTotal) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -94,7 +94,7 @@ class QualifyingTotalModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            }
+            })
             print(totals)
         } catch {
             print("Error \(error)")

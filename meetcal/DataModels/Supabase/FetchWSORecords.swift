@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct WSORecords: Identifiable, Hashable, Decodable, Sendable {
     let id: Int
@@ -45,6 +46,40 @@ class WSOViewModel: ObservableObject {
     @Published var wso: [String] = []
     @Published var ageGroups: [String] = []
     
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveWSOToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "WSO Records", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let fetchDescriptor = FetchDescriptor<WSOEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        for total in wsoRecords {
+            let entity = WSOEntity(
+                id: total.id,
+                wso: total.wso,
+                gender: total.gender,
+                age_category: total.age_category,
+                weight_class: total.weight_class,
+                snatch_record: total.snatch_record,
+                cj_record: total.cj_record,
+                total_record: total.total_record,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
+    
     func loadRecords(gender: String, ageCategory: String, wso: String) async {
         isLoading = true
         error = nil
@@ -61,7 +96,7 @@ class WSOViewModel: ObservableObject {
             
             let decoder = JSONDecoder()
             let wsoData = try decoder.decode([WSORecords].self, from: response.data)
-            self.wsoRecords = wsoData.sorted { (a: WSORecords, b: WSORecords) -> Bool in
+            self.wsoRecords.append(contentsOf: wsoData.sorted { (a: WSORecords, b: WSORecords) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -69,9 +104,7 @@ class WSOViewModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            }
-            
-            print(wsoRecords)
+            })
         } catch {
             print("Error: \(error)")
             self.error = error

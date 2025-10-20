@@ -116,7 +116,8 @@ struct QualifyingTotalsView: View {
                 appliedMeet = draftMeet
                 Task {
                     await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
-                    
+
+                    viewModel.totals.removeAll()
                     await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
                 }
                 isModalShowing = false
@@ -125,6 +126,7 @@ struct QualifyingTotalsView: View {
         .task {
             AnalyticsManager.shared.trackScreenView("Qualifying Totals")
             AnalyticsManager.shared.trackQualifyingTotalsViewed()
+            viewModel.totals.removeAll()
             await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
             await customerManager.fetchCustomerInfo()
         }
@@ -132,13 +134,22 @@ struct QualifyingTotalsView: View {
             await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
         }
         .onChange(of: appliedGender) {
-            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
+            Task {
+                viewModel.totals.removeAll()
+                await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
+            }
         }
         .onChange(of: appliedAge) {
-            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
+            Task {
+                viewModel.totals.removeAll()
+                await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
+            }
         }
         .onChange(of: appliedMeet) {
-            Task { await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet) }
+            Task {
+                viewModel.totals.removeAll()
+                await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
+            }
         }
         .onChange(of: draftMeet) {
             Task { await viewModel.loadAgeGroup(for: draftGender, event_name: draftMeet)

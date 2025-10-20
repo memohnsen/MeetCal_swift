@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct MeetsRow: Decodable, Hashable {
     let name: String
@@ -47,6 +48,33 @@ class MeetsScheduleModel: ObservableObject {
     private var loadMeetsTask: Task<Void, Never>?
     private var loadScheduleTask: Task<Void, Never>?
     private var loadDetailsTask: Task<Void, Never>?
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveMeetsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Meets", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let fetchDescriptor = FetchDescriptor<MeetsEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        for meet in meets {
+            let entity = MeetsEntity(
+                name: meet,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
     
     func loadMeets() async {
         loadMeetsTask?.cancel()
@@ -195,3 +223,4 @@ class MeetsScheduleModel: ObservableObject {
         await loadDetailsTask?.value
     }
 }
+

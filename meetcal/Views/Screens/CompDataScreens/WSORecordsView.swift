@@ -123,6 +123,7 @@ struct WSORecordsView: View {
                         appliedMeet = draftWSO
                         appliedGender = draftGender
                         Task {
+                            viewModel.wsoRecords.removeAll()
                             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
                             await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
                             await viewModel.loadWSO()
@@ -133,6 +134,7 @@ struct WSORecordsView: View {
         .task {
             AnalyticsManager.shared.trackScreenView("WSO Records")
             AnalyticsManager.shared.trackRecordsViewed(type: "wso")
+            viewModel.wsoRecords.removeAll()
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
             await customerManager.fetchCustomerInfo()
         }
@@ -143,13 +145,22 @@ struct WSORecordsView: View {
             await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
         }
         .onChange(of: appliedGender) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+            Task {
+                viewModel.wsoRecords.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
+            }
         }
         .onChange(of: appliedAge) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+            Task {
+                viewModel.wsoRecords.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
+            }
         }
         .onChange(of: appliedMeet) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet) }
+            Task {
+                viewModel.wsoRecords.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
+            }
         }
         .onChange(of: draftWSO) {
             Task { await viewModel.loadAgeGroups(gender: draftGender, wso: draftWSO )}
