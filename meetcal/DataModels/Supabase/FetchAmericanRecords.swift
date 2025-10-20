@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct Records: Identifiable, Hashable, Decodable, Sendable {
     let id: Int
@@ -39,6 +40,40 @@ class RecordsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: Error?
     @Published var ageGroups: [String] = []
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveAmRecordsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "American Records", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let fetchDescriptor = FetchDescriptor<AmericanRecordEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        for record in records {
+            let entity = AmericanRecordEntity(
+                id: record.id,
+                record_type: record.record_type,
+                gender: record.gender,
+                age_category: record.age_category,
+                weight_class: record.weight_class,
+                snatch_record: record.snatch_record,
+                cj_record: record.cj_record,
+                total_record: record.total_record,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
 
     func loadRecords(gender: String, ageCategory: String, record_type: String) async {
         isLoading = true
@@ -55,7 +90,7 @@ class RecordsViewModel: ObservableObject {
             let decoder = JSONDecoder()
             let recordsData = try decoder.decode([Records].self, from: response.data)
             
-            self.records = recordsData.sorted { (a: Records, b: Records) -> Bool in
+            self.records.append(contentsOf: recordsData.sorted { (a: Records, b: Records) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -63,7 +98,7 @@ class RecordsViewModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            }
+            })
         } catch {
             print("Error loading standards: \(error)")
             self.error = error

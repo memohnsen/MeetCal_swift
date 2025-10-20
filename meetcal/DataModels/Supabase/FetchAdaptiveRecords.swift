@@ -40,7 +40,7 @@ class AdaptiveRecordsModel: ObservableObject {
         }
 
         // Delete existing records first (to avoid duplicates)
-        let fetchDescriptor = FetchDescriptor<AdaptiveRecordModel>()
+        let fetchDescriptor = FetchDescriptor<AdaptiveRecordEntity>()
         let existingRecords = try context.fetch(fetchDescriptor)
         for record in existingRecords {
             context.delete(record)
@@ -48,7 +48,7 @@ class AdaptiveRecordsModel: ObservableObject {
 
         // Insert new records
         for record in groupedRecords {
-            let entity = AdaptiveRecordModel(
+            let entity = AdaptiveRecordEntity(
                 id: record.id,
                 age: record.age,
                 gender: record.gender,

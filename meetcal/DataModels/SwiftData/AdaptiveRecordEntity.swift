@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-class AdaptiveRecordModel {
+class AdaptiveRecordEntity {
     @Attribute(.unique) var id: Int
     var age: String
     var gender: String

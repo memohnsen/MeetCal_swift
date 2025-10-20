@@ -21,7 +21,7 @@ struct meetcalApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
-            AdaptiveRecordModel.self,
+            AdaptiveRecordEntity.self,
             AmericanRecordEntity.self,
             NatRankingsEntity.self,
             QTEntity.self,

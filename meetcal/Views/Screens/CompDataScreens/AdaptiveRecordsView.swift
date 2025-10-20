@@ -116,10 +116,12 @@ struct AdaptiveRecordsView: View {
             await customerManager.fetchCustomerInfo()
         }
         .task {
+            viewModel.groupedRecords.removeAll()
             await viewModel.loadAdaptiveRecords(gender: appliedGender)
         }
         .onChange(of: appliedGender) {
             Task {
+                viewModel.groupedRecords.removeAll()
                 await viewModel.loadAdaptiveRecords(gender: appliedGender)
             }
         }

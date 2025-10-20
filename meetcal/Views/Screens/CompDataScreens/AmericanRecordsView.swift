@@ -125,6 +125,7 @@ struct AmericanRecordsView: View {
                         appliedFederation = draftFederation
                         Task {
                             await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
+                            viewModel.records.removeAll()
                             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
                         }
                         isModalShowing = false
@@ -133,6 +134,7 @@ struct AmericanRecordsView: View {
         .task {
             AnalyticsManager.shared.trackScreenView("American Records")
             AnalyticsManager.shared.trackRecordsViewed(type: "american")
+            viewModel.records.removeAll()
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
             await customerManager.fetchCustomerInfo()
         }
@@ -140,13 +142,22 @@ struct AmericanRecordsView: View {
             await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
         }
         .onChange(of: appliedGender) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
+            Task {
+                viewModel.records.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+            }
         }
         .onChange(of: appliedAge) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
+            Task {
+                viewModel.records.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+            }
         }
         .onChange(of: appliedFederation) {
-            Task { await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation) }
+            Task {
+                viewModel.records.removeAll()
+                await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
+            }
         }
         .onChange(of: draftFederation) {
             Task {

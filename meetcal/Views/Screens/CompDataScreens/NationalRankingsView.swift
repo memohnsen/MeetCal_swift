@@ -194,6 +194,7 @@ struct NationalRankingsView: View {
             AnalyticsManager.shared.trackRankingsViewed(filters: ["gender": appliedGender, "age": appliedAge, "class": appliedClass])
 
             availableWeightClasses = getWeightClasses(for: appliedGender, ageGroup: appliedAge)
+            viewModel.rankings.removeAll()
             await viewModel.loadWeightClasses(age: appliedClass)
             await customerManager.fetchCustomerInfo()
         }
@@ -213,6 +214,7 @@ struct NationalRankingsView: View {
         }
         .onChange(of: appliedClass) {
             Task {
+                viewModel.rankings.removeAll()
                 await viewModel.loadWeightClasses(age: appliedClass)
             }
         }
@@ -240,6 +242,7 @@ struct NationalRankingsView: View {
                 )
 
                 Task {
+                    viewModel.rankings.removeAll()
                     await viewModel.loadWeightClasses(age: appliedClass)
                 }
                 isModalShowing = false

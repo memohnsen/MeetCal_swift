@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct QualifyingTotal: Hashable, Decodable, Identifiable, Sendable {
     let id: Int
@@ -37,6 +38,38 @@ class QualifyingTotalModel: ObservableObject {
     @Published var error: Error?
     @Published var totals: [QualifyingTotal] = []
     @Published var ageGroups: [String] = []
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveQTToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Qualifying Totals", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let fetchDescriptor = FetchDescriptor<QTEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        for total in totals {
+            let entity = QTEntity(
+                id: total.id,
+                event_name: total.event_name,
+                gender: total.gender,
+                age_category: total.age_category,
+                weight_class: total.weight_class,
+                qualifying_total: total.qualifying_total,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
     
     func loadTotals(gender: String, age_category: String, event_name: String) async {
         isLoading = true

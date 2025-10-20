@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct Rankings: Identifiable, Hashable, Decodable, Sendable {
     let id: Int
@@ -36,6 +37,40 @@ class IntlRankingsViewModel: ObservableObject {
     @Published var meets: [String] = []
     @Published var ageGroups: [String] = []
     
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveIntlRankingsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "International Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let fetchDescriptor = FetchDescriptor<RankingsEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        for ranking in rankings {
+            let entity = RankingsEntity(
+                id: ranking.id,
+                meet: ranking.meet,
+                name: ranking.name,
+                weight_class: ranking.weight_class,
+                total: ranking.total,
+                percent_a: ranking.percent_a,
+                gender: ranking.gender,
+                age_category: ranking.age_category,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
+    
     func loadRankings(gender: String, ageCategory: String, meet: String) async {
         isLoading = true
         error = nil
@@ -51,8 +86,7 @@ class IntlRankingsViewModel: ObservableObject {
             print(response)
             let decoder = JSONDecoder()
             let rankingsData = try decoder.decode([Rankings].self, from: response.data)
-            self.rankings = rankingsData
-            print(rankings)
+            self.rankings.append(contentsOf: rankingsData)
         } catch {
             print("Error: \(error)")
             self.error = error

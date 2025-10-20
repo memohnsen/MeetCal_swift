@@ -98,7 +98,8 @@ struct StandardsView: View {
                     appliedAge = draftAge
                     Task {
                         await viewModel.loadAgeGroups(for: appliedGender)
-                        
+
+                        viewModel.standards.removeAll()
                         await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
                     }
                     isModalShowing = false
@@ -107,6 +108,7 @@ struct StandardsView: View {
         .task {
             AnalyticsManager.shared.trackScreenView("Standards")
             AnalyticsManager.shared.trackStandardsViewed()
+            viewModel.standards.removeAll()
             await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
             await customerManager.fetchCustomerInfo()
         }
@@ -114,11 +116,17 @@ struct StandardsView: View {
             await viewModel.loadAgeGroups(for: appliedGender)
         }
         .onChange(of: appliedGender) {
-            Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
+            Task {
+                viewModel.standards.removeAll()
+                await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
+            }
             Task { await viewModel.loadAgeGroups(for: appliedGender) }
         }
         .onChange(of: appliedAge) {
-            Task { await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge) }
+            Task {
+                viewModel.standards.removeAll()
+                await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
+            }
         }
     }
 }

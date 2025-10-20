@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct Standard: Identifiable, Hashable, Decodable, Sendable {
     let id: Int
@@ -37,6 +38,41 @@ class StandardsViewModel: ObservableObject {
     @Published var ageGroups: [String] = []
     @Published var isLoading = false
     @Published var error: Error?
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveStandardsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Standards", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Delete existing records first (to avoid duplicates)
+        let fetchDescriptor = FetchDescriptor<StandardsEntity>()
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert new records
+        for standard in standards {
+              let entity = StandardsEntity(
+                  id: standard.id,
+                  age_category: standard.age_category,
+                  gender: standard.gender,
+                  weight_class: standard.weight_class,
+                  standard_a: standard.standard_a,
+                  standard_b: standard.standard_b,
+                  lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+
+        try context.save()
+    }
 
     func loadStandards(gender: String, ageCategory: String) async {
         isLoading = true
@@ -51,7 +87,8 @@ class StandardsViewModel: ObservableObject {
             
             let decoder = JSONDecoder()
             let standardsData = try decoder.decode([Standard].self, from: response.data)
-            self.standards = standardsData.sorted { (a: Standard, b: Standard) -> Bool in
+            
+            self.standards.append(contentsOf: standardsData.sorted { (a: Standard, b: Standard) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -59,8 +96,7 @@ class StandardsViewModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            }
-            
+            })
         } catch {
             print("Error loading standards: \(error)")
             self.error = error

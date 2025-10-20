@@ -16,9 +16,9 @@ class QTEntity {
     var age_category: String
     var weight_class: String
     var qualifying_total: Int
-    var lastSynced: Data
+    var lastSynced: Date
     
-    init(id: Int, event_name: String, gender: String, age_category: String, weight_class: String, qualifying_total: Int, lastSynced: Data) {
+    init(id: Int, event_name: String, gender: String, age_category: String, weight_class: String, qualifying_total: Int, lastSynced: Date) {
         self.id = id
         self.event_name = event_name
         self.gender = gender
