@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct AthleteResults: Decodable, Hashable {
     let id: Int
@@ -33,6 +34,52 @@ class ScheduleDetailsModel: ObservableObject {
     @Published var athleteResults: [AthleteResults] = []
     @Published var isLoading = false
     @Published var error: Error?
+    
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveSchedDetailsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Schedule Details", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Get the meet name from the data we're about to save
+        guard let meetName = athletes.first?.meet else {
+            return // Nothing to save
+        }
+
+        // Delete ONLY this meet's schedule details
+        let fetchDescriptor = FetchDescriptor<SchedDetailsEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert the new data for this meet
+        for athlete in athletes {
+            let entity = SchedDetailsEntity(
+                member_id: athlete.member_id,
+                name: athlete.name,
+                age: athlete.age,
+                club: athlete.club,
+                gender: athlete.gender,
+                weight_class: athlete.weight_class,
+                entry_total: athlete.entry_total,
+                session_number: athlete.session_number,
+                session_platform: athlete.session_platform,
+                meet: athlete.meet,
+                adaptive: athlete.adaptive,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
 
     func loadAthletes(meet: String, sessionID: Int, platform: String) async {
         isLoading = true
@@ -48,7 +95,7 @@ class ScheduleDetailsModel: ObservableObject {
                 .execute()
 
             let rows = try JSONDecoder().decode([AthleteRow].self, from: response.data)
-            self.athletes = rows
+            self.athletes.append(contentsOf: rows)
         } catch {
             self.error = error
         }
@@ -71,7 +118,7 @@ class ScheduleDetailsModel: ObservableObject {
                 .execute()
             
             let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
-            self.athleteResults = rows
+            self.athleteResults.append(contentsOf: rows)
         } catch {
             self.error = error
         }

@@ -52,6 +52,9 @@ struct ScheduleDetailsView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task(id: selectedMeet) {
+            viewModel2.meetDetails.removeAll()
+            viewModel.athletes.removeAll()
+            viewModel.athleteResults.removeAll()
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
             await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
             await viewModel.loadAllResults()
@@ -70,6 +73,7 @@ struct TopView: View {
     @State private var alertTitle: String = ""
     @State private var alertMessage: String = ""
     @State private var notificationIdentifier: String?
+    @State private var navigateToPaywall: Bool = false
 
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
@@ -350,18 +354,15 @@ struct TopView: View {
                                 alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
                                 alertShowing = true
                                 
-                                // Fetch customer info first, then check Pro access
                                 await customerManager.fetchCustomerInfo()
                                 
                                 if customerManager.hasProAccess {
-                                    // Check if notifications are authorized
                                     let settings = await UNUserNotificationCenter.current().notificationSettings()
                                     guard settings.authorizationStatus == .authorized else {
                                         print("Notifications not authorized")
                                         return
                                     }
 
-                                    // Only schedule notification if session is at least 90 minutes away
                                     if notifTime > 60 {
                                         let content = UNMutableNotificationContent()
                                         content.title = "Session \(sessionNum) \(platformColor) starts in 90 minutes"
@@ -437,6 +438,24 @@ struct TopView: View {
                 .cornerRadius(12)
             }
             
+            Divider()
+                .padding(.vertical, 6)
+            
+            if customerManager.hasProAccess {
+                NavigationLink("Qualifying Totals", destination: QualifyingTotalsView())
+            } else {
+                Button {
+                    navigateToPaywall = true
+                } label: {
+                    HStack {
+                        Text("Qualifying Totals")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.blue)
+                }
+            }
+            
         }
         .cardStyling()
         .cornerRadius(32)
@@ -447,6 +466,9 @@ struct TopView: View {
         }
         .task(id: selectedMeet) {
             await saveModel.loadSaved(meet: selectedMeet)
+        }
+        .sheet(isPresented: $navigateToPaywall) {
+            PaywallView()
         }
     }
 }

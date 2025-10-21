@@ -188,6 +188,7 @@ struct StartListView: View {
         }
 
         Task {
+            viewModel.athletes.removeAll()
             await viewModel.loadFilteredStartList(
                 meet: selectedMeet,
                 ageRange: selectedAgeBand.range,
@@ -742,6 +743,9 @@ struct StartListView: View {
         }
         .task{
             AnalyticsManager.shared.trackScreenView("Start List")
+            viewModel.athletes.removeAll()
+            viewModel.schedule.removeAll()
+            viewModel2.meetDetails.removeAll()
             await viewModel.loadStartList(meet: selectedMeet)
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
@@ -749,6 +753,8 @@ struct StartListView: View {
         }
         .onChange(of: selectedMeet) {
             Task {
+                viewModel.athletes.removeAll()
+                viewModel.schedule.removeAll()
                 await viewModel.loadStartList(meet: selectedMeet)
                 await viewModel.loadMeetSchedule(meet: selectedMeet)
             }

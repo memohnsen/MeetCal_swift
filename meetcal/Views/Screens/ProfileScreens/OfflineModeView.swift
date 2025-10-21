@@ -14,11 +14,27 @@ struct OfflineModeView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.modelContext) private var modelContext
 
+    @Query private var allScheduleEntities: [ScheduleEntity]
+    @Query private var allMeetDetailsEntities: [MeetDetailsEntity]
+    @Query private var allStartListEntities: [StartListEntity]
+
     @State private var downloadingItems: Set<String> = []
     @State private var refreshID = UUID()
 
     @StateObject private var meetsModel = MeetsScheduleModel()
     var meets: [MeetsRow] { meetsModel.threeWeeksMeets }
+
+    private var downloadedMeetNames: Set<String> {
+        var meetNames = Set<String>()
+
+        meetNames.formUnion(allScheduleEntities.compactMap { $0.meet })
+
+        meetNames.formUnion(allMeetDetailsEntities.map { $0.name })
+
+        meetNames.formUnion(allStartListEntities.compactMap { $0.meet })
+
+        return meetNames
+    }
 
     @StateObject private var adaptiveModel = AdaptiveRecordsModel()
     @StateObject private var recordsModel = RecordsViewModel()
@@ -59,12 +75,7 @@ struct OfflineModeView: View {
     }
 
     func isMeetScheduleDownloaded(_ meetName: String) -> Bool {
-        var descriptor = FetchDescriptor<ScheduleEntity>(
-            predicate: #Predicate { $0.meet == meetName }
-        )
-        descriptor.fetchLimit = 1
-        let results = try? modelContext.fetch(descriptor)
-        return !(results?.isEmpty ?? true)
+        return downloadedMeetNames.contains(meetName)
     }
 
     func isMeetStartListDownloaded(_ meetName: String) -> Bool {
@@ -124,7 +135,70 @@ struct OfflineModeView: View {
         let results = try? modelContext.fetch(descriptor)
         return !(results?.isEmpty ?? true)
     }
-    
+
+    // MARK: - Last Synced Date Functions
+
+    func getLastSyncedDate(for title: String, meetName: String? = nil) -> Date? {
+        if let meetName = meetName {
+            let descriptor = FetchDescriptor<MeetDetailsEntity>(
+                predicate: #Predicate { $0.name == meetName }
+            )
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+            return nil
+        }
+
+        switch title {
+        case "Adaptive American Records":
+            let descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "American Records":
+            let descriptor = FetchDescriptor<AmericanRecordEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "WSO Records":
+            let descriptor = FetchDescriptor<WSOEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "A/B Standards":
+            let descriptor = FetchDescriptor<StandardsEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "International Rankings":
+            let descriptor = FetchDescriptor<RankingsEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "National Rankings":
+            let descriptor = FetchDescriptor<NatRankingsEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "Qualifying Totals":
+            let descriptor = FetchDescriptor<QTEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        default:
+            break
+        }
+        return nil
+    }
+
     // MARK: - Download Functions
     
     func downloadMeets() async {
@@ -151,6 +225,39 @@ struct OfflineModeView: View {
         downloadingItems.remove(itemName)
     }
     
+    func deleteMeetData(meetName: String) {
+        let detailsDescriptor = FetchDescriptor<MeetDetailsEntity>(
+            predicate: #Predicate { $0.name == meetName }
+        )
+        let detailsRecords = try? modelContext.fetch(detailsDescriptor)
+        detailsRecords?.forEach { modelContext.delete($0) }
+
+        let schedDescriptor = FetchDescriptor<ScheduleEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let schedRecords = try? modelContext.fetch(schedDescriptor)
+        schedRecords?.forEach { modelContext.delete($0) }
+
+        let startListDescriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let startListRecords = try? modelContext.fetch(startListDescriptor)
+        startListRecords?.forEach { modelContext.delete($0) }
+
+        let schedDetailsDescriptor = FetchDescriptor<SchedDetailsEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let schedDetailsRecords = try? modelContext.fetch(schedDetailsDescriptor)
+        schedDetailsRecords?.forEach { modelContext.delete($0) }
+
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "\(meetName) has been deleted from your device."
+        alertShowing = true
+    }
+
     func deleteMeets() {
         let descriptor = FetchDescriptor<MeetsEntity>()
         let records = try? modelContext.fetch(descriptor)
@@ -159,20 +266,97 @@ struct OfflineModeView: View {
         refreshID = UUID()
     }
     
-    func downloadSched() async {
-        let itemName = "Schedule"
+    func downloadMeetData(meetName: String) async {
+        let itemName = "Schedule-\(meetName)"
         downloadingItems.insert(itemName)
-        adaptiveModel.setModelContext(modelContext)
 
-        adaptiveModel.groupedRecords.removeAll()
+        meetsModel.setModelContext(modelContext)
+        startModel.setModelContext(modelContext)
+        schedDetailsModel.setModelContext(modelContext)
 
-        await adaptiveModel.loadAdaptiveRecords(gender: "Men")
-        await adaptiveModel.loadAdaptiveRecords(gender: "Women")
+        meetsModel.meetDetails.removeAll()
+        meetsModel.schedule.removeAll()
+        startModel.athletes.removeAll()
+        schedDetailsModel.athletes.removeAll()
 
         do {
-            try adaptiveModel.saveAdapRecordsToSwiftData()
+            await meetsModel.loadMeetDetails(meetName: meetName)
+            try meetsModel.saveMeetDetailsToSwiftData()
+
+            await meetsModel.loadMeetSchedule(meet: meetName)
+            try meetsModel.saveScheduleToSwiftData()
+
+            await startModel.loadStartList(meet: meetName)
+            try startModel.saveStartListToSwiftData()
+
+            let sessions = Set(meetsModel.schedule.map { $0.session_id })
+            for sessionID in sessions {
+                await schedDetailsModel.loadAthletes(meet: meetName, sessionID: sessionID, platform: "ALL")
+            }
+            try schedDetailsModel.saveSchedDetailsToSwiftData()
+
             alertTitle = "Saved Successfully"
-            alertMessage = "Adaptive American Records have been saved to your device."
+            alertMessage = "\(meetName) has been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+
+    func downloadMeetDetails(meetName: String) async {
+        let itemName = "Meet Details"
+        downloadingItems.insert(itemName)
+        meetsModel.setModelContext(modelContext)
+
+        meetsModel.meetDetails.removeAll()
+
+        await meetsModel.loadMeetDetails(meetName: meetName)
+
+        do {
+            try meetsModel.saveMeetDetailsToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Meet Details have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteMeetDetails() {
+        let descriptor = FetchDescriptor<MeetDetailsEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Meet Details have been deleted from your device."
+        alertShowing = true
+    }
+
+    func downloadSched(meetName: String) async {
+        let itemName = "Schedule"
+        downloadingItems.insert(itemName)
+        meetsModel.setModelContext(modelContext)
+
+        meetsModel.schedule.removeAll()
+
+        await meetsModel.loadMeetSchedule(meet: meetName)
+
+        do {
+            try meetsModel.saveScheduleToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Meet Schedule has been saved to your device."
             alertShowing = true
             refreshID = UUID()
         } catch {
@@ -185,11 +369,92 @@ struct OfflineModeView: View {
     }
     
     func deleteSched() {
-        let descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+        let descriptor = FetchDescriptor<ScheduleEntity>()
         let records = try? modelContext.fetch(descriptor)
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Schedule has been deleted from your device."
+        alertShowing = true
+    }
+
+    func downloadStartList(meetName: String) async {
+        let itemName = "Start List"
+        downloadingItems.insert(itemName)
+        startModel.setModelContext(modelContext)
+
+        startModel.athletes.removeAll()
+
+        await startModel.loadStartList(meet: meetName)
+
+        do {
+            try startModel.saveStartListToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Start List has been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteStartList() {
+        let descriptor = FetchDescriptor<StartListEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Start List has been deleted from your device."
+        alertShowing = true
+    }
+
+    func downloadSchedDetails(meetName: String) async {
+        let itemName = "Schedule Details"
+        downloadingItems.insert(itemName)
+        schedDetailsModel.setModelContext(modelContext)
+
+        schedDetailsModel.athletes.removeAll()
+
+        await meetsModel.loadMeetSchedule(meet: meetName)
+        let sessions = Set(meetsModel.schedule.map { $0.session_id })
+
+        for sessionID in sessions {
+            await schedDetailsModel.loadAthletes(meet: meetName, sessionID: sessionID, platform: "ALL")
+        }
+
+        do {
+            try schedDetailsModel.saveSchedDetailsToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "Schedule Details have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+    
+    func deleteSchedDetails() {
+        let descriptor = FetchDescriptor<SchedDetailsEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Schedule Details have been deleted from your device."
+        alertShowing = true
     }
 
     func downloadAdapRecords() async {
@@ -223,8 +488,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Adaptive American Records have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadStandards() async {
         let itemName = "A/B Standards"
         downloadingItems.insert(itemName)
@@ -259,8 +528,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "A/B Standards have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadAmRecords() async {
         let itemName = "American Records"
         downloadingItems.insert(itemName)
@@ -303,8 +576,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "American Records have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadIntlRankings() async {
         let itemName = "International Rankings"
         downloadingItems.insert(itemName)
@@ -346,8 +623,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "International Rankings have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadNatRankings() async {
         let itemName = "National Rankings"
         downloadingItems.insert(itemName)
@@ -466,8 +747,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "National Rankings have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadQT() async {
         let itemName = "Qualifying Totals"
         downloadingItems.insert(itemName)
@@ -509,8 +794,12 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "Qualifying Totals have been deleted from your device."
+        alertShowing = true
     }
-    
+
     func downloadWSO() async {
         let itemName = "WSO Records"
         downloadingItems.insert(itemName)
@@ -553,12 +842,69 @@ struct OfflineModeView: View {
         records?.forEach { modelContext.delete($0) }
         try? modelContext.save()
         refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "WSO Records have been deleted from your device."
+        alertShowing = true
+    }
+
+    func deleteAllOfflineData() {
+        let qtDescriptor = FetchDescriptor<QTEntity>()
+        let qtRecords = try? modelContext.fetch(qtDescriptor)
+        qtRecords?.forEach { modelContext.delete($0) }
+
+        let wsoDescriptor = FetchDescriptor<WSOEntity>()
+        let wsoRecords = try? modelContext.fetch(wsoDescriptor)
+        wsoRecords?.forEach { modelContext.delete($0) }
+
+        let schedDescriptor = FetchDescriptor<ScheduleEntity>()
+        let schedRecords = try? modelContext.fetch(schedDescriptor)
+        schedRecords?.forEach { modelContext.delete($0) }
+
+        let standardsDescriptor = FetchDescriptor<StandardsEntity>()
+        let standardsRecords = try? modelContext.fetch(standardsDescriptor)
+        standardsRecords?.forEach { modelContext.delete($0) }
+
+        let amRecordsDescriptor = FetchDescriptor<AmericanRecordEntity>()
+        let amRecordsRecords = try? modelContext.fetch(amRecordsDescriptor)
+        amRecordsRecords?.forEach { modelContext.delete($0) }
+
+        let startListDescriptor = FetchDescriptor<StartListEntity>()
+        let startListRecords = try? modelContext.fetch(startListDescriptor)
+        startListRecords?.forEach { modelContext.delete($0) }
+
+        let meetDetailsDescriptor = FetchDescriptor<MeetDetailsEntity>()
+        let meetDetailsRecords = try? modelContext.fetch(meetDetailsDescriptor)
+        meetDetailsRecords?.forEach { modelContext.delete($0) }
+
+        let natRankingsDescriptor = FetchDescriptor<NatRankingsEntity>()
+        let natRankingsRecords = try? modelContext.fetch(natRankingsDescriptor)
+        natRankingsRecords?.forEach { modelContext.delete($0) }
+
+        let intlRankingsDescriptor = FetchDescriptor<RankingsEntity>()
+        let intlRankingsRecords = try? modelContext.fetch(intlRankingsDescriptor)
+        intlRankingsRecords?.forEach { modelContext.delete($0) }
+
+        let schedDetailsDescriptor = FetchDescriptor<SchedDetailsEntity>()
+        let schedDetailsRecords = try? modelContext.fetch(schedDetailsDescriptor)
+        schedDetailsRecords?.forEach { modelContext.delete($0) }
+
+        let adaptiveDescriptor = FetchDescriptor<AdaptiveRecordEntity>()
+        let adaptiveRecords = try? modelContext.fetch(adaptiveDescriptor)
+        adaptiveRecords?.forEach { modelContext.delete($0) }
+
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "All offline data has been deleted from your device."
+        alertShowing = true
     }
 
     var body: some View {
         NavigationStack {
             List {
-                Section("Schedules") {
+                Section("Schedule & Start List") {
                     ForEach(meets, id: \.self) { meet in
                         ListButtonComponent(
                             colorScheme: colorScheme,
@@ -567,12 +913,13 @@ struct OfflineModeView: View {
                             isDownloading: downloadingItems.contains("Schedule-\(meet.name)"),
                             downloadAction: {
                                 Task {
-                                    await downloadMeets()
+                                    await downloadMeetData(meetName: meet.name)
                                 }
                             },
                             deleteAction: {
-                                deleteMeets()
-                            }
+                                deleteMeetData(meetName: meet.name)
+                            },
+                            lastSyncedDate: getLastSyncedDate(for: meet.name, meetName: meet.name)
                         )
                     }
                 }
@@ -590,7 +937,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteStandards()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "A/B Standards")
                     )
 
                     ListButtonComponent(
@@ -605,7 +953,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteAdaptiveRecords()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "Adaptive American Records")
                     )
 
                     ListButtonComponent(
@@ -620,7 +969,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteAmRecords()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "American Records")
                     )
 
                     ListButtonComponent(
@@ -635,7 +985,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteIntlRankings()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "International Rankings")
                     )
 
                     ListButtonComponent(
@@ -650,7 +1001,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteNatRankings()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "National Rankings")
                     )
 
                     ListButtonComponent(
@@ -665,7 +1017,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteQT()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "Qualifying Totals")
                     )
 
                     ListButtonComponent(
@@ -680,7 +1033,8 @@ struct OfflineModeView: View {
                         },
                         deleteAction: {
                             deleteWSO()
-                        }
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "WSO Records")
                     )
                 }
             }
@@ -702,7 +1056,7 @@ struct OfflineModeView: View {
                 ToolbarSpacer()
                 ToolbarItem {
                     Button {
-                        
+                        deleteAllOfflineData()
                     } label: {
                         Image(systemName: "trash")
                             .foregroundStyle(.red)
@@ -718,24 +1072,34 @@ struct OfflineModeView: View {
 }
 
 struct ListButtonComponent: View {
+    @Environment(\.modelContext) private var modelContext
+
     let colorScheme: ColorScheme
     let title: String
     let isDownloaded: Bool
     let isDownloading: Bool
     let downloadAction: () -> Void
     let deleteAction: () -> Void
-    
+    let lastSyncedDate: Date?
+
     var body: some View {
         if isDownloaded {
             Button {
                 deleteAction()
             } label: {
-                HStack {
-                    Text(title)
-                        .foregroundStyle(colorScheme == .light ? .black : .white)
-                    Spacer()
-                    Image(systemName: "trash")
-                        .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(title)
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                        Spacer()
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    if let lastSynced = lastSyncedDate {
+                        Text("Last synced: \(lastSynced, style: .relative) ago")
+                            .font(.caption)
+                            .secondaryText()
+                    }
                 }
             }
         } else if isDownloading {

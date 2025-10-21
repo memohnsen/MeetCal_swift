@@ -177,16 +177,21 @@ struct ScheduleView: View {
         }
         .task {
             AnalyticsManager.shared.trackScreenView("Schedule")
+            viewModel.meets.removeAll()
             await viewModel.loadMeets()
             if selectedMeet.isEmpty, let first = viewModel.meets.first {
                 selectedMeet = first
             }
+            viewModel.schedule.removeAll()
+            viewModel.meetDetails.removeAll()
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel.loadMeetDetails(meetName: selectedMeet)
             await customerManager.fetchCustomerInfo()
         }
         .onChange(of: selectedMeet) {
             Task {
+                viewModel.schedule.removeAll()
+                viewModel.meetDetails.removeAll()
                 await viewModel.loadMeetSchedule(meet: selectedMeet)
                 await viewModel.loadMeetDetails(meetName: selectedMeet)
             }
@@ -194,6 +199,8 @@ struct ScheduleView: View {
             WidgetCenter.shared.reloadAllTimelines()
         }
         .refreshable {
+            viewModel.schedule.removeAll()
+            viewModel.meetDetails.removeAll()
             await viewModel.loadMeetSchedule(meet: selectedMeet)
             await viewModel.loadMeetDetails(meetName: selectedMeet)
         }

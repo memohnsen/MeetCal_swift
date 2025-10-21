@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Combine
+import SwiftData
 
 struct AthleteRow: Decodable, Hashable {
     let member_id: String
@@ -66,6 +67,52 @@ class StartListModel: ObservableObject {
         }
     }
     
+    private var modelContext: ModelContext?
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
+    func saveStartListToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Start List", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Get the meet name from the data we're about to save
+        guard let meetName = athletes.first?.meet else {
+            return // Nothing to save
+        }
+
+        // Delete ONLY this meet's start list
+        let fetchDescriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert the new data for this meet
+        for athlete in athletes {
+            let entity = StartListEntity(
+                member_id: athlete.member_id,
+                name: athlete.name,
+                age: athlete.age,
+                club: athlete.club,
+                gender: athlete.gender,
+                weight_class: athlete.weight_class,
+                entry_total: athlete.entry_total,
+                session_number: athlete.session_number,
+                session_platform: athlete.session_platform,
+                meet: athlete.meet,
+                adaptive: athlete.adaptive,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
+    
     func loadStartList(meet: String) async {
         isLoading = true
         error = nil
@@ -79,9 +126,9 @@ class StartListModel: ObservableObject {
                 .execute()
             
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
-            
-            self.athletes = row
-            self.updateFilterArrays(from: row)
+
+            self.athletes.append(contentsOf: row)
+            self.updateFilterArrays(from: self.athletes)
         } catch {
             print("Error: \(error)")
             self.error = error
@@ -130,7 +177,7 @@ class StartListModel: ObservableObject {
 
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
 
-            self.athletes = row
+            self.athletes.append(contentsOf: row)
         } catch {
             print("Error: \(error)")
             self.error = error
@@ -150,9 +197,9 @@ class StartListModel: ObservableObject {
                 .execute()
             
             let decoder = JSONDecoder.scheduleNoonDateDecoder()
-            
+
             let row = try decoder.decode([ScheduleRow].self, from: response.data)
-            self.schedule = row
+            self.schedule.append(contentsOf: row)
             
         } catch {
             print("Error: \(error)")

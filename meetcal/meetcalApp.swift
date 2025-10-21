@@ -23,6 +23,8 @@ struct meetcalApp: App {
             Item.self,
             AdaptiveRecordEntity.self,
             AmericanRecordEntity.self,
+            MeetDetailsEntity.self,
+            MeetsEntity.self,
             NatRankingsEntity.self,
             QTEntity.self,
             RankingsEntity.self,

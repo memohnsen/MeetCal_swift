@@ -94,9 +94,9 @@ class MeetsScheduleModel: ObservableObject {
                 
                 let row = try JSONDecoder().decode([MeetsRow].self, from: response.data)
                 let unique = Array(row.map { $0.name })
-                
+
                 if !Task.isCancelled {
-                    self.meets = unique
+                    self.meets.append(contentsOf: unique)
                 }
             } catch is CancellationError {
                 return
@@ -146,6 +146,42 @@ class MeetsScheduleModel: ObservableObject {
         isLoading = false
     }
     
+    func saveScheduleToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Schedule", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Get the meet name from the data we're about to save
+        guard let meetName = schedule.first?.meet else {
+            return // Nothing to save
+        }
+
+        // Delete ONLY records for THIS specific meet
+        let fetchDescriptor = FetchDescriptor<ScheduleEntity>(
+            predicate: #Predicate { $0.meet == meetName }
+        )
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert the new data for this meet
+        for meet in schedule {
+            let entity = ScheduleEntity(
+                id: meet.id,
+                date: meet.date,
+                session_id: meet.session_id,
+                weight_class: meet.weight_class,
+                start_time: meet.start_time,
+                platform: meet.platform,
+                meet: meet.meet,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
+    
     func loadMeetSchedule(meet: String) async {
         loadScheduleTask?.cancel()
         
@@ -165,9 +201,9 @@ class MeetsScheduleModel: ObservableObject {
                 let decoder = JSONDecoder.scheduleNoonDateDecoder()
                 
                 let row = try decoder.decode([ScheduleRow].self, from: response.data)
-                
+
                 if !Task.isCancelled {
-                    self.schedule = row
+                    self.schedule.append(contentsOf: row)
                 }
                 
             } catch is CancellationError {
@@ -187,6 +223,44 @@ class MeetsScheduleModel: ObservableObject {
         await loadScheduleTask?.value
     }
     
+    func saveMeetDetailsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Meets Details", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Get the meet name from the data we're about to save
+        guard let meetName = meetDetails.first?.name else {
+            return // Nothing to save
+        }
+
+        // Delete ONLY this specific meet's details
+        let fetchDescriptor = FetchDescriptor<MeetDetailsEntity>(
+            predicate: #Predicate { $0.name == meetName }
+        )
+        let existingRecords = try context.fetch(fetchDescriptor)
+        for record in existingRecords {
+            context.delete(record)
+        }
+
+        // Insert the new data for this meet
+        for meet in meetDetails {
+            let entity = MeetDetailsEntity(
+                name: meet.name,
+                venue_name: meet.venue_name,
+                venue_street: meet.venue_street,
+                venue_city: meet.venue_city,
+                venue_state: meet.venue_state,
+                venue_zip: meet.venue_zip,
+                time_zone: meet.time_zone,
+                start_date: meet.start_date,
+                end_date: meet.end_date,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
+    }
+    
     func loadMeetDetails(meetName: String) async {
         loadDetailsTask?.cancel()
         
@@ -203,9 +277,9 @@ class MeetsScheduleModel: ObservableObject {
                 try Task.checkCancellation()
                 
                 let row = try JSONDecoder().decode([MeetDetailsRow].self, from: response.data)
-                
+
                 if !Task.isCancelled {
-                    self.meetDetails = row
+                    self.meetDetails.append(contentsOf: row)
                 }
             } catch is CancellationError {
                 return

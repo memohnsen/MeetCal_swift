@@ -10,39 +10,32 @@ import SwiftData
 
 @Model
 class SchedDetailsEntity {
-    @Attribute(.unique) var id: Int
-    var meet: String
-    var date: String
+    @Attribute(.unique) var member_id: String
     var name: String
-    var age: String
-    var body_weight: Float
-    var total: Float
-    var snatch1: Float
-    var snatch2: Float
-    var snatch3: Float
-    var snatch_best: Float
-    var cj1: Float
-    var cj2: Float
-    var cj3: Float
-    var cj_best: Float
+    var age: Int
+    var club: String
+    var gender: String
+    var weight_class: String
+    var entry_total: Int
+    var session_number: Int?
+    var session_platform: String?
+    var meet: String
+    var adaptive: Bool
     var lastSynced: Date
     
-    init(id: Int, meet: String, date: String, name: String, age: String, body_weight: Float, total: Float, snatch1: Float, snatch2: Float, snatch3: Float, snatch_best: Float, cj1: Float, cj2: Float, cj3: Float, cj_best: Float, lastSynced: Date) {
-        self.id = id
-        self.meet = meet
-        self.date = date
+    init(member_id: String, name: String, age: Int, club: String, gender: String, weight_class: String, entry_total: Int, session_number: Int? = nil, session_platform: String? = nil, meet: String, adaptive: Bool, lastSynced: Date) {
+        self.member_id = member_id
         self.name = name
         self.age = age
-        self.body_weight = body_weight
-        self.total = total
-        self.snatch1 = snatch1
-        self.snatch2 = snatch2
-        self.snatch3 = snatch3
-        self.snatch_best = snatch_best
-        self.cj1 = cj1
-        self.cj2 = cj2
-        self.cj3 = cj3
-        self.cj_best = cj_best
+        self.club = club
+        self.gender = gender
+        self.weight_class = weight_class
+        self.entry_total = entry_total
+        self.session_number = session_number
+        self.session_platform = session_platform
+        self.meet = meet
+        self.adaptive = adaptive
         self.lastSynced = lastSynced
     }
 }
+
