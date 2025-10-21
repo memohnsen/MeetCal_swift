@@ -201,8 +201,6 @@ class RecordsViewModel: ObservableObject {
 
             self.isUsingOfflineData = false
         } catch {
-            print("Network fetch failed: \(error)")
-
             if hasOffline {
                 do {
                     let offlineRecords = try loadRecordsFromSwiftData(
@@ -212,9 +210,7 @@ class RecordsViewModel: ObservableObject {
                     )
                     self.records.append(contentsOf: offlineRecords)
                     self.isUsingOfflineData = true
-                    print("✅ Fell back to \(offlineRecords.count) offline records")
                 } catch {
-                    print("Error loading offline records: \(error)")
                     self.error = error
                 }
             } else {

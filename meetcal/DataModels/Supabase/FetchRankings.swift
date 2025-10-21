@@ -36,11 +36,74 @@ class IntlRankingsViewModel: ObservableObject {
     @Published var error: Error?
     @Published var meets: [String] = []
     @Published var ageGroups: [String] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineRankings(gender: String? = nil, ageCategory: String? = nil, meet: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<RankingsEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let meet = meet {
+            descriptor.predicate = #Predicate<RankingsEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.meet == meet
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<RankingsEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadRankingsFromSwiftData(gender: String? = nil, ageCategory: String? = nil, meet: String? = nil) throws -> [Rankings] {
+        guard let context = modelContext else {
+            throw NSError(domain: "International Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<RankingsEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let meet = meet {
+            descriptor.predicate = #Predicate<RankingsEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.meet == meet
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            Rankings(
+                id: entity.id,
+                meet: entity.meet,
+                name: entity.name,
+                weight_class: entity.weight_class,
+                total: entity.total,
+                percent_a: entity.percent_a,
+                gender: entity.gender,
+                age_category: entity.age_category
+            )
+        }
     }
     
     func saveIntlRankingsToSwiftData() throws {
@@ -74,6 +137,30 @@ class IntlRankingsViewModel: ObservableObject {
     func loadRankings(gender: String, ageCategory: String, meet: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineRankings(gender: gender, ageCategory: ageCategory, meet: meet)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineRankings = try loadRankingsFromSwiftData(
+                    gender: gender,
+                    ageCategory: ageCategory,
+                    meet: meet
+                )
+                self.rankings.append(contentsOf: offlineRankings)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("intl_rankings")
@@ -83,13 +170,27 @@ class IntlRankingsViewModel: ObservableObject {
                 .eq("meet", value: meet)
                 .order("ranking")
                 .execute()
-            print(response)
+
             let decoder = JSONDecoder()
             let rankingsData = try decoder.decode([Rankings].self, from: response.data)
             self.rankings.append(contentsOf: rankingsData)
+            self.isUsingOfflineData = false
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineRankings = try loadRankingsFromSwiftData(
+                        gender: gender,
+                        ageCategory: ageCategory,
+                        meet: meet
+                    )
+                    self.rankings.append(contentsOf: offlineRankings)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }
@@ -102,18 +203,17 @@ class IntlRankingsViewModel: ObservableObject {
                 .from("intl_rankings")
                 .select("meet")
                 .execute()
-            
+
             let rows = try JSONDecoder().decode([MeetRow].self, from: response.data)
             let unique = Array(Set(rows.map {$0.meet}))
-            
+
             self.meets = unique
         } catch {
-            print("Error: \(error)")
             self.error = error
         }
         isLoading = false
     }
-    
+
     func loadAgeGroups(meet: String, gender: String) async {
         isLoading = true
         error = nil
@@ -124,24 +224,23 @@ class IntlRankingsViewModel: ObservableObject {
                 .eq("meet", value: meet)
                 .eq("gender", value: gender)
                 .execute()
-            
+
             let row = try JSONDecoder().decode([AgeRow].self, from: response.data)
             let unique = Array(Set(row.map {$0.age_category}))
-            
+
             let order: [String] = ["U15", "U17", "Junior", "Senior"]
             let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
             let ordered = unique.sorted {
                 let l = rank[$0.lowercased()] ?? Int.max
                 let r = rank[$1.lowercased()] ?? Int.max
-                
+
                 if l != r { return l < r }
-                
+
                 return $0 < $1
             }
-            
+
             self.ageGroups = ordered
         } catch {
-            print("Error: \(error)")
             self.error = error
         }
         isLoading = false

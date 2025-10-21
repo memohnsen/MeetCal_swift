@@ -38,11 +38,82 @@ class StandardsViewModel: ObservableObject {
     @Published var ageGroups: [String] = []
     @Published var isLoading = false
     @Published var error: Error?
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineStandards(gender: String? = nil, ageCategory: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<StandardsEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory {
+            let genderLower = gender.lowercased()
+            let ageLower = ageCategory.lowercased()
+            descriptor.predicate = #Predicate<StandardsEntity> {
+                $0.gender == genderLower &&
+                $0.age_category == ageLower
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<StandardsEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadStandardsFromSwiftData(gender: String? = nil, ageCategory: String? = nil) throws -> [Standard] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Standards", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<StandardsEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory {
+            let genderLower = gender.lowercased()
+            let ageLower = ageCategory.lowercased()
+            descriptor.predicate = #Predicate<StandardsEntity> {
+                $0.gender == genderLower &&
+                $0.age_category == ageLower
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            Standard(
+                id: entity.id,
+                age_category: entity.age_category,
+                gender: entity.gender,
+                weight_class: entity.weight_class,
+                standard_a: entity.standard_a,
+                standard_b: entity.standard_b
+            )
+        }.sorted { (a: Standard, b: Standard) -> Bool in
+            if a.isPlusClass != b.isPlusClass {
+                return a.isPlusClass == false
+            }
+            if a.numericWeight != b.numericWeight {
+                return a.numericWeight < b.numericWeight
+            }
+            return a.weight_class < b.weight_class
+        }
     }
     
     func saveStandardsToSwiftData() throws {
@@ -50,14 +121,12 @@ class StandardsViewModel: ObservableObject {
             throw NSError(domain: "Standards", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
         }
 
-        // Delete existing records first (to avoid duplicates)
         let fetchDescriptor = FetchDescriptor<StandardsEntity>()
         let existingRecords = try context.fetch(fetchDescriptor)
         for record in existingRecords {
             context.delete(record)
         }
 
-        // Insert new records
         for standard in standards {
               let entity = StandardsEntity(
                   id: standard.id,
@@ -77,6 +146,29 @@ class StandardsViewModel: ObservableObject {
     func loadStandards(gender: String, ageCategory: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineStandards(gender: gender, ageCategory: ageCategory)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineStandards = try loadStandardsFromSwiftData(
+                    gender: gender,
+                    ageCategory: ageCategory
+                )
+                self.standards.append(contentsOf: offlineStandards)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("standards")
@@ -84,10 +176,10 @@ class StandardsViewModel: ObservableObject {
                 .eq("gender", value: gender.lowercased())
                 .eq("age_category", value: ageCategory.lowercased())
                 .execute()
-            
+
             let decoder = JSONDecoder()
             let standardsData = try decoder.decode([Standard].self, from: response.data)
-            
+
             self.standards.append(contentsOf: standardsData.sorted { (a: Standard, b: Standard) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
@@ -97,9 +189,23 @@ class StandardsViewModel: ObservableObject {
                 }
                 return a.weight_class < b.weight_class
             })
+
+            self.isUsingOfflineData = false
         } catch {
-            print("Error loading standards: \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineStandards = try loadStandardsFromSwiftData(
+                        gender: gender,
+                        ageCategory: ageCategory
+                    )
+                    self.standards.append(contentsOf: offlineStandards)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

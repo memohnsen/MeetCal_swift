@@ -27,11 +27,84 @@ class AdaptiveRecordsModel: ObservableObject {
     @Published var error: Error?
     @Published var results: [AthleteResults] = []
     @Published var groupedRecords: [AdaptiveRecord] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineRecords(gender: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+
+        if let gender = gender {
+            descriptor.predicate = #Predicate<AdaptiveRecordEntity> {
+                $0.gender == gender
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadRecordsFromSwiftData(gender: String? = nil) throws -> [AdaptiveRecord] {
+        guard let context = modelContext else {
+            throw NSError(domain: "AdaptiveRecords", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<AdaptiveRecordEntity>()
+
+        if let gender = gender {
+            descriptor.predicate = #Predicate<AdaptiveRecordEntity> {
+                $0.gender == gender
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            AdaptiveRecord(
+                id: entity.id,
+                age: entity.age,
+                gender: entity.gender,
+                weightClass: entity.weight_class,
+                snatch_best: entity.snatch_best,
+                cj_best: entity.cj_best,
+                total: entity.total,
+                athleteName: entity.name
+            )
+        }.sorted { (record1, record2) in
+            let num1 = Int(record1.weightClass.replacingOccurrences(of: #"[^\d]"#, with: "", options: .regularExpression)) ?? 0
+            let num2 = Int(record2.weightClass.replacingOccurrences(of: #"[^\d]"#, with: "", options: .regularExpression)) ?? 0
+
+            let has1Plus = record1.weightClass.contains("+")
+            let has2Plus = record2.weightClass.contains("+")
+
+            if has1Plus && !has2Plus {
+                return false
+            } else if !has1Plus && has2Plus {
+                return true
+            }
+
+            return num1 < num2
+        }
     }
     
     func saveAdapRecordsToSwiftData() throws {
@@ -81,6 +154,25 @@ class AdaptiveRecordsModel: ObservableObject {
     func loadAdaptiveRecords(gender: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineRecords(gender: gender)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineRecords = try loadRecordsFromSwiftData(gender: gender)
+                self.groupedRecords.append(contentsOf: offlineRecords)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
 
         do {
             let response = try await supabase
@@ -107,7 +199,6 @@ class AdaptiveRecordsModel: ObservableObject {
                 }
             }
 
-            // Convert to display format and sort by weight class
             let records = weightClassRecords.map { (weightClass, result) in
                 AdaptiveRecord(
                     id: result.id,
@@ -138,11 +229,19 @@ class AdaptiveRecordsModel: ObservableObject {
             self.results.removeAll()
             self.results.append(contentsOf: rows)
             self.groupedRecords.append(contentsOf: records)
+            self.isUsingOfflineData = false
         } catch {
-            #if DEBUG
-            print("Error: \(error)")
-            #endif
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineRecords = try loadRecordsFromSwiftData(gender: gender)
+                    self.groupedRecords.append(contentsOf: offlineRecords)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

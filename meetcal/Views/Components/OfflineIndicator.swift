@@ -54,8 +54,6 @@ struct OfflineIndicator: View {
     }
 }
 
-// MARK: - View Modifier for Easy Use
-
 extension View {
     func offlineIndicator(isUsingOfflineData: Bool, lastSynced: Date? = nil) -> some View {
         self.modifier(OfflineIndicatorModifier(isUsingOfflineData: isUsingOfflineData, lastSynced: lastSynced))
@@ -76,8 +74,6 @@ struct OfflineIndicatorModifier: ViewModifier {
         }
     }
 }
-
-// MARK: - Inline Offline Badge
 
 struct OfflineBadge: View {
     @StateObject private var networkMonitor = NetworkMonitor.shared

@@ -15,11 +15,86 @@ class NationalRankingsModel: ObservableObject {
     @Published var error: Error?
     @Published var isLoading: Bool = false
     @Published var rankings: [AthleteResults] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineRankings(age: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<NatRankingsEntity>()
+
+        if let age = age {
+            descriptor.predicate = #Predicate<NatRankingsEntity> {
+                $0.age == age
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<NatRankingsEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadRankingsFromSwiftData(age: String? = nil) throws -> [AthleteResults] {
+        guard let context = modelContext else {
+            throw NSError(domain: "National Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<NatRankingsEntity>()
+
+        if let age = age {
+            descriptor.predicate = #Predicate<NatRankingsEntity> {
+                $0.age == age
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        let results = entities.map { entity in
+            AthleteResults(
+                id: entity.id,
+                meet: entity.meet,
+                date: entity.date,
+                name: entity.name,
+                age: entity.age,
+                body_weight: entity.body_weight,
+                total: entity.total,
+                snatch1: entity.snatch1,
+                snatch2: entity.snatch2,
+                snatch3: entity.snatch3,
+                snatch_best: entity.snatch_best,
+                cj1: entity.cj1,
+                cj2: entity.cj2,
+                cj3: entity.cj3,
+                cj_best: entity.cj_best
+            )
+        }
+
+        let maxTotalsByName = Dictionary(grouping: results) { $0.name }
+            .compactMapValues { athleteResults in
+                athleteResults.max { $0.total < $1.total }
+            }
+            .values
+            .sorted { $0.total > $1.total }
+
+        return Array(maxTotalsByName)
     }
     
     func saveNatRankingsToSwiftData() throws {
@@ -60,6 +135,25 @@ class NationalRankingsModel: ObservableObject {
     func loadWeightClasses(age: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineRankings(age: age)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineRankings = try loadRankingsFromSwiftData(age: age)
+                self.rankings.append(contentsOf: offlineRankings)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
 
         do {
             let response = try await supabase
@@ -79,9 +173,19 @@ class NationalRankingsModel: ObservableObject {
                 .sorted { $0.total > $1.total }
 
             self.rankings.append(contentsOf: maxTotalsByName)
+            self.isUsingOfflineData = false
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineRankings = try loadRankingsFromSwiftData(age: age)
+                    self.rankings.append(contentsOf: offlineRankings)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

@@ -45,11 +45,82 @@ class WSOViewModel: ObservableObject {
     @Published var error: Error?
     @Published var wso: [String] = []
     @Published var ageGroups: [String] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineRecords(gender: String? = nil, ageCategory: String? = nil, wso: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<WSOEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let wso = wso {
+            descriptor.predicate = #Predicate<WSOEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.wso == wso
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<WSOEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadRecordsFromSwiftData(gender: String? = nil, ageCategory: String? = nil, wso: String? = nil) throws -> [WSORecords] {
+        guard let context = modelContext else {
+            throw NSError(domain: "WSO Records", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<WSOEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let wso = wso {
+            descriptor.predicate = #Predicate<WSOEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.wso == wso
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            WSORecords(
+                id: entity.id,
+                wso: entity.wso,
+                gender: entity.gender,
+                age_category: entity.age_category,
+                weight_class: entity.weight_class,
+                snatch_record: entity.snatch_record,
+                cj_record: entity.cj_record,
+                total_record: entity.total_record
+            )
+        }.sorted { (a: WSORecords, b: WSORecords) -> Bool in
+            if a.isPlusClass != b.isPlusClass {
+                return a.isPlusClass == false
+            }
+            if a.numericWeight != b.numericWeight {
+                return a.numericWeight < b.numericWeight
+            }
+            return a.weight_class < b.weight_class
+        }
     }
     
     func saveWSOToSwiftData() throws {
@@ -83,6 +154,30 @@ class WSOViewModel: ObservableObject {
     func loadRecords(gender: String, ageCategory: String, wso: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineRecords(gender: gender, ageCategory: ageCategory, wso: wso)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineRecords = try loadRecordsFromSwiftData(
+                    gender: gender,
+                    ageCategory: ageCategory,
+                    wso: wso
+                )
+                self.wsoRecords.append(contentsOf: offlineRecords)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("wso_records")
@@ -91,9 +186,7 @@ class WSOViewModel: ObservableObject {
                 .eq("age_category", value: ageCategory)
                 .eq("wso", value: wso)
                 .execute()
-            
-            print(response)
-            
+
             let decoder = JSONDecoder()
             let wsoData = try decoder.decode([WSORecords].self, from: response.data)
             self.wsoRecords.append(contentsOf: wsoData.sorted { (a: WSORecords, b: WSORecords) -> Bool in
@@ -105,9 +198,24 @@ class WSOViewModel: ObservableObject {
                 }
                 return a.weight_class < b.weight_class
             })
+
+            self.isUsingOfflineData = false
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineRecords = try loadRecordsFromSwiftData(
+                        gender: gender,
+                        ageCategory: ageCategory,
+                        wso: wso
+                    )
+                    self.wsoRecords.append(contentsOf: offlineRecords)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }
@@ -120,19 +228,18 @@ class WSOViewModel: ObservableObject {
                 .from("wso_records")
                 .select("wso")
                 .execute()
-            
+
             let row = try JSONDecoder().decode([MeetRow].self, from: response.data)
             let unique = Array(Set(row.map { $0.wso }))
             let sorted = unique.sorted()
-            
+
             self.wso = sorted
         } catch {
-            print("Error: \(error)")
             self.error = error
         }
         isLoading = false
     }
-    
+
     func loadAgeGroups(gender: String, wso: String) async {
         isLoading = true
         error = nil
@@ -143,10 +250,10 @@ class WSOViewModel: ObservableObject {
                 .eq("gender", value: gender)
                 .eq("wso", value: wso)
                 .execute()
-            
+
             let row = try JSONDecoder().decode([AgeRow].self, from: response.data)
             let unique = Array(Set( row.map { $0.age_category }))
-            
+
             let order: [String] = [
                 "U11", "U13", "U15", "U17", "Youth", "Junior", "University", "Senior", "Masters", "Masters 30", "Masters 35", "Masters 40", "Masters 45", "Masters 50", "Masters 55", "Masters 60", "Masters 65", "Masters 70", "Masters 75", "Masters 80", "Masters 85", "Masters 35-39", "Masters 40-44", "Masters 45-49", "Masters 50-54", "Masters 55-59", "Masters 60-64", "Masters 65-69", "Masters 70-74", "Masters 75-79", "Masters 80-84", "Masters 85-89"
             ]
@@ -154,15 +261,14 @@ class WSOViewModel: ObservableObject {
             let ordered = unique.sorted {
                 let l = rank[$0] ?? Int.max
                 let r = rank[$1] ?? Int.max
-                
+
                 if l != r { return l < r }
-                
+
                 return $0 < $1
             }
-            
+
             self.ageGroups = ordered
         } catch {
-            print("error: \(error)")
             self.error = error
         }
         isLoading = false

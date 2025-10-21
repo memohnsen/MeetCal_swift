@@ -38,11 +38,80 @@ class QualifyingTotalModel: ObservableObject {
     @Published var error: Error?
     @Published var totals: [QualifyingTotal] = []
     @Published var ageGroups: [String] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineTotals(gender: String? = nil, ageCategory: String? = nil, eventName: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<QTEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let eventName = eventName {
+            descriptor.predicate = #Predicate<QTEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.event_name == eventName
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<QTEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadTotalsFromSwiftData(gender: String? = nil, ageCategory: String? = nil, eventName: String? = nil) throws -> [QualifyingTotal] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Qualifying Totals", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<QTEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let eventName = eventName {
+            descriptor.predicate = #Predicate<QTEntity> {
+                $0.gender == gender &&
+                $0.age_category == ageCategory &&
+                $0.event_name == eventName
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            QualifyingTotal(
+                id: entity.id,
+                event_name: entity.event_name,
+                gender: entity.gender,
+                age_category: entity.age_category,
+                weight_class: entity.weight_class,
+                qualifying_total: entity.qualifying_total
+            )
+        }.sorted { (a: QualifyingTotal, b: QualifyingTotal) -> Bool in
+            if a.isPlusClass != b.isPlusClass {
+                return a.isPlusClass == false
+            }
+            if a.numericWeight != b.numericWeight {
+                return a.numericWeight < b.numericWeight
+            }
+            return a.weight_class < b.weight_class
+        }
     }
     
     func saveQTToSwiftData() throws {
@@ -74,6 +143,30 @@ class QualifyingTotalModel: ObservableObject {
     func loadTotals(gender: String, age_category: String, event_name: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineTotals(gender: gender, ageCategory: age_category, eventName: event_name)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineTotals = try loadTotalsFromSwiftData(
+                    gender: gender,
+                    ageCategory: age_category,
+                    eventName: event_name
+                )
+                self.totals.append(contentsOf: offlineTotals)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("qualifying_totals")
@@ -82,8 +175,7 @@ class QualifyingTotalModel: ObservableObject {
                 .eq("age_category", value: age_category)
                 .eq("event_name", value: event_name)
                 .execute()
-            
-            print(response)
+
             let decoder = JSONDecoder()
             let totalData = try decoder.decode([QualifyingTotal].self, from: response.data)
             self.totals.append(contentsOf: totalData.sorted { (a: QualifyingTotal, b: QualifyingTotal) -> Bool in
@@ -95,10 +187,24 @@ class QualifyingTotalModel: ObservableObject {
                 }
                 return a.weight_class < b.weight_class
             })
-            print(totals)
+
+            self.isUsingOfflineData = false
         } catch {
-            print("Error \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineTotals = try loadTotalsFromSwiftData(
+                        gender: gender,
+                        ageCategory: age_category,
+                        eventName: event_name
+                    )
+                    self.totals.append(contentsOf: offlineTotals)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }
@@ -113,25 +219,23 @@ class QualifyingTotalModel: ObservableObject {
                 .eq("gender", value: gender)
                 .eq("event_name", value: event_name)
                 .execute()
-            
+
             let rows = try JSONDecoder().decode([AgeRow].self, from: response.data)
             let unique = Array(Set(rows.map {$0.age_category}))
-            
-            //sorting
+
             let order: [String] = ["U11", "U13", "U15", "U17", "Junior", "University", "U23", "U25", "Senior", "Masters 30", "Masters 35", "Masters 40", "Masters 45", "Masters 50", "Masters 55", "Masters 60", "Masters 65", "Masters 70", "Masters 75", "Masters 80", "Masters 85"]
             let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map{($1, $0)})
             let ordered = unique.sorted{
                 let l = rank[$0] ?? Int.max
                 let r = rank[$1] ?? Int.max
-                
+
                 if l != r { return l < r}
-                
+
                 return $0 < $1
             }
-            
+
             self.ageGroups = ordered
         } catch {
-            print("Error: \(error)")
             self.error = error
         }
         isLoading = false

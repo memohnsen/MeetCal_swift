@@ -16,8 +16,6 @@ class OfflineManager {
 
     private init() {}
 
-    // MARK: - Cache Strategy
-
     func isCacheFresh(lastSynced: Date?) -> Bool {
         guard let lastSynced = lastSynced else { return false }
         let elapsed = Date().timeIntervalSince(lastSynced)
@@ -44,8 +42,6 @@ class OfflineManager {
         return false
     }
 
-    // MARK: - Generic Fetch with Fallback
-
     func fetchWithFallback<T>(
         networkFetch: () async throws -> T,
         offlineFetch: () throws -> T,
@@ -69,8 +65,6 @@ class OfflineManager {
             }
         }
     }
-
-    // MARK: - Error Classification
 
     enum FetchError: LocalizedError {
         case networkUnavailable
@@ -100,8 +94,6 @@ class OfflineManager {
         return .supabaseError(error)
     }
 }
-
-// MARK: - SwiftData Helpers
 
 extension OfflineManager {
     func getLastSyncedDate<T: PersistentModel>(
@@ -139,11 +131,6 @@ extension OfflineManager {
     }
 }
 
-// MARK: - Protocol for Entities with lastSynced
-
 protocol LastSyncedProtocol {
     var lastSynced: Date { get }
 }
-
-// Note: Entity conformances are declared in their respective entity files
-// to avoid circular dependencies during SwiftData initialization
