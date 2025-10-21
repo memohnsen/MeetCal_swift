@@ -40,11 +40,86 @@ class RecordsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: Error?
     @Published var ageGroups: [String] = []
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineRecords(gender: String? = nil, ageCategory: String? = nil, recordType: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<AmericanRecordEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let recordType = recordType {
+            let genderLower = gender.lowercased()
+            let ageLower = ageCategory.lowercased()
+            descriptor.predicate = #Predicate<AmericanRecordEntity> {
+                $0.gender == genderLower &&
+                $0.age_category == ageLower &&
+                $0.record_type == recordType
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<AmericanRecordEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadRecordsFromSwiftData(gender: String? = nil, ageCategory: String? = nil, recordType: String? = nil) throws -> [Records] {
+        guard let context = modelContext else {
+            throw NSError(domain: "American Records", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor = FetchDescriptor<AmericanRecordEntity>()
+
+        if let gender = gender, let ageCategory = ageCategory, let recordType = recordType {
+            let genderLower = gender.lowercased()
+            let ageLower = ageCategory.lowercased()
+            descriptor.predicate = #Predicate<AmericanRecordEntity> {
+                $0.gender == genderLower &&
+                $0.age_category == ageLower &&
+                $0.record_type == recordType
+            }
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            Records(
+                id: entity.id,
+                record_type: entity.record_type,
+                gender: entity.gender,
+                age_category: entity.age_category,
+                weight_class: entity.weight_class,
+                snatch_record: entity.snatch_record,
+                cj_record: entity.cj_record,
+                total_record: entity.total_record
+            )
+        }.sorted { (a: Records, b: Records) -> Bool in
+            if a.isPlusClass != b.isPlusClass {
+                return a.isPlusClass == false
+            }
+            if a.numericWeight != b.numericWeight {
+                return a.numericWeight < b.numericWeight
+            }
+            return a.weight_class < b.weight_class
+        }
     }
     
     func saveAmRecordsToSwiftData() throws {
@@ -78,6 +153,30 @@ class RecordsViewModel: ObservableObject {
     func loadRecords(gender: String, ageCategory: String, record_type: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineRecords(gender: gender, ageCategory: ageCategory, recordType: record_type)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineRecords = try loadRecordsFromSwiftData(
+                    gender: gender,
+                    ageCategory: ageCategory,
+                    recordType: record_type
+                )
+                self.records.append(contentsOf: offlineRecords)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("records")
@@ -86,10 +185,10 @@ class RecordsViewModel: ObservableObject {
                 .ilike("age_category", pattern: ageCategory.lowercased())
                 .eq("record_type", value: record_type)
                 .execute()
-            
+
             let decoder = JSONDecoder()
             let recordsData = try decoder.decode([Records].self, from: response.data)
-            
+
             self.records.append(contentsOf: recordsData.sorted { (a: Records, b: Records) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
@@ -99,9 +198,28 @@ class RecordsViewModel: ObservableObject {
                 }
                 return a.weight_class < b.weight_class
             })
+
+            self.isUsingOfflineData = false
         } catch {
-            print("Error loading standards: \(error)")
-            self.error = error
+            print("Network fetch failed: \(error)")
+
+            if hasOffline {
+                do {
+                    let offlineRecords = try loadRecordsFromSwiftData(
+                        gender: gender,
+                        ageCategory: ageCategory,
+                        recordType: record_type
+                    )
+                    self.records.append(contentsOf: offlineRecords)
+                    self.isUsingOfflineData = true
+                    print("✅ Fell back to \(offlineRecords.count) offline records")
+                } catch {
+                    print("Error loading offline records: \(error)")
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

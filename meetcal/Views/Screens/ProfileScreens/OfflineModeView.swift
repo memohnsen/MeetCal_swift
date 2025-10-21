@@ -1047,14 +1047,6 @@ struct OfflineModeView: View {
             }
             .toolbar{
                 ToolbarItem {
-                    Button{
-                        
-                    } label: {
-                        Image(systemName: "arrow.trianglehead.counterclockwise.icloud")
-                    }
-                }
-                ToolbarSpacer()
-                ToolbarItem {
                     Button {
                         deleteAllOfflineData()
                     } label: {
@@ -1063,6 +1055,7 @@ struct OfflineModeView: View {
                     }
                 }
             }
+            .toolbarVisibility(.hidden, for: .tabBar)
         }
         .task {
             await meetsModel.loadMeets3Weeks()
