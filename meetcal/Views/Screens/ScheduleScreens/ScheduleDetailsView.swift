@@ -466,7 +466,6 @@ struct TopView: View {
                     .foregroundStyle(.blue)
                 }
             }
-            
         }
         .cardStyling()
         .cornerRadius(32)

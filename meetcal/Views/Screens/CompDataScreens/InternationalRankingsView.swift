@@ -27,7 +27,9 @@ struct InternationalRankingsView: View {
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
     @State var draftMeet: String = "2025 Worlds"
-    
+
+    @State private var loadTask: Task<Void, Never>?
+
     var ageGroups: [String] {viewModel.ageGroups}
     var meets: [String] {viewModel.meets}
     
@@ -117,15 +119,10 @@ struct InternationalRankingsView: View {
             meets: meets,
             title: "Meet",
             onApply: {
+                isModalShowing = false
                 appliedAge = draftAge
                 appliedMeet = draftMeet
                 appliedGender = draftGender
-                Task {
-                    await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)
-                    await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
-                    await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
-                }
-                isModalShowing = false
             }
         ))
         .task {
@@ -144,23 +141,34 @@ struct InternationalRankingsView: View {
             await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
         }
         .onChange(of: appliedGender) {
-            viewModel.rankings.removeAll()
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            loadTask?.cancel()
+            loadTask = Task {
+                await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)
+                viewModel.rankings.removeAll()
+                await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+            }
         }
         .onChange(of: appliedAge) {
-            viewModel.rankings.removeAll()
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            loadTask?.cancel()
+            loadTask = Task {
+                viewModel.rankings.removeAll()
+                await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+            }
         }
         .onChange(of: appliedMeet) {
-            viewModel.rankings.removeAll()
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            loadTask?.cancel()
+            loadTask = Task {
+                await viewModel.loadMeet(gender: appliedGender, ageCategory: appliedAge)
+                await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
+                viewModel.rankings.removeAll()
+                await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+            }
         }
         .onChange(of: draftMeet) {
             Task {
                 await viewModel.loadAgeGroups(meet: draftMeet, gender: draftGender)
                 draftAge = viewModel.ageGroups.first ?? draftAge
             }
-            viewModel.rankings.removeAll()
         }
     }
 }
