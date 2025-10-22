@@ -133,6 +133,8 @@ struct InternationalRankingsView: View {
             AnalyticsManager.shared.trackScreenView("International Rankings")
             AnalyticsManager.shared.trackRankingsViewed(filters: ["meet": appliedMeet, "gender": appliedGender, "age": appliedAge])
             await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+            viewModel.rankings.removeAll()
+            
             await customerManager.fetchCustomerInfo()
         }
         .task {
@@ -143,18 +145,22 @@ struct InternationalRankingsView: View {
         }
         .onChange(of: appliedGender) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            viewModel.rankings.removeAll()
         }
         .onChange(of: appliedAge) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            viewModel.rankings.removeAll()
         }
         .onChange(of: appliedMeet) {
             Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
+            viewModel.rankings.removeAll()
         }
         .onChange(of: draftMeet) {
             Task {
                 await viewModel.loadAgeGroups(meet: draftMeet, gender: draftGender)
                 draftAge = viewModel.ageGroups.first ?? draftAge
             }
+            viewModel.rankings.removeAll()
         }
     }
 }

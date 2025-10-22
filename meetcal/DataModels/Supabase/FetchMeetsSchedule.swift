@@ -172,7 +172,7 @@ class MeetsScheduleModel: ObservableObject {
     private func hasOfflineMeets() -> Bool {
         guard let context = modelContext else { return false }
 
-        var descriptor = FetchDescriptor<MeetsEntity>()
+        var descriptor = FetchDescriptor<MeetDetailsEntity>()
         descriptor.fetchLimit = 1
         let results = try? context.fetch(descriptor)
         return !(results?.isEmpty ?? true)
@@ -181,7 +181,7 @@ class MeetsScheduleModel: ObservableObject {
     private func getOfflineMeetsLastSynced() -> Date? {
         guard let context = modelContext else { return nil }
 
-        var descriptor = FetchDescriptor<MeetsEntity>()
+        var descriptor = FetchDescriptor<MeetDetailsEntity>()
         descriptor.fetchLimit = 1
 
         if let entities = try? context.fetch(descriptor),
@@ -196,10 +196,10 @@ class MeetsScheduleModel: ObservableObject {
             throw NSError(domain: "Meets", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
         }
 
-        let descriptor = FetchDescriptor<MeetsEntity>()
+        let descriptor = FetchDescriptor<MeetDetailsEntity>()
         let entities = try context.fetch(descriptor)
 
-        return entities.map { $0.name }
+        return entities.map { $0.name }.sorted()
     }
     
     func saveMeetsToSwiftData() throws {

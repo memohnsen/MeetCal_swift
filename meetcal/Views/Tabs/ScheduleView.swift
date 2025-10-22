@@ -16,6 +16,7 @@ struct ScheduleView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.isUserAuthenticated) private var isUserAuthenticated
 
     @StateObject private var viewModel = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -40,7 +41,7 @@ struct ScheduleView: View {
     
     var body: some View {
         NavigationStack{
-            if clerk.user != nil {
+            if isUserAuthenticated {
                 ZStack {
                     VStack {
                         HStack {

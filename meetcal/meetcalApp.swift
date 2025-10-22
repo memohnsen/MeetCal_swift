@@ -18,6 +18,32 @@ struct meetcalApp: App {
     @State private var clerk = Clerk.shared
     @StateObject private var customerManager = CustomerInfoManager()
 
+    @AppStorage("cached_user_id") private var cachedUserId: String = ""
+    @AppStorage("cached_auth_valid") private var cachedAuthValid: Bool = false
+    @AppStorage("last_auth_check") private var lastAuthCheck: Double = 0
+
+    private let authCacheValidityDays: Double = 3
+    private let secondsPerDay: Double = 86400
+
+    private func isAuthCacheValid() -> Bool {
+        let currentTime = Date().timeIntervalSince1970
+        let cacheAge = currentTime - lastAuthCheck
+        return cacheAge < (authCacheValidityDays * secondsPerDay)
+    }
+
+    private func updateAuthCache(userId: String?, isValid: Bool) {
+        cachedUserId = userId ?? ""
+        cachedAuthValid = isValid
+        lastAuthCheck = Date().timeIntervalSince1970
+    }
+
+    var isUserAuthenticated: Bool {
+        if let user = clerk.user {
+            return true
+        }
+        return cachedAuthValid && isAuthCacheValid() && !cachedUserId.isEmpty
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -51,12 +77,12 @@ struct meetcalApp: App {
                 ContentView()
                     .environment(\.clerk, clerk)
                     .environmentObject(customerManager)
+                    .environment(\.isUserAuthenticated, isUserAuthenticated)
                     .task {
                         let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
                         clerk.configure(publishableKey: clerkKey)
                         try? await clerk.load()
-                        
-                        // Sync RevenueCat with Clerk user after initial load
+
                         await syncRevenueCatWithClerk()
                     }
                     .onChange(of: clerk.user) { oldUser, newUser in
@@ -64,14 +90,15 @@ struct meetcalApp: App {
                             await syncRevenueCatWithClerk()
                         }
 
-                        // Track authentication events
                         if let newUser = newUser, oldUser == nil {
-                            // User just signed in or signed up
+                            updateAuthCache(userId: newUser.id, isValid: true)
                             AnalyticsManager.shared.identifyUser(userId: newUser.id)
                             AnalyticsManager.shared.trackUserSignedIn(method: "clerk")
                         } else if newUser == nil, oldUser != nil {
-                            // User just signed out
+                            updateAuthCache(userId: nil, isValid: false)
                             AnalyticsManager.shared.trackUserSignedOut()
+                        } else if let newUser = newUser {
+                            updateAuthCache(userId: newUser.id, isValid: true)
                         }
                     }
             }

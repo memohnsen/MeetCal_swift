@@ -212,6 +212,21 @@ class QualifyingTotalModel: ObservableObject {
     func loadAgeGroup(for gender: String, event_name: String) async {
         isLoading = true
         error = nil
+
+        let hasOffline = hasOfflineTotals(gender: gender, ageCategory: nil, eventName: event_name)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            if let ageGroups = try? loadAgeGroupsFromSwiftData(gender: gender, eventName: event_name), !ageGroups.isEmpty {
+                self.ageGroups = ageGroups
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("qualifying_totals")
@@ -236,8 +251,43 @@ class QualifyingTotalModel: ObservableObject {
 
             self.ageGroups = ordered
         } catch {
-            self.error = error
+            if hasOffline {
+                if let ageGroups = try? loadAgeGroupsFromSwiftData(gender: gender, eventName: event_name), !ageGroups.isEmpty {
+                    self.ageGroups = ageGroups
+                } else {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
+    }
+
+    private func loadAgeGroupsFromSwiftData(gender: String, eventName: String) throws -> [String] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Qualifying Totals", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<QTEntity>(
+            predicate: #Predicate<QTEntity> {
+                $0.gender == gender && $0.event_name == eventName
+            }
+        )
+
+        let entities = try context.fetch(descriptor)
+        let unique = Array(Set(entities.map { $0.age_category }))
+
+        let order: [String] = ["U11", "U13", "U15", "U17", "Junior", "University", "U23", "U25", "Senior", "Masters 30", "Masters 35", "Masters 40", "Masters 45", "Masters 50", "Masters 55", "Masters 60", "Masters 65", "Masters 70", "Masters 75", "Masters 80", "Masters 85"]
+        let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map{($1, $0)})
+
+        return unique.sorted{
+            let l = rank[$0] ?? Int.max
+            let r = rank[$1] ?? Int.max
+
+            if l != r { return l < r}
+
+            return $0 < $1
+        }
     }
 }

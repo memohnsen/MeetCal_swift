@@ -17,12 +17,35 @@ class CustomerInfoManager: ObservableObject {
     @Published var errorMessage: String?
     @Published var hasProAccess = false
 
+    @AppStorage("cached_pro_access") private var cachedProAccess: Bool = false
+    @AppStorage("last_subscription_check") private var lastSubCheck: Double = 0
+
+    private let cacheValidityDays: Double = 3
+    private let secondsPerDay: Double = 86400
+
+    init() {
+        hasProAccess = cachedProAccess
+    }
+
+    private func isCacheValid() -> Bool {
+        let currentTime = Date().timeIntervalSince1970
+        let cacheAge = currentTime - lastSubCheck
+        return cacheAge < (cacheValidityDays * secondsPerDay)
+    }
+
+    private func updateCache(hasAccess: Bool) {
+        cachedProAccess = hasAccess
+        hasProAccess = hasAccess
+        lastSubCheck = Date().timeIntervalSince1970
+    }
+
     @MainActor
     func loginToRevenueCat(clerkUserId: String) async {
         do {
             let (customerInfo, _) = try await Purchases.shared.logIn(clerkUserId)
             self.customerInfo = customerInfo
-            hasProAccess = !customerInfo.entitlements.active.isEmpty
+            let hasAccess = !customerInfo.entitlements.active.isEmpty
+            updateCache(hasAccess: hasAccess)
         } catch {
             errorMessage = error.localizedDescription
             #if DEBUG
@@ -36,7 +59,7 @@ class CustomerInfoManager: ObservableObject {
         do {
             let customerInfo = try await Purchases.shared.logOut()
             self.customerInfo = customerInfo
-            hasProAccess = false
+            updateCache(hasAccess: false)
         } catch {
             errorMessage = error.localizedDescription
             #if DEBUG
@@ -47,6 +70,11 @@ class CustomerInfoManager: ObservableObject {
 
     @MainActor
     func fetchCustomerInfo() async {
+        if isCacheValid() && !NetworkMonitor.shared.isConnected {
+            isLoading = false
+            return
+        }
+
         isLoading = true
         errorMessage = nil
 
@@ -56,24 +84,21 @@ class CustomerInfoManager: ObservableObject {
             self.customerInfo = customerInfo
 
             let wasProUser = hasProAccess
-            if !customerInfo.entitlements.active.isEmpty {
-                hasProAccess = true
+            let currentHasAccess = !customerInfo.entitlements.active.isEmpty
 
-                // Track new subscription (if wasn't pro before)
-                if !wasProUser {
-                    AnalyticsManager.shared.trackSubscriptionStarted(tier: "pro")
-                }
-            } else {
-                if wasProUser {
-                    // Track subscription cancellation
-                    AnalyticsManager.shared.trackSubscriptionCancelled()
-                }
-                hasProAccess = false
+            updateCache(hasAccess: currentHasAccess)
+
+            if currentHasAccess && !wasProUser {
+                AnalyticsManager.shared.trackSubscriptionStarted(tier: "pro")
+            } else if !currentHasAccess && wasProUser {
+                AnalyticsManager.shared.trackSubscriptionCancelled()
             }
 
-            // Set user property for subscription status
             AnalyticsManager.shared.setSubscriptionStatus(hasProAccess ? "pro" : "free")
         } catch {
+            if isCacheValid() {
+                hasProAccess = cachedProAccess
+            }
             errorMessage = error.localizedDescription
             #if DEBUG
             print("Error fetching customer info: \(error)")

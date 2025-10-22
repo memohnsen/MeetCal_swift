@@ -198,6 +198,21 @@ class IntlRankingsViewModel: ObservableObject {
     func loadMeet(gender: String, ageCategory: String) async {
         isLoading = true
         error = nil
+
+        let hasOffline = hasOfflineRankings(gender: nil, ageCategory: nil, meet: nil)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            if let meets = try? loadMeetsFromSwiftData(), !meets.isEmpty {
+                self.meets = meets
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("intl_rankings")
@@ -209,7 +224,15 @@ class IntlRankingsViewModel: ObservableObject {
 
             self.meets = unique
         } catch {
-            self.error = error
+            if hasOffline {
+                if let meets = try? loadMeetsFromSwiftData(), !meets.isEmpty {
+                    self.meets = meets
+                } else {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }
@@ -217,6 +240,21 @@ class IntlRankingsViewModel: ObservableObject {
     func loadAgeGroups(meet: String, gender: String) async {
         isLoading = true
         error = nil
+
+        let hasOffline = hasOfflineRankings(gender: gender, ageCategory: nil, meet: meet)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            if let ageGroups = try? loadAgeGroupsFromSwiftData(meet: meet, gender: gender), !ageGroups.isEmpty {
+                self.ageGroups = ageGroups
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("intl_rankings")
@@ -241,9 +279,55 @@ class IntlRankingsViewModel: ObservableObject {
 
             self.ageGroups = ordered
         } catch {
-            self.error = error
+            if hasOffline {
+                if let ageGroups = try? loadAgeGroupsFromSwiftData(meet: meet, gender: gender), !ageGroups.isEmpty {
+                    self.ageGroups = ageGroups
+                } else {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
+    }
+
+    private func loadMeetsFromSwiftData() throws -> [String] {
+        guard let context = modelContext else {
+            throw NSError(domain: "International Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<RankingsEntity>()
+        let entities = try context.fetch(descriptor)
+
+        return Array(Set(entities.map { $0.meet }))
+    }
+
+    private func loadAgeGroupsFromSwiftData(meet: String, gender: String) throws -> [String] {
+        guard let context = modelContext else {
+            throw NSError(domain: "International Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<RankingsEntity>(
+            predicate: #Predicate<RankingsEntity> {
+                $0.meet == meet && $0.gender == gender
+            }
+        )
+
+        let entities = try context.fetch(descriptor)
+        let unique = Array(Set(entities.map { $0.age_category }))
+
+        let order: [String] = ["U15", "U17", "Junior", "Senior"]
+        let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
+
+        return unique.sorted {
+            let l = rank[$0.lowercased()] ?? Int.max
+            let r = rank[$1.lowercased()] ?? Int.max
+
+            if l != r { return l < r }
+
+            return $0 < $1
+        }
     }
 }
 

@@ -213,31 +213,44 @@ class StandardsViewModel: ObservableObject {
     func loadAgeGroups(for gender: String) async {
         isLoading = true
         error = nil
+
+        let hasOffline = hasOfflineStandards(gender: gender, ageCategory: nil)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            if let ageGroups = try? loadAgeGroupsFromSwiftData(gender: gender), !ageGroups.isEmpty {
+                self.ageGroups = ageGroups
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("standards")
                 .select("age_category")
                 .eq("gender", value: gender.lowercased())
                 .execute()
-            
+
             let rows = try JSONDecoder().decode([AgeRow].self, from: response.data)
-            
-            //create unique set of items from column
+
             let lower = rows.map{ $0.age_category.lowercased()}
             let unique = Array(Set(lower))
-            
-            //sorting function
+
             let order: [String] = ["u15", "youth", "junior", "senior"]
             let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map{($1, $0)})
             let ordered = unique.sorted{
                 let l = rank[$0] ?? Int.max
                 let r = rank[$1] ?? Int.max
-                
+
                 if l != r { return l < r}
-                
+
                 return $0 < $1
             }
-            
+
             self.ageGroups = ordered.map{
                 let upper = $0.uppercased()
                 if upper == "U13" || upper == "U15" || upper == "U17" {
@@ -247,9 +260,53 @@ class StandardsViewModel: ObservableObject {
                 }
             }
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            if hasOffline {
+                if let ageGroups = try? loadAgeGroupsFromSwiftData(gender: gender), !ageGroups.isEmpty {
+                    self.ageGroups = ageGroups
+                } else {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
+    }
+
+    private func loadAgeGroupsFromSwiftData(gender: String) throws -> [String] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Standards", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let genderLower = gender.lowercased()
+        let descriptor = FetchDescriptor<StandardsEntity>(
+            predicate: #Predicate<StandardsEntity> {
+                $0.gender == genderLower
+            }
+        )
+
+        let entities = try context.fetch(descriptor)
+        let lower = entities.map { $0.age_category.lowercased() }
+        let unique = Array(Set(lower))
+
+        let order: [String] = ["u15", "youth", "junior", "senior"]
+        let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map{($1, $0)})
+        let ordered = unique.sorted{
+            let l = rank[$0] ?? Int.max
+            let r = rank[$1] ?? Int.max
+
+            if l != r { return l < r}
+
+            return $0 < $1
+        }
+
+        return ordered.map{
+            let upper = $0.uppercased()
+            if upper == "U13" || upper == "U15" || upper == "U17" {
+                return upper
+            } else {
+                return $0.capitalized
+            }
+        }
     }
 }
