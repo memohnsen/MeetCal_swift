@@ -13,6 +13,7 @@ struct AdaptiveRecordsView: View {
     @StateObject private var viewModel = AdaptiveRecordsModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var appliedGender: String = "Men"
     
@@ -111,6 +112,7 @@ struct AdaptiveRecordsView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Adaptive Records")
             AnalyticsManager.shared.trackStandardsViewed()
             await customerManager.fetchCustomerInfo()

@@ -28,6 +28,7 @@ struct meetcalApp: App {
             NatRankingsEntity.self,
             QTEntity.self,
             RankingsEntity.self,
+            ResultsEntity.self,
             SavedEntity.self,
             ScheduleEntity.self,
             SchedDetailsEntity.self,

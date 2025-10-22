@@ -35,7 +35,8 @@ class StartListModel: ObservableObject {
     @Published var ages: [Int] = []
     @Published var club: [String] = []
     @Published var adaptiveBool: [Bool] = []
-    
+    @Published var isUsingOfflineData = false
+
     private func updateFilterArrays(from rows: [AthleteRow]) {
         let agesSet = Set(rows.map { $0.age })
         self.ages = agesSet.sorted()
@@ -56,21 +57,81 @@ class StartListModel: ObservableObject {
             }
             return a < b
         }
-        
+
         let clubsSet = Set(rows.map { $0.club })
         self.club = clubsSet.sorted()
-        
+
         let adaptiveSet = Set(rows.map { $0.adaptive })
         self.adaptiveBool = adaptiveSet.sorted { (lhs, rhs) in
             if lhs == rhs { return false }
             return lhs == false && rhs == true
         }
     }
-    
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineStartList(meet: String) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate<StartListEntity> {
+                $0.meet == meet
+            }
+        )
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineStartListLastSynced(meet: String) -> Date? {
+        guard let context = modelContext else { return nil }
+
+        let descriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate<StartListEntity> {
+                $0.meet == meet
+            }
+        )
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadStartListFromSwiftData(meet: String) throws -> [AthleteRow] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Start List", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate<StartListEntity> {
+                $0.meet == meet
+            },
+            sortBy: [SortDescriptor(\.name, order: .forward)]
+        )
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            AthleteRow(
+                member_id: entity.member_id,
+                name: entity.name,
+                age: entity.age,
+                club: entity.club,
+                gender: entity.gender,
+                weight_class: entity.weight_class,
+                entry_total: entity.entry_total,
+                session_number: entity.session_number,
+                session_platform: entity.session_platform,
+                meet: entity.meet,
+                adaptive: entity.adaptive
+            )
+        }
     }
     
     func saveStartListToSwiftData() throws {
@@ -116,7 +177,27 @@ class StartListModel: ObservableObject {
     func loadStartList(meet: String) async {
         isLoading = true
         error = nil
-        
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineStartList(meet: meet)
+        let lastSynced = getOfflineStartListLastSynced(meet: meet)
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineStartList = try loadStartListFromSwiftData(meet: meet)
+                self.athletes.append(contentsOf: offlineStartList)
+                self.updateFilterArrays(from: self.athletes)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("athletes")
@@ -124,14 +205,25 @@ class StartListModel: ObservableObject {
                 .eq("meet", value: meet)
                 .order("name")
                 .execute()
-            
+
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
 
             self.athletes.append(contentsOf: row)
             self.updateFilterArrays(from: self.athletes)
+            self.isUsingOfflineData = false
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineStartList = try loadStartListFromSwiftData(meet: meet)
+                    self.athletes.append(contentsOf: offlineStartList)
+                    self.updateFilterArrays(from: self.athletes)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

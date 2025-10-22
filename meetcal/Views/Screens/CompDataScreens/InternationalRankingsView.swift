@@ -13,6 +13,7 @@ struct InternationalRankingsView: View {
     @StateObject private var viewModel = IntlRankingsViewModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
@@ -128,6 +129,7 @@ struct InternationalRankingsView: View {
             }
         ))
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("International Rankings")
             AnalyticsManager.shared.trackRankingsViewed(filters: ["meet": appliedMeet, "gender": appliedGender, "age": appliedAge])
             await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)

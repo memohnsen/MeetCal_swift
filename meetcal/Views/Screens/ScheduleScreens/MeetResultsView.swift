@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MeetResultsView: View {
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = ScheduleDetailsModel()
     @StateObject private var customerManager = CustomerInfoManager()
 
@@ -34,6 +35,7 @@ struct MeetResultsView: View {
             }
         }
         .task {
+            viewModel.setModelContext(modelContext)
             await viewModel.loadResults(name: name)
             await customerManager.fetchCustomerInfo()
         }

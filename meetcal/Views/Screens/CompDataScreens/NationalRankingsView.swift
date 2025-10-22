@@ -13,6 +13,7 @@ struct NationalRankingsView: View {
     @StateObject private var viewModel = NationalRankingsModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
@@ -190,6 +191,7 @@ struct NationalRankingsView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("National Rankings")
             AnalyticsManager.shared.trackRankingsViewed(filters: ["gender": appliedGender, "age": appliedAge, "class": appliedClass])
 

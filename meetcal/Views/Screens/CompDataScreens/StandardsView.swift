@@ -13,6 +13,7 @@ struct StandardsView: View {
     @StateObject private var viewModel = StandardsViewModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var isModalShowing: Bool = false
     @State var appliedGender: String = "Men"
@@ -106,6 +107,7 @@ struct StandardsView: View {
                 }
         ))
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Standards")
             AnalyticsManager.shared.trackStandardsViewed()
             viewModel.standards.removeAll()

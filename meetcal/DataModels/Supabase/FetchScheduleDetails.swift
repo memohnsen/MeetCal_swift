@@ -34,11 +34,188 @@ class ScheduleDetailsModel: ObservableObject {
     @Published var athleteResults: [AthleteResults] = []
     @Published var isLoading = false
     @Published var error: Error?
-    
+    @Published var isUsingOfflineData = false
+
     private var modelContext: ModelContext?
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+
+    private func hasOfflineResults(name: String? = nil) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<ResultsEntity>()
+
+        if let name = name {
+            descriptor.predicate = #Predicate<ResultsEntity> {
+                $0.name == name
+            }
+        }
+
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineLastSynced() -> Date? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<ResultsEntity>()
+        descriptor.fetchLimit = 1
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadResultsFromSwiftData(name: String) throws -> [AthleteResults] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Results", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<ResultsEntity>(
+            predicate: #Predicate<ResultsEntity> {
+                $0.name == name
+            },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            AthleteResults(
+                id: entity.id,
+                meet: entity.meet,
+                date: entity.date,
+                name: entity.name,
+                age: entity.age,
+                body_weight: entity.body_weight,
+                total: entity.total,
+                snatch1: entity.snatch1,
+                snatch2: entity.snatch2,
+                snatch3: entity.snatch3,
+                snatch_best: entity.snatch_best,
+                cj1: entity.cj1,
+                cj2: entity.cj2,
+                cj3: entity.cj3,
+                cj_best: entity.cj_best
+            )
+        }
+    }
+
+    private func hasOfflineSchedDetails(meet: String, sessionID: Int) -> Bool {
+        guard let context = modelContext else { return false }
+
+        var descriptor = FetchDescriptor<SchedDetailsEntity>(
+            predicate: #Predicate<SchedDetailsEntity> {
+                $0.meet == meet && $0.session_number == sessionID
+            }
+        )
+        descriptor.fetchLimit = 1
+        let results = try? context.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
+    private func getOfflineSchedDetailsLastSynced(meet: String) -> Date? {
+        guard let context = modelContext else { return nil }
+
+        let descriptor = FetchDescriptor<SchedDetailsEntity>(
+            predicate: #Predicate<SchedDetailsEntity> {
+                $0.meet == meet
+            }
+        )
+
+        if let entities = try? context.fetch(descriptor),
+           let firstEntity = entities.first {
+            return firstEntity.lastSynced
+        }
+        return nil
+    }
+
+    private func loadAthletesFromSwiftData(meet: String, sessionID: Int, platform: String) throws -> [AthleteRow] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Schedule Details", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        var descriptor: FetchDescriptor<SchedDetailsEntity>
+
+        if platform == "ALL" {
+            descriptor = FetchDescriptor<SchedDetailsEntity>(
+                predicate: #Predicate<SchedDetailsEntity> {
+                    $0.meet == meet && $0.session_number == sessionID
+                },
+                sortBy: [SortDescriptor(\.entry_total, order: .reverse)]
+            )
+        } else {
+            descriptor = FetchDescriptor<SchedDetailsEntity>(
+                predicate: #Predicate<SchedDetailsEntity> {
+                    $0.meet == meet && $0.session_number == sessionID && $0.session_platform == platform
+                },
+                sortBy: [SortDescriptor(\.entry_total, order: .reverse)]
+            )
+        }
+
+        let entities = try context.fetch(descriptor)
+
+        return entities.map { entity in
+            AthleteRow(
+                member_id: entity.member_id,
+                name: entity.name,
+                age: entity.age,
+                club: entity.club,
+                gender: entity.gender,
+                weight_class: entity.weight_class,
+                entry_total: entity.entry_total,
+                session_number: entity.session_number,
+                session_platform: entity.session_platform,
+                meet: entity.meet,
+                adaptive: entity.adaptive
+            )
+        }
+    }
+
+    func saveResultsToSwiftData() throws {
+        guard let context = modelContext else {
+            throw NSError(domain: "Results", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let uniqueNames = Set(athleteResults.map { $0.name })
+
+        for name in uniqueNames {
+            let fetchDescriptor = FetchDescriptor<ResultsEntity>(
+                predicate: #Predicate { $0.name == name }
+            )
+            let existingRecords = try context.fetch(fetchDescriptor)
+            for record in existingRecords {
+                context.delete(record)
+            }
+        }
+
+        for result in athleteResults {
+            let entity = ResultsEntity(
+                id: result.id,
+                meet: result.meet,
+                date: result.date,
+                name: result.name,
+                age: result.age,
+                body_weight: result.body_weight,
+                total: result.total,
+                snatch1: result.snatch1,
+                snatch2: result.snatch2,
+                snatch3: result.snatch3,
+                snatch_best: result.snatch_best,
+                cj1: result.cj1,
+                cj2: result.cj2,
+                cj3: result.cj3,
+                cj_best: result.cj_best,
+                lastSynced: Date()
+            )
+            context.insert(entity)
+        }
+        try context.save()
     }
     
     func saveSchedDetailsToSwiftData() throws {
@@ -84,6 +261,26 @@ class ScheduleDetailsModel: ObservableObject {
     func loadAthletes(meet: String, sessionID: Int, platform: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineSchedDetails(meet: meet, sessionID: sessionID)
+        let lastSynced = getOfflineSchedDetailsLastSynced(meet: meet)
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineAthletes = try loadAthletesFromSwiftData(meet: meet, sessionID: sessionID, platform: platform)
+                self.athletes.append(contentsOf: offlineAthletes)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("athletes")
@@ -96,8 +293,19 @@ class ScheduleDetailsModel: ObservableObject {
 
             let rows = try JSONDecoder().decode([AthleteRow].self, from: response.data)
             self.athletes.append(contentsOf: rows)
+            self.isUsingOfflineData = false
         } catch {
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineAthletes = try loadAthletesFromSwiftData(meet: meet, sessionID: sessionID, platform: platform)
+                    self.athletes.append(contentsOf: offlineAthletes)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }
@@ -128,6 +336,27 @@ class ScheduleDetailsModel: ObservableObject {
     func loadResults(name: String) async {
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let hasOffline = hasOfflineResults(name: name)
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineResults = try loadResultsFromSwiftData(name: name)
+                self.athleteResults.removeAll { $0.name == name }
+                self.athleteResults.append(contentsOf: offlineResults)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             let response = try await supabase
                 .from("lifting_results")
@@ -135,14 +364,25 @@ class ScheduleDetailsModel: ObservableObject {
                 .eq("name", value: name)
                 .order("date", ascending: false)
                 .execute()
-            
+
             let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
-            
+
             self.athleteResults.removeAll { $0.name == name }
             self.athleteResults.append(contentsOf: rows)
+            self.isUsingOfflineData = false
         } catch {
-            print("Error loading results for \(name): \(error)")
-            self.error = error
+            if hasOffline {
+                do {
+                    let offlineResults = try loadResultsFromSwiftData(name: name)
+                    self.athleteResults.removeAll { $0.name == name }
+                    self.athleteResults.append(contentsOf: offlineResults)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
         }
         isLoading = false
     }

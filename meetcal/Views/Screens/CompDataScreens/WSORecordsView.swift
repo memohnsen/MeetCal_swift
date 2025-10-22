@@ -13,6 +13,7 @@ struct WSORecordsView: View {
     @StateObject private var viewModel = WSOViewModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
     
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
@@ -132,6 +133,7 @@ struct WSORecordsView: View {
                     }
                 ))
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("WSO Records")
             AnalyticsManager.shared.trackRecordsViewed(type: "wso")
             viewModel.wsoRecords.removeAll()

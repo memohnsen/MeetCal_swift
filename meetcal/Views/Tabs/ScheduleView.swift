@@ -15,7 +15,8 @@ struct ScheduleView: View {
 
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
-    
+    @Environment(\.modelContext) private var modelContext
+
     @StateObject private var viewModel = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
     
@@ -176,6 +177,7 @@ struct ScheduleView: View {
             }
         }
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Schedule")
             viewModel.meets.removeAll()
             await viewModel.loadMeets()

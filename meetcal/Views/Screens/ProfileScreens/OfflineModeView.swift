@@ -250,6 +250,11 @@ struct OfflineModeView: View {
         let schedDetailsRecords = try? modelContext.fetch(schedDetailsDescriptor)
         schedDetailsRecords?.forEach { modelContext.delete($0) }
 
+        let resultsDescriptor = FetchDescriptor<ResultsEntity>()
+        let allResults = try? modelContext.fetch(resultsDescriptor)
+        let schedDetailsAthletes = schedDetailsRecords?.map { $0.name } ?? []
+        allResults?.filter { schedDetailsAthletes.contains($0.name) }.forEach { modelContext.delete($0) }
+
         try? modelContext.save()
         refreshID = UUID()
 
@@ -278,6 +283,7 @@ struct OfflineModeView: View {
         meetsModel.schedule.removeAll()
         startModel.athletes.removeAll()
         schedDetailsModel.athletes.removeAll()
+        schedDetailsModel.athleteResults.removeAll()
 
         do {
             await meetsModel.loadMeetDetails(meetName: meetName)
@@ -294,6 +300,12 @@ struct OfflineModeView: View {
                 await schedDetailsModel.loadAthletes(meet: meetName, sessionID: sessionID, platform: "ALL")
             }
             try schedDetailsModel.saveSchedDetailsToSwiftData()
+
+            let uniqueAthletes = Set(schedDetailsModel.athletes.map { $0.name })
+            for athleteName in uniqueAthletes {
+                await schedDetailsModel.loadResults(name: athleteName)
+            }
+            try schedDetailsModel.saveResultsToSwiftData()
 
             alertTitle = "Saved Successfully"
             alertMessage = "\(meetName) has been saved to your device."
@@ -892,6 +904,10 @@ struct OfflineModeView: View {
         let adaptiveDescriptor = FetchDescriptor<AdaptiveRecordEntity>()
         let adaptiveRecords = try? modelContext.fetch(adaptiveDescriptor)
         adaptiveRecords?.forEach { modelContext.delete($0) }
+
+        let resultsDescriptor = FetchDescriptor<ResultsEntity>()
+        let resultsRecords = try? modelContext.fetch(resultsDescriptor)
+        resultsRecords?.forEach { modelContext.delete($0) }
 
         try? modelContext.save()
         refreshID = UUID()

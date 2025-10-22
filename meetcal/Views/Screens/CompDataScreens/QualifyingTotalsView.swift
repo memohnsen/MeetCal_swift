@@ -13,6 +13,7 @@ struct QualifyingTotalsView: View {
     @StateObject private var viewModel = QualifyingTotalModel()
     @StateObject private var customerManager = CustomerInfoManager()
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
@@ -124,6 +125,7 @@ struct QualifyingTotalsView: View {
             }
         ))
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Qualifying Totals")
             AnalyticsManager.shared.trackQualifyingTotalsViewed()
             viewModel.totals.removeAll()

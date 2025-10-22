@@ -14,6 +14,7 @@ import UserNotifications
 
 struct ScheduleDetailsView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = ScheduleDetailsModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -52,6 +53,8 @@ struct ScheduleDetailsView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task(id: selectedMeet) {
+            viewModel.setModelContext(modelContext)
+            viewModel2.setModelContext(modelContext)
             viewModel2.meetDetails.removeAll()
             viewModel.athletes.removeAll()
             viewModel.athleteResults.removeAll()

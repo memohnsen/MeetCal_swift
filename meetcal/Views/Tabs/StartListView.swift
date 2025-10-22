@@ -44,6 +44,7 @@ private let defaultAgeBands: [AgeBand] = [
 struct StartListView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = StartListModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var saveModel = SavedViewModel()
@@ -742,6 +743,8 @@ struct StartListView: View {
             }
         }
         .task{
+            viewModel.setModelContext(modelContext)
+            viewModel2.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Start List")
             viewModel.athletes.removeAll()
             viewModel.schedule.removeAll()
