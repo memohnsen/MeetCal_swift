@@ -27,7 +27,9 @@ struct QualifyingTotalsView: View {
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
     @State var draftMeet: String = "Nationals"
-    
+
+    @State private var loadTask: Task<Void, Never>?
+
     let genders: [String] = ["Men", "Women"]
     // age group will change based on meet query
     var ageGroups: [String] { viewModel.ageGroups }
@@ -112,49 +114,46 @@ struct QualifyingTotalsView: View {
             meets: meets,
             title: "Meet",
             onApply: {
+                isModalShowing = false
                 appliedGender = draftGender
                 appliedAge = draftAge
                 appliedMeet = draftMeet
-                Task {
-                    await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
-
-                    viewModel.totals.removeAll()
-                    await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
-                }
-                isModalShowing = false
             }
         ))
         .task {
             viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Qualifying Totals")
             AnalyticsManager.shared.trackQualifyingTotalsViewed()
+            await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
             viewModel.totals.removeAll()
             await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
             await customerManager.fetchCustomerInfo()
         }
-        .task {
-            await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
-        }
         .onChange(of: appliedGender) {
-            Task {
+            loadTask?.cancel()
+            loadTask = Task {
                 viewModel.totals.removeAll()
                 await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
             }
         }
         .onChange(of: appliedAge) {
-            Task {
+            loadTask?.cancel()
+            loadTask = Task {
                 viewModel.totals.removeAll()
                 await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
             }
         }
         .onChange(of: appliedMeet) {
-            Task {
+            loadTask?.cancel()
+            loadTask = Task {
+                await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
                 viewModel.totals.removeAll()
                 await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)
             }
         }
         .onChange(of: draftMeet) {
-            Task { await viewModel.loadAgeGroup(for: draftGender, event_name: draftMeet)
+            Task {
+                await viewModel.loadAgeGroup(for: draftGender, event_name: draftMeet)
                 draftAge = viewModel.ageGroups.first ?? "Senior"
             }
         }

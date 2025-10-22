@@ -132,9 +132,9 @@ struct InternationalRankingsView: View {
             viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("International Rankings")
             AnalyticsManager.shared.trackRankingsViewed(filters: ["meet": appliedMeet, "gender": appliedGender, "age": appliedAge])
-            await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
             viewModel.rankings.removeAll()
-            
+            await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet)
+
             await customerManager.fetchCustomerInfo()
         }
         .task {
@@ -144,16 +144,16 @@ struct InternationalRankingsView: View {
             await viewModel.loadAgeGroups(meet: appliedMeet, gender: appliedGender)
         }
         .onChange(of: appliedGender) {
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
             viewModel.rankings.removeAll()
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
         .onChange(of: appliedAge) {
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
             viewModel.rankings.removeAll()
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
         .onChange(of: appliedMeet) {
-            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
             viewModel.rankings.removeAll()
+            Task { await viewModel.loadRankings(gender: appliedGender, ageCategory: appliedAge, meet: appliedMeet) }
         }
         .onChange(of: draftMeet) {
             Task {

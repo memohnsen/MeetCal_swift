@@ -77,6 +77,7 @@ struct TopView: View {
     @State private var alertMessage: String = ""
     @State private var notificationIdentifier: String?
     @State private var navigateToPaywall: Bool = false
+    @State private var navigateToQT: Bool = false
 
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
@@ -445,7 +446,14 @@ struct TopView: View {
                 .padding(.vertical, 6)
             
             if customerManager.hasProAccess {
-                NavigationLink("Qualifying Totals", destination: QualifyingTotalsView())
+                Button {
+                    navigateToQT = true
+                } label: {
+                    Text("Qualifying Totals")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                }
+                .foregroundStyle(.blue)
             } else {
                 Button {
                     navigateToPaywall = true
@@ -472,6 +480,9 @@ struct TopView: View {
         }
         .sheet(isPresented: $navigateToPaywall) {
             PaywallView()
+        }
+        .sheet(isPresented: $navigateToQT) {
+            QualifyingTotalsView()
         }
     }
 }

@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct EventInfoView: View {
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = MeetsScheduleModel()
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
-    
+
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     
     func timeZoneShortHand(timeZone: String?) -> String {
@@ -88,6 +89,7 @@ struct EventInfoView: View {
             .toolbar(.hidden, for: .tabBar)
         }
         .task {
+            viewModel.setModelContext(modelContext)
             await viewModel.loadMeetDetails(meetName: selectedMeet)
         }
     }
