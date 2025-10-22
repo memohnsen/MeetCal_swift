@@ -22,13 +22,13 @@ struct CompDataView: View {
                 NavigationLink("Weightlifting Wrapped", destination: WLWrapped())
                 
                 if customerManager.hasProAccess {
-                    NavigationLink("Share Meet Results By Club", destination: ShareMeetResultsByClub())
+                    NavigationLink("Shareable Meet Results By Club", destination: ShareMeetResultsByClub())
                 } else {
                     Button {
                         navigateToPaywall = true
                     } label: {
                         HStack {
-                            Text("Share Meet Results By Club")
+                            Text("Shareable Meet Results By Club")
                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                             Spacer()
                             Image(systemName: "chevron.right")
