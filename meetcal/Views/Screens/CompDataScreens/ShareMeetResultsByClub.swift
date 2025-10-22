@@ -84,9 +84,9 @@ struct MeetResultsByClubView: View {
     let club: String
     let meet: String
     @StateObject private var viewModel = FetchMeetsByClub()
-    @State private var showImagePreview: Bool = false
     @State private var generatedImage: UIImage?
-    @State private var showShareSheet: Bool = false
+    @State private var isShowingPreview: Bool = false
+    @State private var isShowingShareSheet: Bool = false
     @Environment(\.colorScheme) var colorScheme
 
     // Computed properties to access viewModel data (like StartListView pattern)
@@ -115,6 +115,7 @@ struct MeetResultsByClubView: View {
         }
 
         generatedImage = image
+        isShowingPreview = true
     }
 
     var body: some View {
@@ -221,14 +222,12 @@ struct MeetResultsByClubView: View {
             ImagePreviewSheet(
                 image: shareable.image,
                 isPresented: .constant(true),
-                showShareSheet: $showShareSheet,
+                showShareSheet: $isShowingShareSheet,
                 colorScheme: colorScheme
             )
         }
-        .sheet(isPresented: $showShareSheet) {
-            if let image = generatedImage {
-                ClubShareSheet(items: [image])
-            }
+        .sheet(isPresented: $isShowingShareSheet, onDismiss: { generatedImage = nil }) {
+            if let image = generatedImage { ClubShareSheet(items: [image]) }
         }
         .task {
             await viewModel.loadClubMeetStats(club: club, meet: meet)
@@ -462,7 +461,7 @@ private struct ImagePreviewSheet: View {
 
                             Button {
                                 isPresented = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                     showShareSheet = true
                                 }
                             } label: {
