@@ -62,16 +62,41 @@ class FetchMeetsByClub: ObservableObject {
     func loadAthletesByClub(club: String) async {
         isLoading = true
         error = nil
-        
+
         do {
+            // First get all athletes from this club
             let response = try await supabase
                 .from("athletes")
                 .select("member_id, name, club, meet")
                 .eq("club", value: club)
                 .execute()
-            
-            let rows = try JSONDecoder().decode([AthleteClub].self, from: response.data)
-            self.athletesInClub = rows
+
+            let allAthletes = try JSONDecoder().decode([AthleteClub].self, from: response.data)
+
+            // Get the unique meets from these athletes
+            let uniqueMeets = Array(Set(allAthletes.map { $0.meet }))
+
+            // Fetch the status of these meets
+            let meetsResponse = try await supabase
+                .from("meets")
+                .select("name, status")
+                .in("name", values: uniqueMeets)
+                .execute()
+
+            struct MeetStatus: Decodable {
+                let name: String
+                let status: String
+            }
+
+            let meetsWithStatus = try JSONDecoder().decode([MeetStatus].self, from: meetsResponse.data)
+
+            // Filter to only keep completed meets
+            let completedMeetNames = Set(meetsWithStatus.filter { $0.status == "completed" }.map { $0.name })
+
+            // Filter athletes to only those in completed meets
+            let filteredAthletes = allAthletes.filter { completedMeetNames.contains($0.meet) }
+
+            self.athletesInClub = filteredAthletes
         } catch {
             self.error = error
         }

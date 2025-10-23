@@ -22,11 +22,11 @@ struct InternationalRankingsView: View {
     
     @State var appliedGender: String = "Men"
     @State var appliedAge: String = "Senior"
-    @State var appliedMeet: String = "2025 Worlds"
+    @State var appliedMeet: String = "Worlds"
     
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
-    @State var draftMeet: String = "2025 Worlds"
+    @State var draftMeet: String = "Worlds"
 
     @State private var loadTask: Task<Void, Never>?
 

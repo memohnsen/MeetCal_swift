@@ -88,7 +88,7 @@ struct OnboardingView: View {
                         .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(.top, 32)
                     
-                    Text("We have 5 main features that help you have as much data as possible to compete and coach your best at meets.")
+                    Text("We have 6 main features that help you have as much data as possible to compete and coach your best at meets.")
                         .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(.top)
                     
@@ -280,6 +280,37 @@ struct OnboardingView: View {
                     
                     Spacer()
                     
+                    HStack {
+                        Text("Next")
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .foregroundStyle(.white)
+                    .background(.blue)
+                    .cornerRadius(32)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .onTapGesture {
+                        pageCounter += 1
+                    }
+                    .padding(.top)
+                }
+                .padding(.horizontal)
+            } else if pageCounter == 8 {
+                VStack(alignment: .leading) {
+                    Text("⬇️ Download")
+                        .bold()
+                        .font(.title)
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(.top, 32)
+
+                    Text("Need to view schedules offline? Download any meet schedule and competition data to access session details, start lists, and records even without an internet connection.")
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(.top)
+
+                    Spacer()
+
                     HStack {
                         Text("Next")
                     }
