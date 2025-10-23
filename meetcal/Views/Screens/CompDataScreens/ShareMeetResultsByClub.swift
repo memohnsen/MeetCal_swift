@@ -93,7 +93,7 @@ struct MeetResultsByClubView: View {
     var clubStats: ClubMeetStats { viewModel.clubStats }
 
     @MainActor
-    private func captureImage() {
+    private func generateImage() {
         // Ensure data is loaded before capturing
         guard clubStats.totalAthletes > 0 else {
             return
@@ -115,6 +115,10 @@ struct MeetResultsByClubView: View {
         }
 
         generatedImage = image
+    }
+
+    private func showPreview() {
+        isShowingShareSheet = false
         isShowingPreview = true
     }
 
@@ -208,29 +212,29 @@ struct MeetResultsByClubView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    captureImage()
+                    showPreview()
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isLoading || generatedImage == nil)
             }
         }
-        .sheet(item: Binding(
-            get: { generatedImage.map { ShareableImageClub(image: $0) } },
-            set: { _ in generatedImage = nil }
-        )) { shareable in
+        .sheet(isPresented: $isShowingPreview) {
             ImagePreviewSheet(
-                image: shareable.image,
-                isPresented: .constant(true),
+                image: generatedImage,
+                isPresented: $isShowingPreview,
                 showShareSheet: $isShowingShareSheet,
                 colorScheme: colorScheme
             )
         }
-        .sheet(isPresented: $isShowingShareSheet, onDismiss: { generatedImage = nil }) {
-            if let image = generatedImage { ClubShareSheet(items: [image]) }
+        .sheet(isPresented: $isShowingShareSheet) {
+            if let image = generatedImage {
+                ClubShareSheet(items: [image])
+            }
         }
         .task {
             await viewModel.loadClubMeetStats(club: club, meet: meet)
+            generateImage()
         }
     }
 }
@@ -461,7 +465,7 @@ private struct ImagePreviewSheet: View {
 
                             Button {
                                 isPresented = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     showShareSheet = true
                                 }
                             } label: {
