@@ -85,13 +85,13 @@ struct WSORecordsView: View {
                                         Text(String("\(record.weight_class)kg"))
                                             .frame(width: 60, alignment: .leading)
                                         Spacer()
-                                        Text(String("\(record.snatch_record)kg"))
+                                        Text(record.snatch_record.map { "\($0)kg" } ?? "")
                                             .frame(width: 60, alignment: .leading)
                                         Spacer()
-                                        Text("\(record.cj_record)kg")
+                                        Text(record.cj_record.map { "\($0)kg" } ?? "")
                                             .frame(width: 60, alignment: .leading)
                                         Spacer()
-                                        Text("\(record.total_record)kg")
+                                        Text(record.total_record.map { "\($0)kg" } ?? "")
                                             .frame(width: 60, alignment: .leading)
                                     }
                                 }
@@ -123,12 +123,6 @@ struct WSORecordsView: View {
                         appliedAge = draftAge
                         appliedMeet = draftWSO
                         appliedGender = draftGender
-                        Task {
-                            viewModel.wsoRecords.removeAll()
-                            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
-                            await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
-                            await viewModel.loadWSO()
-                        }
                         isModalShowing = false
                     }
                 ))

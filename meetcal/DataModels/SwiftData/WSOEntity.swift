@@ -15,12 +15,12 @@ class WSOEntity {
     var gender: String
     var age_category: String
     var weight_class: String
-    var snatch_record: Int
-    var cj_record: Int
-    var total_record: Int
+    var snatch_record: Int?
+    var cj_record: Int?
+    var total_record: Int?
     var lastSynced: Date
-    
-    init(id: Int, wso: String, gender: String, age_category: String, weight_class: String, snatch_record: Int, cj_record: Int, total_record: Int, lastSynced: Date) {
+
+    init(id: Int, wso: String, gender: String, age_category: String, weight_class: String, snatch_record: Int?, cj_record: Int?, total_record: Int?, lastSynced: Date) {
         self.id = id
         self.wso = wso
         self.gender = gender

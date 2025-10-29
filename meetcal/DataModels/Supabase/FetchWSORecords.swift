@@ -16,10 +16,10 @@ struct WSORecords: Identifiable, Hashable, Decodable, Sendable {
     let gender: String
     let age_category: String
     let weight_class: String
-    let snatch_record: Int
-    let cj_record: Int
-    let total_record: Int
-    
+    let snatch_record: Int?
+    let cj_record: Int?
+    let total_record: Int?
+
     var isPlusClass: Bool {
         weight_class.contains("+")
     }

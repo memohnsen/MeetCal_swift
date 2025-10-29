@@ -124,11 +124,6 @@ struct AmericanRecordsView: View {
                         appliedAge = draftAge
                         appliedGender = draftGender
                         appliedFederation = draftFederation
-                        Task {
-                            await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
-                            viewModel.records.removeAll()
-                            await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
-                        }
                         isModalShowing = false
                     }
                 ))
