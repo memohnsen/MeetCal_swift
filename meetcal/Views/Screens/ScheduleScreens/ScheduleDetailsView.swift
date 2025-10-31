@@ -15,6 +15,7 @@ import UserNotifications
 struct ScheduleDetailsView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
     @Environment(\.modelContext) private var modelContext
+    
     @StateObject private var viewModel = ScheduleDetailsModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -41,14 +42,6 @@ struct ScheduleDetailsView: View {
                 .padding(.horizontal)
                 .navigationTitle(date.formatted(date: .long, time: .omitted))
                 .navigationBarTitleDisplayMode(.inline)
-//                .toolbar{
-//                    ToolbarItem{
-//                        Image(systemName: "bookmark.fill")
-//                    }
-//                    ToolbarItem{
-//                        Image(systemName: "calendar")
-//                    }
-//                }
             }
             .toolbar(.hidden, for: .tabBar)
         }
@@ -67,6 +60,8 @@ struct ScheduleDetailsView: View {
 
 struct TopView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet: String = ""
+    @AppStorage("has_seen_review") var hasSeenReview = false
+
     @Environment(\.colorScheme) var colorScheme
     @ObservedObject var viewModel: MeetsScheduleModel
     @StateObject private var saveModel = SavedViewModel()
@@ -78,6 +73,7 @@ struct TopView: View {
     @State private var notificationIdentifier: String?
     @State private var navigateToPaywall: Bool = false
     @State private var navigateToQT: Bool = false
+    @State private var navigateToReview: Bool = false
 
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
@@ -470,7 +466,12 @@ struct TopView: View {
         .cardStyling()
         .cornerRadius(32)
         .alert(alertTitle, isPresented: $alertShowing) {
-            Button("OK") { }
+            Button("OK") {
+                if !hasSeenReview && alertTitle == "Session Saved" {
+                    navigateToReview = true
+                    hasSeenReview = true
+                }
+            }
         } message: {
             Text(alertMessage)
         }
@@ -482,6 +483,10 @@ struct TopView: View {
         }
         .sheet(isPresented: $navigateToQT) {
             QualifyingTotalsView()
+        }
+        .sheet(isPresented: $navigateToReview) {
+            ReviewRequest()
+                .presentationDetents([.height(450)])
         }
     }
 }
