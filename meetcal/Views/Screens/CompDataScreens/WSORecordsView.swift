@@ -154,12 +154,18 @@ struct WSORecordsView: View {
         }
         .onChange(of: appliedMeet) {
             Task {
+                await viewModel.loadAgeGroups(gender: appliedGender, wso: appliedMeet)
                 viewModel.wsoRecords.removeAll()
                 await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, wso: appliedMeet)
             }
         }
         .onChange(of: draftWSO) {
-            Task { await viewModel.loadAgeGroups(gender: draftGender, wso: draftWSO )}
+            Task {
+                await viewModel.loadAgeGroups(gender: draftGender, wso: draftWSO)
+                if !viewModel.ageGroups.isEmpty {
+                    draftAge = viewModel.ageGroups.first ?? draftAge
+                }
+            }
         }
     }
 }

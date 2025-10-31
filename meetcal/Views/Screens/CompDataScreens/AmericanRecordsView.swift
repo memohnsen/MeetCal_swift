@@ -152,6 +152,7 @@ struct AmericanRecordsView: View {
         }
         .onChange(of: appliedFederation) {
             Task {
+                await viewModel.loadAgeGroup(for: appliedGender, record_type: appliedFederation)
                 viewModel.records.removeAll()
                 await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
             }
@@ -159,7 +160,9 @@ struct AmericanRecordsView: View {
         .onChange(of: draftFederation) {
             Task {
                 await viewModel.loadAgeGroup(for: draftGender, record_type: draftFederation)
-                draftAge = viewModel.ageGroups.first ?? draftAge
+                if !viewModel.ageGroups.isEmpty {
+                    draftAge = viewModel.ageGroups.first ?? draftAge
+                }
             }
         }
     }

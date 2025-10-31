@@ -243,10 +243,6 @@ struct NationalRankingsView: View {
                     values: ["gender": appliedGender, "age": appliedAge, "class": appliedClass]
                 )
 
-                Task {
-                    viewModel.rankings.removeAll()
-                    await viewModel.loadWeightClasses(age: appliedClass)
-                }
                 isModalShowing = false
             }
         ))

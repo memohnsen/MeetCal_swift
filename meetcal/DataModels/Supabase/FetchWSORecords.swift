@@ -169,7 +169,7 @@ class WSOViewModel: ObservableObject {
                     ageCategory: ageCategory,
                     wso: wso
                 )
-                self.wsoRecords.append(contentsOf: offlineRecords)
+                self.wsoRecords = offlineRecords
                 self.isUsingOfflineData = true
             } catch {
                 self.error = error
@@ -189,7 +189,7 @@ class WSOViewModel: ObservableObject {
 
             let decoder = JSONDecoder()
             let wsoData = try decoder.decode([WSORecords].self, from: response.data)
-            self.wsoRecords.append(contentsOf: wsoData.sorted { (a: WSORecords, b: WSORecords) -> Bool in
+            self.wsoRecords = wsoData.sorted { (a: WSORecords, b: WSORecords) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -197,7 +197,7 @@ class WSOViewModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            })
+            }
 
             self.isUsingOfflineData = false
         } catch {
@@ -208,7 +208,7 @@ class WSOViewModel: ObservableObject {
                         ageCategory: ageCategory,
                         wso: wso
                     )
-                    self.wsoRecords.append(contentsOf: offlineRecords)
+                    self.wsoRecords = offlineRecords
                     self.isUsingOfflineData = true
                 } catch {
                     self.error = error

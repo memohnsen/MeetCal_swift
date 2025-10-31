@@ -168,7 +168,7 @@ class RecordsViewModel: ObservableObject {
                     ageCategory: ageCategory,
                     recordType: record_type
                 )
-                self.records.append(contentsOf: offlineRecords)
+                self.records = offlineRecords
                 self.isUsingOfflineData = true
             } catch {
                 self.error = error
@@ -189,7 +189,7 @@ class RecordsViewModel: ObservableObject {
             let decoder = JSONDecoder()
             let recordsData = try decoder.decode([Records].self, from: response.data)
 
-            self.records.append(contentsOf: recordsData.sorted { (a: Records, b: Records) -> Bool in
+            self.records = recordsData.sorted { (a: Records, b: Records) -> Bool in
                 if a.isPlusClass != b.isPlusClass {
                     return a.isPlusClass == false
                 }
@@ -197,7 +197,7 @@ class RecordsViewModel: ObservableObject {
                     return a.numericWeight < b.numericWeight
                 }
                 return a.weight_class < b.weight_class
-            })
+            }
 
             self.isUsingOfflineData = false
         } catch {
@@ -208,7 +208,7 @@ class RecordsViewModel: ObservableObject {
                         ageCategory: ageCategory,
                         recordType: record_type
                     )
-                    self.records.append(contentsOf: offlineRecords)
+                    self.records = offlineRecords
                     self.isUsingOfflineData = true
                 } catch {
                     self.error = error
