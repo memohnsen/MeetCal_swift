@@ -20,6 +20,8 @@ struct ScheduleDetailsView: View {
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
     
+    var athletes: [AthleteRow] { viewModel.athletes }
+    
     let meet: String
     let date: Date
     let sessionNum: Int
@@ -34,10 +36,10 @@ struct ScheduleDetailsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    TopView(viewModel: viewModel2, date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
+                    TopView(viewModel: viewModel2, athletes: athletes, date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
                         .padding(.bottom, 8)
                     
-                    BottomView(viewModel: viewModel)
+                    BottomView(viewModel: viewModel, athletes: athletes)
                 }
                 .padding(.horizontal)
                 .navigationTitle(date.formatted(date: .long, time: .omitted))
@@ -74,9 +76,11 @@ struct TopView: View {
     @State private var navigateToPaywall: Bool = false
     @State private var navigateToQT: Bool = false
     @State private var navigateToReview: Bool = false
+    @State private var navigateToGuesser: Bool = false
 
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
+    let athletes: [AthleteRow]
 
     let date: Date
     let sessionNum: Int
@@ -442,20 +446,46 @@ struct TopView: View {
                 .padding(.vertical, 6)
             
             if customerManager.hasProAccess {
-                Button {
-                    navigateToQT = true
-                } label: {
-                    Text("Qualifying Totals")
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                }
-                .foregroundStyle(.blue)
-            } else {
-                Button {
-                    navigateToPaywall = true
-                } label: {
-                    HStack {
+                HStack{
+                    Button {
+                        navigateToQT = true
+                    } label: {
                         Text("Qualifying Totals")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.blue)
+                    
+                    Divider()
+                    
+                    Button{
+                        navigateToGuesser = true
+                    } label: {
+                        Text("Attempts Out Guesser")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.blue)
+                }
+            } else {
+                HStack {
+                    Button {
+                        navigateToPaywall = true
+                    } label: {
+                        HStack {
+                            Text("Qualifying Totals")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .foregroundStyle(.blue)
+                    }
+
+                    Divider()
+                    
+                    Button{
+                        navigateToPaywall = true
+                    } label: {
+                        Text("Attempts Out Guesser")
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
@@ -484,6 +514,9 @@ struct TopView: View {
         .sheet(isPresented: $navigateToQT) {
             QualifyingTotalsView()
         }
+        .sheet(isPresented: $navigateToGuesser) {
+            AttemptsGuesser(athletes: athletes)
+        }
         .sheet(isPresented: $navigateToReview) {
             ReviewRequest()
                 .presentationDetents([.height(450)])
@@ -498,7 +531,7 @@ struct BottomView: View {
     @State private var navigateToPaywall: Bool = false
     @State private var navigateToResults: Bool = false
 
-    var athletes: [AthleteRow] { viewModel.athletes }
+    let athletes: [AthleteRow]
     var results: [AthleteResults] { viewModel.athleteResults }
     
     func getBestResults(for athleteName: String) -> (snatch: Float, cleanJerk: Float, total: Float) {
