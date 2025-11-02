@@ -50,6 +50,7 @@ struct OfflineModeView: View {
     @State private var alertShowing: Bool = false
     @State private var alertMessage: String = ""
     @State private var alertTitle: String = ""
+    @State private var isRefreshing: Bool = false
 
     // MARK: - SwiftData Helpers (Single Source of Truth)
 

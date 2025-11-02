@@ -36,9 +36,9 @@ struct ScheduleDetailsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    TopView(viewModel: viewModel2, athletes: athletes, date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
+                    TopView(viewModel: viewModel2, athletes: athletes, athleteResults: viewModel.athleteResults, date: date, sessionNum: sessionNum, platformColor: platformColor, weightClass: weightClass, startTime: startTime)
                         .padding(.bottom, 8)
-                    
+
                     BottomView(viewModel: viewModel, athletes: athletes)
                 }
                 .padding(.horizontal)
@@ -81,6 +81,7 @@ struct TopView: View {
     var meetDetails: [MeetDetailsRow] { viewModel.meetDetails }
     var saved: [SessionsRow] { saveModel.saved }
     let athletes: [AthleteRow]
+    let athleteResults: [AthleteResults]
 
     let date: Date
     let sessionNum: Int
@@ -515,7 +516,7 @@ struct TopView: View {
             QualifyingTotalsView()
         }
         .sheet(isPresented: $navigateToGuesser) {
-            AttemptsGuesser(athletes: athletes)
+            AttemptsGuesser(athletes: athletes, athleteResults: athleteResults)
         }
         .sheet(isPresented: $navigateToReview) {
             ReviewRequest()
