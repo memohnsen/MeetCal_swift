@@ -39,6 +39,8 @@ struct AttemptData: Comparable {
 class AttemptsGuesserModel: ObservableObject {
     @Published var athleteEstimates: [AthleteAttemptEstimate] = []
 
+    private let debugMode = false
+
     func calculateEstimates(athletes: [AthleteRow], athleteResults: [AthleteResults]) {
         var estimates: [AthleteAttemptEstimate] = []
 
@@ -48,70 +50,132 @@ class AttemptsGuesserModel: ObservableObject {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let twoYearsAgoString = dateFormatter.string(from: twoYearsAgo)
 
-        print("\n========================================")
-        print("ATTEMPTS GUESSER CALCULATION")
-        print("Two years ago cutoff: \(twoYearsAgoString)")
-        print("========================================\n")
+        if debugMode {
+            print("\n========================================")
+            print("ATTEMPTS GUESSER CALCULATION")
+            print("Two years ago cutoff: \(twoYearsAgoString)")
+            print("========================================\n")
+        }
+
+        // First pass: collect all estimates from athletes WITH history to calculate session averages
+        var tempEstimates: [(athlete: AthleteRow, history: [AthleteResults], bestSnatch: Float?, bestCJ: Float?, avgSnatchIncrease: (Int, Int), avgCJIncrease: (Int, Int), snatchMakeRate: Double, cjMakeRate: Double)] = []
 
         for athlete in athletes {
-            print("--- \(athlete.name) ---")
-
-            // Get athlete's results from past 2 years
             let athleteHistory = athleteResults.filter { result in
                 result.name == athlete.name && result.date >= twoYearsAgoString
             }
 
-            print("Found \(athleteHistory.count) meets in past 2 years")
-            for (index, result) in athleteHistory.enumerated() {
-                print("  Meet \(index + 1): \(result.meet) (\(result.date))")
-                print("    Snatch: \(Int(result.snatch1))/\(Int(result.snatch2))/\(Int(result.snatch3)) (best: \(Int(result.snatch_best)))")
-                print("    CJ: \(Int(result.cj1))/\(Int(result.cj2))/\(Int(result.cj3)) (best: \(Int(result.cj_best)))")
-            }
-
-            // Get best snatch and CJ in past 2 years
             let bestSnatch = athleteHistory.map { $0.snatch_best }.max()
             let bestCJ = athleteHistory.map { $0.cj_best }.max()
 
-            print("Best Snatch: \(bestSnatch != nil ? String(Int(bestSnatch!)) : "nil")")
-            print("Best CJ: \(bestCJ != nil ? String(Int(bestCJ!)) : "nil")")
+            let avgSnatchIncrease = calculateAverageIncrease(results: athleteHistory, liftType: .snatch)
+            let avgCJIncrease = calculateAverageIncrease(results: athleteHistory, liftType: .cleanJerk)
+            let (snatchMakeRate, cjMakeRate) = calculateMakeRates(results: athleteHistory)
+
+            tempEstimates.append((athlete, athleteHistory, bestSnatch, bestCJ, avgSnatchIncrease, avgCJIncrease, snatchMakeRate, cjMakeRate))
+        }
+
+        // Calculate session average jumps from athletes with history
+        let sessionSnatchJumps = tempEstimates.compactMap { estimate -> (Int, Int)? in
+            guard estimate.bestSnatch != nil && estimate.bestSnatch! > 0 else { return nil }
+            return estimate.avgSnatchIncrease
+        }
+        let sessionCJJumps = tempEstimates.compactMap { estimate -> (Int, Int)? in
+            guard estimate.bestCJ != nil && estimate.bestCJ! > 0 else { return nil }
+            return estimate.avgCJIncrease
+        }
+
+        let sessionAvgSnatchJump1to2 = sessionSnatchJumps.isEmpty ? 3 : Int(round(Double(sessionSnatchJumps.map { $0.0 }.reduce(0, +)) / Double(sessionSnatchJumps.count)))
+        let sessionAvgSnatchJump2to3 = sessionSnatchJumps.isEmpty ? 3 : Int(round(Double(sessionSnatchJumps.map { $0.1 }.reduce(0, +)) / Double(sessionSnatchJumps.count)))
+        let sessionAvgCJJump1to2 = sessionCJJumps.isEmpty ? 4 : Int(round(Double(sessionCJJumps.map { $0.0 }.reduce(0, +)) / Double(sessionCJJumps.count)))
+        let sessionAvgCJJump2to3 = sessionCJJumps.isEmpty ? 4 : Int(round(Double(sessionCJJumps.map { $0.1 }.reduce(0, +)) / Double(sessionCJJumps.count)))
+
+        if debugMode {
+            print("Session Average Jumps:")
+            print("  Snatch: 1→2: \(sessionAvgSnatchJump1to2)kg, 2→3: \(sessionAvgSnatchJump2to3)kg")
+            print("  CJ: 1→2: \(sessionAvgCJJump1to2)kg, 2→3: \(sessionAvgCJJump2to3)kg\n")
+        }
+
+        // Second pass: create estimates for all athletes
+        for (athlete, athleteHistory, bestSnatch, bestCJ, avgSnatchIncrease, avgCJIncrease, snatchMakeRate, cjMakeRate) in tempEstimates {
+            if debugMode {
+                print("--- \(athlete.name) ---")
+
+                print("Found \(athleteHistory.count) meets in past 2 years")
+                for (index, result) in athleteHistory.enumerated() {
+                    print("  Meet \(index + 1): \(result.meet) (\(result.date))")
+                    print("    Snatch: \(Int(result.snatch1))/\(Int(result.snatch2))/\(Int(result.snatch3)) (best: \(Int(result.snatch_best)))")
+                    print("    CJ: \(Int(result.cj1))/\(Int(result.cj2))/\(Int(result.cj3)) (best: \(Int(result.cj_best)))")
+                }
+
+                print("Best Snatch: \(bestSnatch != nil ? String(Int(bestSnatch!)) : "nil")")
+                print("Best CJ: \(bestCJ != nil ? String(Int(bestCJ!)) : "nil")")
+            }
 
             // Calculate estimated attempts
             var snatchEstimates: [Int] = []
             var cjEstimates: [Int] = []
-            var avgSnatchIncrease = (first: 0, second: 0)
-            var avgCJIncrease = (first: 0, second: 0)
+            var finalAvgSnatchIncrease = avgSnatchIncrease
+            var finalAvgCJIncrease = avgCJIncrease
 
+            // Use history if available, otherwise use entry total
             if let bestSnatch = bestSnatch, bestSnatch > 0 {
-                // Calculate average increases
-                avgSnatchIncrease = calculateAverageIncrease(results: athleteHistory, liftType: .snatch)
-
-                // 93% of best for first attempt
                 let firstAttempt = Int(round(bestSnatch * 0.93))
-                let secondAttempt = firstAttempt + avgSnatchIncrease.first
-                let thirdAttempt = secondAttempt + avgSnatchIncrease.second
+                let secondAttempt = firstAttempt + avgSnatchIncrease.0
+                let thirdAttempt = secondAttempt + avgSnatchIncrease.1
 
                 snatchEstimates = [firstAttempt, secondAttempt, thirdAttempt]
-                print("Snatch avg increases: 1→2: \(avgSnatchIncrease.first)kg, 2→3: \(avgSnatchIncrease.second)kg")
-                print("Snatch estimates: \(snatchEstimates[0])/\(snatchEstimates[1])/\(snatchEstimates[2])")
+                if debugMode {
+                    print("Snatch avg increases: 1→2: \(avgSnatchIncrease.0)kg, 2→3: \(avgSnatchIncrease.1)kg")
+                    print("Snatch estimates: \(snatchEstimates[0])/\(snatchEstimates[1])/\(snatchEstimates[2])")
+                }
+            } else if athlete.entry_total > 0 {
+                // No history - use entry total
+                if debugMode {
+                    print("No snatch history - using entry total: \(athlete.entry_total)kg")
+                }
+                let estimatedTotal = Int(round(Float(athlete.entry_total) * 0.93))
+                let snatchOpener = Int(round(Float(estimatedTotal) * 0.43))
+                let secondAttempt = snatchOpener + sessionAvgSnatchJump1to2
+                let thirdAttempt = secondAttempt + sessionAvgSnatchJump2to3
+
+                snatchEstimates = [snatchOpener, secondAttempt, thirdAttempt]
+                finalAvgSnatchIncrease = (sessionAvgSnatchJump1to2, sessionAvgSnatchJump2to3)
+                if debugMode {
+                    print("Snatch estimates (from entry): \(snatchEstimates[0])/\(snatchEstimates[1])/\(snatchEstimates[2])")
+                }
             }
 
             if let bestCJ = bestCJ, bestCJ > 0 {
-                // Calculate average increases
-                avgCJIncrease = calculateAverageIncrease(results: athleteHistory, liftType: .cleanJerk)
-
-                // 93% of best for first attempt
                 let firstAttempt = Int(round(bestCJ * 0.93))
-                let secondAttempt = firstAttempt + avgCJIncrease.first
-                let thirdAttempt = secondAttempt + avgCJIncrease.second
+                let secondAttempt = firstAttempt + avgCJIncrease.0
+                let thirdAttempt = secondAttempt + avgCJIncrease.1
 
                 cjEstimates = [firstAttempt, secondAttempt, thirdAttempt]
-                print("CJ avg increases: 1→2: \(avgCJIncrease.first)kg, 2→3: \(avgCJIncrease.second)kg")
-                print("CJ estimates: \(cjEstimates[0])/\(cjEstimates[1])/\(cjEstimates[2])")
+                if debugMode {
+                    print("CJ avg increases: 1→2: \(avgCJIncrease.0)kg, 2→3: \(avgCJIncrease.1)kg")
+                    print("CJ estimates: \(cjEstimates[0])/\(cjEstimates[1])/\(cjEstimates[2])")
+                }
+            } else if athlete.entry_total > 0 {
+                // No history - use entry total
+                if debugMode {
+                    print("No CJ history - using entry total: \(athlete.entry_total)kg")
+                }
+                let estimatedTotal = Int(round(Float(athlete.entry_total) * 0.93))
+                let cjOpener = Int(round(Float(estimatedTotal) * 0.57))
+                let secondAttempt = cjOpener + sessionAvgCJJump1to2
+                let thirdAttempt = secondAttempt + sessionAvgCJJump2to3
+
+                cjEstimates = [cjOpener, secondAttempt, thirdAttempt]
+                finalAvgCJIncrease = (sessionAvgCJJump1to2, sessionAvgCJJump2to3)
+                if debugMode {
+                    print("CJ estimates (from entry): \(cjEstimates[0])/\(cjEstimates[1])/\(cjEstimates[2])")
+                }
             }
 
-            // Calculate make rates
-            let (snatchMakeRate, cjMakeRate) = calculateMakeRates(results: athleteHistory)
-            print("Make rates - Snatch: \(Int(snatchMakeRate * 100))%, CJ: \(Int(cjMakeRate * 100))%")
+            if debugMode {
+                print("Make rates - Snatch: \(Int(snatchMakeRate * 100))%, CJ: \(Int(cjMakeRate * 100))%")
+            }
 
             let estimate = AthleteAttemptEstimate(
                 athleteName: athlete.name,
@@ -119,8 +183,8 @@ class AttemptsGuesserModel: ObservableObject {
                 cjEstimates: cjEstimates,
                 snatchAttemptsOut: 0, // Will calculate after all estimates
                 cjAttemptsOut: 0, // Will calculate after all estimates
-                averageSnatchIncrease: avgSnatchIncrease,
-                averageCJIncrease: avgCJIncrease,
+                averageSnatchIncrease: finalAvgSnatchIncrease,
+                averageCJIncrease: finalAvgCJIncrease,
                 bestSnatch: bestSnatch,
                 bestCJ: bestCJ,
                 snatchMakeRate: snatchMakeRate,
@@ -128,13 +192,17 @@ class AttemptsGuesserModel: ObservableObject {
             )
 
             estimates.append(estimate)
-            print("")  // Empty line between athletes
+            if debugMode {
+                print("")  // Empty line between athletes
+            }
         }
 
         // Calculate attempts out for each athlete
-        print("========================================")
-        print("CALCULATING ATTEMPTS OUT")
-        print("========================================\n")
+        if debugMode {
+            print("========================================")
+            print("CALCULATING ATTEMPTS OUT")
+            print("========================================\n")
+        }
         estimates = calculateAttemptsOut(estimates: estimates)
 
         self.athleteEstimates = estimates
@@ -147,20 +215,22 @@ class AttemptsGuesserModel: ObservableObject {
         for result in results {
             switch liftType {
             case .snatch:
-                // Only count positive increases (successful attempts)
-                if result.snatch1 > 0 && result.snatch2 > 0 && result.snatch2 > result.snatch1 {
-                    firstToSecondIncreases.append(Int(result.snatch2 - result.snatch1))
+                // Only count increases from positive to positive (both successful)
+                if result.snatch1 > 0 && result.snatch2 > 0 {
+                    firstToSecondIncreases.append(Int(abs(result.snatch2 - result.snatch1)))
                 }
-                if result.snatch2 > 0 && result.snatch3 > 0 && result.snatch3 > result.snatch2 {
-                    secondToThirdIncreases.append(Int(result.snatch3 - result.snatch2))
+                // Only count 2nd to 3rd if 2nd was positive (successful)
+                if result.snatch2 > 0 && result.snatch3 > 0 {
+                    secondToThirdIncreases.append(Int(abs(result.snatch3 - result.snatch2)))
                 }
             case .cleanJerk:
-                // Only count positive increases (successful attempts)
-                if result.cj1 > 0 && result.cj2 > 0 && result.cj2 > result.cj1 {
-                    firstToSecondIncreases.append(Int(result.cj2 - result.cj1))
+                // Only count increases from positive to positive (both successful)
+                if result.cj1 > 0 && result.cj2 > 0 {
+                    firstToSecondIncreases.append(Int(abs(result.cj2 - result.cj1)))
                 }
-                if result.cj2 > 0 && result.cj3 > 0 && result.cj3 > result.cj2 {
-                    secondToThirdIncreases.append(Int(result.cj3 - result.cj2))
+                // Only count 2nd to 3rd if 2nd was positive (successful)
+                if result.cj2 > 0 && result.cj3 > 0 {
+                    secondToThirdIncreases.append(Int(abs(result.cj3 - result.cj2)))
                 }
             }
         }
@@ -232,16 +302,18 @@ class AttemptsGuesserModel: ObservableObject {
         snatchAttempts.sort()
         cjAttempts.sort()
 
-        print("SNATCH ORDER (by weight):")
-        for (index, attempt) in snatchAttempts.enumerated() {
-            print("  \(index). \(attempt.athleteName) - Attempt #\(attempt.attemptNumber): \(attempt.weight)kg")
-        }
+        if debugMode {
+            print("SNATCH ORDER (by weight):")
+            for (index, attempt) in snatchAttempts.enumerated() {
+                print("  \(index). \(attempt.athleteName) - Attempt #\(attempt.attemptNumber): \(attempt.weight)kg")
+            }
 
-        print("\nCJ ORDER (by weight):")
-        for (index, attempt) in cjAttempts.enumerated() {
-            print("  \(index). \(attempt.athleteName) - Attempt #\(attempt.attemptNumber): \(attempt.weight)kg")
+            print("\nCJ ORDER (by weight):")
+            for (index, attempt) in cjAttempts.enumerated() {
+                print("  \(index). \(attempt.athleteName) - Attempt #\(attempt.attemptNumber): \(attempt.weight)kg")
+            }
+            print("")
         }
-        print("")
 
         // Calculate attempts out for each athlete
         return estimates.map { estimate in
@@ -260,7 +332,9 @@ class AttemptsGuesserModel: ObservableObject {
                     // Check if next attempt is the same athlete (they're following themselves)
                     if i + 1 < snatchAttempts.count && i + 1 < firstSnatchIndex && snatchAttempts[i].athleteName == snatchAttempts[i + 1].athleteName {
                         snatchOut += 1  // Add extra 1 when athlete follows themselves
-                        print("  → \(snatchAttempts[i].athleteName) follows themselves at position \(i)")
+                        if debugMode {
+                            print("  → \(snatchAttempts[i].athleteName) follows themselves at position \(i)")
+                        }
                     }
                 }
             }
@@ -277,12 +351,16 @@ class AttemptsGuesserModel: ObservableObject {
                     // Check if next attempt is the same athlete (they're following themselves)
                     if i + 1 < cjAttempts.count && i + 1 < firstCJIndex && cjAttempts[i].athleteName == cjAttempts[i + 1].athleteName {
                         cjOut += 1  // Add extra 1 when athlete follows themselves
-                        print("  → \(cjAttempts[i].athleteName) follows themselves at position \(i)")
+                        if debugMode {
+                            print("  → \(cjAttempts[i].athleteName) follows themselves at position \(i)")
+                        }
                     }
                 }
             }
 
-            print("\(estimate.athleteName) - Snatch: \(snatchOut) attempts out, CJ: \(cjOut) attempts out")
+            if debugMode {
+                print("\(estimate.athleteName) - Snatch: \(snatchOut) attempts out, CJ: \(cjOut) attempts out")
+            }
 
             return AthleteAttemptEstimate(
                 athleteName: estimate.athleteName,
