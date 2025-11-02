@@ -32,6 +32,7 @@ struct AthleteResults: Decodable, Hashable {
 class ScheduleDetailsModel: ObservableObject {
     @Published var athletes: [AthleteRow] = []
     @Published var athleteResults: [AthleteResults] = []
+    @Published var allAthletes: [AthleteResults] = []
     @Published var isLoading = false
     @Published var error: Error?
     @Published var isUsingOfflineData = false
@@ -333,6 +334,79 @@ class ScheduleDetailsModel: ObservableObject {
         isLoading = false
     }
     
+    func loadAllAthleteResults() async {
+        isLoading = true
+        error = nil
+        athleteResults.removeAll()
+
+        do {
+            print("Starting to load all athlete results...")
+            let response = try await supabase
+                .from("lifting_results")
+                .select()
+                .order("name")
+                .execute()
+
+            let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
+            self.allAthletes = rows
+            print("Successfully loaded \(rows.count) athlete results")
+        } catch {
+            self.error = error
+            print("Error loading athlete results: \(error.localizedDescription)")
+        }
+        isLoading = false
+    }
+
+    func searchAthletesByName(query: String) async {
+        isLoading = true
+        error = nil
+        athleteResults.removeAll()
+
+        do {
+            let response = try await supabase
+                .from("lifting_results")
+                .select("name")
+                .ilike("name", pattern: "%\(query)%")
+                .limit(30)
+                .execute()
+
+            struct NameOnly: Decodable {
+                let name: String
+            }
+
+            let rows = try JSONDecoder().decode([NameOnly].self, from: response.data)
+
+            // Convert to AthleteResults format with just the name field
+            // This is a workaround to match the expected type
+            let uniqueNames = Array(Set(rows.map { $0.name }))
+
+            // We'll just store the names in a simple format
+            // The actual results will be loaded when user clicks on a name
+            self.athleteResults = uniqueNames.map { name in
+                AthleteResults(
+                    id: 0,
+                    meet: "",
+                    date: "",
+                    name: name,
+                    age: "",
+                    body_weight: 0,
+                    total: 0,
+                    snatch1: 0,
+                    snatch2: 0,
+                    snatch3: 0,
+                    snatch_best: 0,
+                    cj1: 0,
+                    cj2: 0,
+                    cj3: 0,
+                    cj_best: 0
+                )
+            }
+        } catch {
+            self.error = error
+        }
+        isLoading = false
+    }
+
     func loadResults(name: String) async {
         isLoading = true
         error = nil

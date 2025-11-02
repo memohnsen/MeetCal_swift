@@ -51,6 +51,7 @@ struct OfflineModeView: View {
     @State private var alertMessage: String = ""
     @State private var alertTitle: String = ""
     @State private var isRefreshing: Bool = false
+    @State private var showRefreshConfirmation: Bool = false
 
     // MARK: - SwiftData Helpers (Single Source of Truth)
 
@@ -551,9 +552,9 @@ struct OfflineModeView: View {
         let itemName = "American Records"
         downloadingItems.insert(itemName)
         recordsModel.setModelContext(modelContext)
-        
-        recordsModel.records.removeAll()
-        
+
+        var allRecords: [Records] = []
+
         let ages = ["u13", "u15", "u17", "junior", "university", "senior",
                     "masters 30", "masters 35", "masters 40", "masters 45", "masters 50",
                     "masters 55", "masters 60", "masters 65", "masters 70", "masters 75",
@@ -561,13 +562,22 @@ struct OfflineModeView: View {
                     "masters 35-39", "masters 40-44", "masters 45-49", "masters 50-54",
                     "masters 55-59", "masters 60-64", "masters 65-69", "masters 70-74",
                     "masters 75-79", "masters 80-84", "masters 85-89", "masters +90"]
-        
+
         for age in ages {
             await recordsModel.loadRecords(gender: "men", ageCategory: age, record_type: "USAW")
+            allRecords.append(contentsOf: recordsModel.records)
+
             await recordsModel.loadRecords(gender: "women", ageCategory: age, record_type: "USAW")
+            allRecords.append(contentsOf: recordsModel.records)
+
             await recordsModel.loadRecords(gender: "men", ageCategory: age, record_type: "USAMW")
+            allRecords.append(contentsOf: recordsModel.records)
+
             await recordsModel.loadRecords(gender: "women", ageCategory: age, record_type: "USAMW")
+            allRecords.append(contentsOf: recordsModel.records)
         }
+
+        recordsModel.records = allRecords
         
         do {
             try recordsModel.saveAmRecordsToSwiftData()
@@ -580,6 +590,7 @@ struct OfflineModeView: View {
             alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
             alertShowing = true
         }
+
         downloadingItems.remove(itemName)
     }
     
@@ -861,6 +872,62 @@ struct OfflineModeView: View {
         alertShowing = true
     }
 
+    func refreshAllDownloadedData() async {
+        isRefreshing = true
+
+        // Collect what's currently downloaded BEFORE deleting
+        let downloadedMeets = Array(downloadedMeetNames)
+        let hasQT = isItemDownloaded("Qualifying Totals")
+        let hasWSO = isItemDownloaded("WSO Records")
+        let hasStandards = isItemDownloaded("A/B Standards")
+        let hasAmRecords = isItemDownloaded("American Records")
+        let hasAdaptiveRecords = isItemDownloaded("Adaptive American Records")
+        let hasIntlRankings = isItemDownloaded("International Rankings")
+        let hasNatRankings = isItemDownloaded("National Rankings")
+
+        // Delete all offline data
+        deleteAllOfflineData()
+
+        // Re-download everything that was downloaded before
+        if hasQT {
+            await downloadQT()
+        }
+
+        if hasWSO {
+            await downloadWSO()
+        }
+
+        if hasStandards {
+            await downloadStandards()
+        }
+
+        if hasAmRecords {
+            await downloadAmRecords()
+        }
+
+        if hasAdaptiveRecords {
+            await downloadAdapRecords()
+        }
+
+        if hasIntlRankings {
+            await downloadIntlRankings()
+        }
+
+        if hasNatRankings {
+            await downloadNatRankings()
+        }
+
+        // Re-download all meets
+        for meetName in downloadedMeets {
+            await downloadMeetData(meetName: meetName)
+        }
+
+        isRefreshing = false
+        alertTitle = "Refresh Complete"
+        alertMessage = "All downloaded data has been refreshed successfully."
+        alertShowing = true
+    }
+
     func deleteAllOfflineData() {
         let qtDescriptor = FetchDescriptor<QTEntity>()
         let qtRecords = try? modelContext.fetch(qtDescriptor)
@@ -1063,14 +1130,41 @@ struct OfflineModeView: View {
                 Text(alertMessage)
             }
             .toolbar{
-                ToolbarItem {
+                ToolbarItem() {
+                    Button {
+                        showRefreshConfirmation = true
+                    } label: {
+                        if isRefreshing {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .disabled(isRefreshing)
+                }
+                
+                ToolbarSpacer()
+
+                ToolbarItem() {
                     Button {
                         deleteAllOfflineData()
                     } label: {
                         Image(systemName: "trash")
                             .foregroundStyle(.red)
                     }
+                    .disabled(isRefreshing)
                 }
+            }
+            .confirmationDialog("Refresh All Downloaded Data", isPresented: $showRefreshConfirmation) {
+                Button("Refresh All") {
+                    Task {
+                        await refreshAllDownloadedData()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will delete and re-download all your offline data to ensure it's up to date.")
             }
             .toolbarVisibility(.hidden, for: .tabBar)
         }

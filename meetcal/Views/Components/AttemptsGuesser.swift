@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct AttemptsGuesser: View {
     let athletes: [AthleteRow]
@@ -116,6 +117,18 @@ struct AttemptsGuesser: View {
             .navigationTitle("Attempts Out Guesser")
             .navigationBarTitleDisplayMode(.inline)
             .task {
+                AnalyticsManager.shared.trackScreenView("Attempts Out Guesser")
+
+                // Get meet name and session number from the first athlete if available
+                let meetName = athletes.first?.meet ?? "Unknown"
+                let sessionNumber = athletes.first?.session_number ?? 0
+
+                AnalyticsManager.shared.trackAttemptsGuesserViewed(
+                    meetName: meetName,
+                    sessionNumber: sessionNumber,
+                    athleteCount: athletes.count
+                )
+
                 viewModel.calculateEstimates(athletes: athletes, athleteResults: athleteResults)
             }
         }

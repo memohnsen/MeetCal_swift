@@ -38,6 +38,10 @@ struct CompDataView: View {
                 }
                 
                 Section("National") {
+                    NavigationLink(destination: AllMeetResultsView()) {
+                        Text("All USAW Meet Results")
+                    }
+                    
                     if customerManager.hasProAccess {
                         NavigationLink(destination: QualifyingTotalsView()) {
                             Text("Qualifying Totals")

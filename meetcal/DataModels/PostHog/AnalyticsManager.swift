@@ -155,6 +155,27 @@ class AnalyticsManager {
         ])
     }
 
+    func trackAttemptsGuesserViewed(meetName: String, sessionNumber: Int, athleteCount: Int) {
+        PostHogSDK.shared.capture("attempts_guesser_viewed", properties: [
+            "meet_name": meetName,
+            "session_number": sessionNumber,
+            "athlete_count": athleteCount
+        ])
+    }
+
+    func trackAthleteHistorySearched(query: String, resultsCount: Int) {
+        PostHogSDK.shared.capture("athlete_history_searched", properties: [
+            "query": query,
+            "results_count": resultsCount
+        ])
+    }
+
+    func trackAthleteHistoryViewed(athleteName: String) {
+        PostHogSDK.shared.capture("athlete_history_viewed", properties: [
+            "athlete_name": athleteName
+        ])
+    }
+
     // MARK: - Monetization
     func trackPaywallViewed(triggerLocation: String) {
         PostHogSDK.shared.capture("paywall_viewed", properties: [
