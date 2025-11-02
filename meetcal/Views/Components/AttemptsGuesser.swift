@@ -146,7 +146,7 @@ struct AttemptsGuesser: View {
         }
 
         if !estimate.cjEstimates.isEmpty && estimate.cjEstimates[0] > 0 {
-            notes.append("Takes \(averageIncreaseRounded(firstAttempt: estimate.averageCJIncrease.first, secondAttempt: estimate.averageCJIncrease.second))kg jumps in the Clean & Jerk, \(Int(estimate.cjMakeRate * 100))% opener make rate")
+            notes.append("They take \(averageIncreaseRounded(firstAttempt: estimate.averageCJIncrease.first, secondAttempt: estimate.averageCJIncrease.second))kg jumps in the Clean & Jerk, \(Int(estimate.cjMakeRate * 100))% opener make rate")
         }
 
         return notes.isEmpty ? "No historical data available" : notes.joined(separator: ". ") + "."

@@ -462,7 +462,7 @@ struct TopView: View {
                     Button{
                         navigateToGuesser = true
                     } label: {
-                        Text("Attempts Out Guesser")
+                        Text("Attempts Guesser")
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
