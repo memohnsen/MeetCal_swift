@@ -24,6 +24,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         let POSTHOG_API_KEY = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as! String
         let POSTHOG_HOST = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_HOST") as! String
         let config = PostHogConfig(apiKey: POSTHOG_API_KEY, host: POSTHOG_HOST)
+        config.captureScreenViews = false // Disable automatic screen tracking (doesn't work with SwiftUI)
         PostHogSDK.shared.setup(config)
 
         FirebaseApp.configure()

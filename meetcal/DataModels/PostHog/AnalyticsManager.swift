@@ -15,9 +15,7 @@ class AnalyticsManager {
 
     // MARK: - Screen Views
     func trackScreenView(_ screenName: String, properties: [String: Any]? = nil) {
-        var eventProperties = properties ?? [:]
-        eventProperties["screen_name"] = screenName
-        PostHogSDK.shared.capture("screen_viewed", properties: eventProperties)
+        PostHogSDK.shared.screen(screenName, properties: properties)
     }
 
     // MARK: - User Authentication
