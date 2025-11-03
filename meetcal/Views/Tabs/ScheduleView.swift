@@ -255,6 +255,7 @@ struct ScheduleView: View {
                     .shadow(radius: 20)
                     .padding(.horizontal, 30)
                     .refreshable{
+                        viewModel.meets.removeAll()
                         await viewModel.loadMeets()
                     }
                 }
