@@ -27,94 +27,87 @@ struct AttemptsGuesser: View {
                 ForEach(viewModel.athleteEstimates.sorted(by: { $0.snatchAttemptsOut < $1.snatchAttemptsOut })) { estimate in
                     DisclosureGroup(estimate.athleteName){
                         VStack(alignment: .leading, spacing: 8){
-                            if estimate.bestSnatch == nil && estimate.bestCJ == nil {
-                                Text("No historical data available for this athlete in the past 2 years")
+                            Text("Estimated Count")
+                                .bold()
+
+                            if !estimate.snatchEstimates.isEmpty && estimate.snatchEstimates[0] > 0 {
+                                Text("Snatch: \(estimate.snatchAttemptsOut) attempts out")
                                     .secondaryText()
-                                    .italic()
-                                    .padding(.vertical, 8)
                             } else {
-                                Text("Estimated Count")
-                                    .bold()
+                                Text("Snatch: No data available")
+                                    .secondaryText()
+                            }
 
-                                if !estimate.snatchEstimates.isEmpty && estimate.snatchEstimates[0] > 0 {
-                                    Text("Snatch: \(estimate.snatchAttemptsOut) attempts out")
-                                        .secondaryText()
-                                } else {
-                                    Text("Snatch: No historical data")
-                                        .secondaryText()
-                                }
+                            if !estimate.cjEstimates.isEmpty && estimate.cjEstimates[0] > 0 {
+                                Text("CJ: \(estimate.cjAttemptsOut) attempts out")
+                                    .secondaryText()
+                            } else {
+                                Text("CJ: No data available")
+                                    .secondaryText()
+                            }
 
-                                if !estimate.cjEstimates.isEmpty && estimate.cjEstimates[0] > 0 {
-                                    Text("CJ: \(estimate.cjAttemptsOut) attempts out")
-                                        .secondaryText()
-                                } else {
-                                    Text("CJ: No historical data")
-                                        .secondaryText()
+                            Divider()
+                                .padding(.vertical, 12)
+
+                            Text("Estimated Attempts")
+                                .bold()
+                                .padding(.bottom, 8)
+
+                            Grid{
+                                GridRow{
+                                    Text("")
+                                    Text("1")
+                                        .bold()
+                                    Text("2")
+                                        .bold()
+                                    Text("3")
+                                        .bold()
                                 }
 
                                 Divider()
-                                    .padding(.vertical, 12)
 
-                                Text("Estimated Attempts")
-                                    .bold()
-                                    .padding(.bottom, 8)
-
-                                Grid{
+                                if !estimate.snatchEstimates.isEmpty && estimate.snatchEstimates[0] > 0 {
                                     GridRow{
-                                        Text("")
-                                        Text("1")
+                                        Text("Snatch")
                                             .bold()
-                                        Text("2")
-                                            .bold()
-                                        Text("3")
-                                            .bold()
+                                        Text("\(estimate.snatchEstimates[0])")
+                                            .secondaryText()
+                                        Text("\(estimate.snatchEstimates[1])")
+                                            .secondaryText()
+                                        Text("\(estimate.snatchEstimates[2])")
+                                            .secondaryText()
                                     }
 
                                     Divider()
-
-                                    if !estimate.snatchEstimates.isEmpty && estimate.snatchEstimates[0] > 0 {
-                                        GridRow{
-                                            Text("Snatch")
-                                                .bold()
-                                            Text("\(estimate.snatchEstimates[0])")
-                                                .secondaryText()
-                                            Text("\(estimate.snatchEstimates[1])")
-                                                .secondaryText()
-                                            Text("\(estimate.snatchEstimates[2])")
-                                                .secondaryText()
-                                        }
-
-                                        Divider()
-                                    }
-
-                                    if !estimate.cjEstimates.isEmpty && estimate.cjEstimates[0] > 0 {
-                                        GridRow{
-                                            Text("CJ")
-                                                .bold()
-                                            Text("\(estimate.cjEstimates[0])")
-                                                .secondaryText()
-                                            Text("\(estimate.cjEstimates[1])")
-                                                .secondaryText()
-                                            Text("\(estimate.cjEstimates[2])")
-                                                .secondaryText()
-                                        }
-                                    }
                                 }
 
-                                Divider()
-                                    .padding(.vertical, 12)
-
-                                Text("Athlete Notes")
-                                    .bold()
-
-                                Text(generateAthleteNotes(estimate: estimate))
-                                    .secondaryText()
+                                if !estimate.cjEstimates.isEmpty && estimate.cjEstimates[0] > 0 {
+                                    GridRow{
+                                        Text("CJ")
+                                            .bold()
+                                        Text("\(estimate.cjEstimates[0])")
+                                            .secondaryText()
+                                        Text("\(estimate.cjEstimates[1])")
+                                            .secondaryText()
+                                        Text("\(estimate.cjEstimates[2])")
+                                            .secondaryText()
+                                    }
+                                }
                             }
+
+                            Divider()
+                                .padding(.vertical, 12)
+
+                            Text("Athlete Notes")
+                                .bold()
+
+                            Text(generateAthleteNotes(estimate: estimate))
+                                .secondaryText()
                         }
                     }
                 }
             }
-            .navigationTitle("Attempts Out Guesser")
+            .navigationTitle("Attempt Estimator")
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 AnalyticsManager.shared.trackScreenView("Attempts Out Guesser")
@@ -139,6 +132,11 @@ struct AttemptsGuesser: View {
     }
 
     private func generateAthleteNotes(estimate: AthleteAttemptEstimate) -> String {
+        // Check if athlete has no historical data
+        if estimate.bestSnatch == nil && estimate.bestCJ == nil {
+            return "No data within the past 2 years. Estimates are based on entry total."
+        }
+
         var notes: [String] = []
 
         if !estimate.snatchEstimates.isEmpty && estimate.snatchEstimates[0] > 0 {
@@ -149,6 +147,6 @@ struct AttemptsGuesser: View {
             notes.append("They take \(averageIncreaseRounded(firstAttempt: estimate.averageCJIncrease.first, secondAttempt: estimate.averageCJIncrease.second))kg jumps in the Clean & Jerk, \(Int(estimate.cjMakeRate * 100))% opener make rate")
         }
 
-        return notes.isEmpty ? "No historical data available" : notes.joined(separator: ". ") + "."
+        return notes.isEmpty ? "No data available" : notes.joined(separator: ". ") + "."
     }
 }
