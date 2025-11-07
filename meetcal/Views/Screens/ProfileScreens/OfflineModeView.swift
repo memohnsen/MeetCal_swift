@@ -46,6 +46,7 @@ struct OfflineModeView: View {
     @StateObject private var standardsModel = StandardsViewModel()
     @StateObject private var startModel = StartListModel()
     @StateObject private var wsoModel = WSOViewModel()
+    @StateObject private var worldRecordsModel = WorldRecordsModel()
 
     @State private var alertShowing: Bool = false
     @State private var alertMessage: String = ""
@@ -61,6 +62,8 @@ struct OfflineModeView: View {
             return hasAdaptiveData()
         case "American Records":
             return hasAmericanRecordsData()
+        case "IWF World Records":
+            return hasWorldRecordsData()
         case "WSO Records":
             return hasWSOData()
         case "A/B Standards":
@@ -138,6 +141,13 @@ struct OfflineModeView: View {
         return !(results?.isEmpty ?? true)
     }
 
+    func hasWorldRecordsData() -> Bool {
+        var descriptor = FetchDescriptor<WorldRecordsEntity>()
+        descriptor.fetchLimit = 1
+        let results = try? modelContext.fetch(descriptor)
+        return !(results?.isEmpty ?? true)
+    }
+
     // MARK: - Last Synced Date Functions
 
     func getLastSyncedDate(for title: String, meetName: String? = nil) -> Date? {
@@ -191,6 +201,12 @@ struct OfflineModeView: View {
             }
         case "Qualifying Totals":
             let descriptor = FetchDescriptor<QTEntity>()
+            if let entities = try? modelContext.fetch(descriptor),
+               let firstEntity = entities.first {
+                return firstEntity.lastSynced
+            }
+        case "IWF World Records":
+            let descriptor = FetchDescriptor<WorldRecordsEntity>()
             if let entities = try? modelContext.fetch(descriptor),
                let firstEntity = entities.first {
                 return firstEntity.lastSynced
@@ -872,6 +888,52 @@ struct OfflineModeView: View {
         alertShowing = true
     }
 
+    func downloadWorldRecords() async {
+        let itemName = "IWF World Records"
+        downloadingItems.insert(itemName)
+        worldRecordsModel.setModelContext(modelContext)
+
+        var allRecords: [WorldRecords] = []
+
+        let ages = ["Senior", "Junior", "Youth"]
+
+        for age in ages {
+            await worldRecordsModel.loadRecords(gender: "Men", age_category: age)
+            allRecords.append(contentsOf: worldRecordsModel.worldRecords)
+
+            await worldRecordsModel.loadRecords(gender: "Women", age_category: age)
+            allRecords.append(contentsOf: worldRecordsModel.worldRecords)
+        }
+
+        worldRecordsModel.worldRecords = allRecords
+
+        do {
+            try worldRecordsModel.saveWorldRecordsToSwiftData()
+            alertTitle = "Saved Successfully"
+            alertMessage = "IWF World Records have been saved to your device."
+            alertShowing = true
+            refreshID = UUID()
+        } catch {
+            alertTitle = "Error"
+            alertMessage = "There was an error saving your data. Make sure you are connected to internet and a Pro user."
+            alertShowing = true
+        }
+
+        downloadingItems.remove(itemName)
+    }
+
+    func deleteWorldRecords() {
+        let descriptor = FetchDescriptor<WorldRecordsEntity>()
+        let records = try? modelContext.fetch(descriptor)
+        records?.forEach { modelContext.delete($0) }
+        try? modelContext.save()
+        refreshID = UUID()
+
+        alertTitle = "Deleted Successfully"
+        alertMessage = "IWF World Records have been deleted from your device."
+        alertShowing = true
+    }
+
     func refreshAllDownloadedData() async {
         isRefreshing = true
 
@@ -884,6 +946,7 @@ struct OfflineModeView: View {
         let hasAdaptiveRecords = isItemDownloaded("Adaptive American Records")
         let hasIntlRankings = isItemDownloaded("International Rankings")
         let hasNatRankings = isItemDownloaded("National Rankings")
+        let hasWorldRecords = isItemDownloaded("IWF World Records")
 
         // Delete all offline data
         deleteAllOfflineData()
@@ -915,6 +978,10 @@ struct OfflineModeView: View {
 
         if hasNatRankings {
             await downloadNatRankings()
+        }
+
+        if hasWorldRecords {
+            await downloadWorldRecords()
         }
 
         // Re-download all meets
@@ -976,6 +1043,10 @@ struct OfflineModeView: View {
         let resultsDescriptor = FetchDescriptor<ResultsEntity>()
         let resultsRecords = try? modelContext.fetch(resultsDescriptor)
         resultsRecords?.forEach { modelContext.delete($0) }
+
+        let worldRecordsDescriptor = FetchDescriptor<WorldRecordsEntity>()
+        let worldRecordsRecords = try? modelContext.fetch(worldRecordsDescriptor)
+        worldRecordsRecords?.forEach { modelContext.delete($0) }
 
         try? modelContext.save()
         refreshID = UUID()
@@ -1119,6 +1190,22 @@ struct OfflineModeView: View {
                             deleteWSO()
                         },
                         lastSyncedDate: getLastSyncedDate(for: "WSO Records")
+                    )
+
+                    ListButtonComponent(
+                        colorScheme: colorScheme,
+                        title: "IWF World Records",
+                        isDownloaded: isItemDownloaded("IWF World Records"),
+                        isDownloading: downloadingItems.contains("IWF World Records"),
+                        downloadAction: {
+                            Task {
+                                await downloadWorldRecords()
+                            }
+                        },
+                        deleteAction: {
+                            deleteWorldRecords()
+                        },
+                        lastSyncedDate: getLastSyncedDate(for: "IWF World Records")
                     )
                 }
             }

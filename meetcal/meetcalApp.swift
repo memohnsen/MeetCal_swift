@@ -60,6 +60,7 @@ struct meetcalApp: App {
             SchedDetailsEntity.self,
             StandardsEntity.self,
             StartListEntity.self,
+            WorldRecordsEntity.self,
             WSOEntity.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

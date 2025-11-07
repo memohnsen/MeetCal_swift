@@ -18,13 +18,13 @@ struct WorldRecordsView: View {
     @State private var isModalShowing: Bool = false
     @State private var isModal1DropdownShowing: Bool = false
     @State private var isModal2DropdownShowing: Bool = false
-    
+
     @State var appliedGender: String = "Men"
     @State var appliedAge: String = "Senior"
-    
+
     @State var draftGender: String = "Men"
     @State var draftAge: String = "Senior"
-    
+
     var worldRecords: [WorldRecords] { viewModel.worldRecords }
     
     var body: some View {
@@ -108,13 +108,10 @@ struct WorldRecordsView: View {
             onApply: {
                 appliedGender = draftGender
                 appliedAge = draftAge
-                Task {
-                    viewModel.worldRecords.removeAll()
-                    await viewModel.loadRecords(gender: appliedGender, age_category: appliedAge)
-                }
                 isModalShowing = false
             }))
         .task {
+            viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("World Records")
             viewModel.worldRecords.removeAll()
             await viewModel.loadRecords(gender: appliedGender, age_category: appliedAge)
