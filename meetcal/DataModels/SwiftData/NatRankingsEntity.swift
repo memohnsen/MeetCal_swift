@@ -25,9 +25,10 @@ class NatRankingsEntity {
     var cj2: Float
     var cj3: Float
     var cj_best: Float
+    var federation: String
     var lastSynced: Date
-    
-    init(id: Int, meet: String, date: String, name: String, age: String, body_weight: Float, total: Float, snatch1: Float, snatch2: Float, snatch3: Float, snatch_best: Float, cj1: Float, cj2: Float, cj3: Float, cj_best: Float, lastSynced: Date) {
+
+    init(id: Int, meet: String, date: String, name: String, age: String, body_weight: Float, total: Float, snatch1: Float, snatch2: Float, snatch3: Float, snatch_best: Float, cj1: Float, cj2: Float, cj3: Float, cj_best: Float, federation: String, lastSynced: Date) {
         self.id = id
         self.meet = meet
         self.date = date
@@ -43,6 +44,7 @@ class NatRankingsEntity {
         self.cj2 = cj2
         self.cj3 = cj3
         self.cj_best = cj_best
+        self.federation = federation
         self.lastSynced = lastSynced
     }
 }

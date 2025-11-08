@@ -83,7 +83,8 @@ class NationalRankingsModel: ObservableObject {
                 cj1: entity.cj1,
                 cj2: entity.cj2,
                 cj3: entity.cj3,
-                cj_best: entity.cj_best
+                cj_best: entity.cj_best,
+                federation: entity.federation
             )
         }
 
@@ -125,6 +126,7 @@ class NationalRankingsModel: ObservableObject {
                 cj2 : ranking.cj2,
                 cj3 : ranking.cj3,
                 cj_best: ranking.cj_best,
+                federation: ranking.federation,
                 lastSynced: Date()
             )
             context.insert(entity)

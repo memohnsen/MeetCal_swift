@@ -26,6 +26,7 @@ struct AthleteResults: Decodable, Hashable {
     let cj2: Float
     let cj3: Float
     let cj_best: Float
+    let federation: String
 }
     
 @MainActor
@@ -102,7 +103,8 @@ class ScheduleDetailsModel: ObservableObject {
                 cj1: entity.cj1,
                 cj2: entity.cj2,
                 cj3: entity.cj3,
-                cj_best: entity.cj_best
+                cj_best: entity.cj_best,
+                federation: entity.federation
             )
         }
     }
@@ -212,6 +214,7 @@ class ScheduleDetailsModel: ObservableObject {
                 cj2: result.cj2,
                 cj3: result.cj3,
                 cj_best: result.cj_best,
+                federation: result.federation,
                 lastSynced: Date()
             )
             context.insert(entity)
@@ -401,7 +404,8 @@ class ScheduleDetailsModel: ObservableObject {
                     cj1: 0,
                     cj2: 0,
                     cj3: 0,
-                    cj_best: 0
+                    cj_best: 0,
+                    federation: "USAW"
                 )
             }
         } catch {
