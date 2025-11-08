@@ -56,6 +56,7 @@ class WrappedModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
+                .eq("federation", value: "USAW")
                 .eq("name", value: name.capitalized)
                 .gte("date", value: startOf2024)
                 .execute()
@@ -84,6 +85,7 @@ class WrappedModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
+                .eq("federation", value: "USAW")
                 .eq("age", value: age)
                 .gte("date", value: startOf2024)
                 .execute()

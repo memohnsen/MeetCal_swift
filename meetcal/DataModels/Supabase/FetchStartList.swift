@@ -362,6 +362,7 @@ class StartListModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
+                .eq("federation", value: "USAW")
                 .eq("name", value: name)
                 .gte("date", value: oneYearAgoString)
                 .execute()

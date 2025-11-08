@@ -159,6 +159,7 @@ class NationalRankingsModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
+                .eq("federation", value: "USAW")
                 .eq("age", value: age)
                 .order("total", ascending: false)
                 .execute()
