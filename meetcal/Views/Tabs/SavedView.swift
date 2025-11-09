@@ -237,8 +237,9 @@ struct SavedView: View {
                                                             Text("Session \(String(session.session_number)) • \(session.formattedDate)")
                                                                 .padding(.bottom, 6)
                                                                 .foregroundStyle(colorScheme == .light ? .black : .white)
-                                                                .font(.headline)
-                                                                .bold()
+                                                                .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : (UIScreen.main.bounds.width < 431 ? 16 : 18), weight: .bold))
+                                                                .lineLimit(2)
+                                                                .minimumScaleFactor(0.8)
                                                             
                                                             HStack {
                                                                 Text("Weigh-In: \(session.weighInTime) • Start: \(session.formattedStartTime)")

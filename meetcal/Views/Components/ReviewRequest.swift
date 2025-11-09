@@ -22,15 +22,17 @@ struct ReviewRequest: View {
                     .font(.title)
                     .bold()
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
 
                 Image("meetcal-logo")
                     .resizable()
                     .frame(width: 140, height: 140)
                     .shadow(color: .white.opacity(0.35), radius: 8)
                     .padding(.vertical, 16)
-                
+
                 Text("If you love MeetCal, it would help us a ton if you took a minute to leave us review!")
                     .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
 
                 Spacer()
 

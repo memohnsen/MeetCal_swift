@@ -358,9 +358,9 @@ struct TopView: View {
                                 alertTitle = "Session Saved"
                                 alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
                                 alertShowing = true
-                                
+
                                 await customerManager.fetchCustomerInfo()
-                                
+
                                 if customerManager.hasProAccess {
                                     let settings = await UNUserNotificationCenter.current().notificationSettings()
                                     guard settings.authorizationStatus == .authorized else {
@@ -404,7 +404,7 @@ struct TopView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: UIScreen.main.bounds.width < 415 ? 44 : (UIScreen.main.bounds.width < 431 ? 48 : 50))
                     .foregroundStyle(.white)
                     .background(.blue)
                     .cornerRadius(12)
@@ -414,30 +414,30 @@ struct TopView: View {
                         Task {
                             await saveModel.unsaveSession(meet: selectedMeet, sessionNumber: sessionNum, platform: platformColor)
                             await saveModel.loadSaved(meet: selectedMeet)
-                            
+
                             let identifier = "\(selectedMeet)-\(sessionNum)-\(platformColor)"
                             let center = UNUserNotificationCenter.current()
                             center.removePendingNotificationRequests(withIdentifiers: [identifier])
                             notificationIdentifier = nil
-                            
+
                             alertTitle = "Session Unsaved"
                             alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"
                             alertShowing = true
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: UIScreen.main.bounds.width < 415 ? 44 : (UIScreen.main.bounds.width < 431 ? 48 : 50))
                     .foregroundStyle(.white)
                     .background(.blue)
                     .cornerRadius(12)
                     .padding(.vertical, 6)
                 }
-                
+
                 Button("Add to Calendar") {
                     addToCal()
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(height: UIScreen.main.bounds.width < 415 ? 44 : (UIScreen.main.bounds.width < 431 ? 48 : 50))
                 .foregroundStyle(.white)
                 .background(.green)
                 .cornerRadius(12)
@@ -452,17 +452,19 @@ struct TopView: View {
                         navigateToQT = true
                     } label: {
                         Text("Qualifying Totals")
+                            .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : 18))
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
                     .foregroundStyle(.blue)
-                    
+
                     Divider()
-                    
+
                     Button{
                         navigateToGuesser = true
                     } label: {
                         Text("Attempt Estimator")
+                            .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : 18))
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
@@ -475,6 +477,7 @@ struct TopView: View {
                     } label: {
                         HStack {
                             Text("Qualifying Totals")
+                                .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : 18))
                             Spacer()
                             Image(systemName: "chevron.right")
                         }
@@ -482,11 +485,12 @@ struct TopView: View {
                     }
 
                     Divider()
-                    
+
                     Button{
                         navigateToPaywall = true
                     } label: {
-                        Text("Attempts Out Guesser")
+                        Text("Attempt Estimator")
+                            .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : 18))
                         Spacer()
                         Image(systemName: "chevron.right")
                     }

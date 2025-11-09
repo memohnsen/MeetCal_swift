@@ -18,8 +18,10 @@ struct SponsorView: View {
                     VStack(spacing: 20) {
                         Text("Support the business that support weightlifting.")
                             .multilineTextAlignment(.center)
+                            .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : (UIScreen.main.bounds.width < 431 ? 16 : 17)))
                         Text("For the community, by the community.")
                             .multilineTextAlignment(.center)
+                            .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : (UIScreen.main.bounds.width < 431 ? 16 : 17)))
                             .padding(.top, -15)
                         
                         Divider()

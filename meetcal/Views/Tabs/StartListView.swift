@@ -839,7 +839,7 @@ private struct AthleteDisclosureRow: View {
 
                     Spacer()
 
-                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: athlete.weight_class, startTime: schedule?.start_time ?? "00:00:00")) {
+                    NavigationLink(destination: ScheduleDetailsView(meet: selectedMeet, date: schedule?.date ?? .now, sessionNum: athlete.session_number ?? 00, platformColor: athlete.session_platform ?? "TBD", weightClass: schedule?.weight_class ?? athlete.weight_class, startTime: schedule?.start_time ?? "00:00:00")) {
                         Text("Session \(athlete.session_number ?? 0) • \(athlete.session_platform ?? "TBD") Platform")
                     }
                     .foregroundStyle(.blue)

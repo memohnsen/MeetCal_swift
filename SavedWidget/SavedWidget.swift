@@ -254,7 +254,7 @@ struct LargeWidgetView: View {
                     .foregroundStyle(.secondary)
                 Spacer()
             } else {
-                ForEach(entry.sessions.prefix(8).indices, id: \.self) { index in
+                ForEach(entry.sessions.prefix(7).indices, id: \.self) { index in
                     SessionView(session: entry.sessions[index])
                 }
                 Spacer()

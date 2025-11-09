@@ -27,13 +27,15 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="meetcal-logo" translatesAutoresizingMaskIntoConstraints="NO" id="Xs4-du-A6s">
-                                <rect key="frame" x="73" y="257" width="247" height="167"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="meetcal-logo" translatesAutoresizingMaskIntoConstraints="NO" id="Xs4-du-A6s">
+                                <rect key="frame" x="96.666666666666686" y="257" width="200" height="167"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="200" id="img-width"/>
+                                    <constraint firstAttribute="height" constant="167" id="img-height"/>
+                                </constraints>
                             </imageView>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Your Must Have Meet Companion" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="18" translatesAutoresizingMaskIntoConstraints="NO" id="k06-8J-12L">
-                                <rect key="frame" x="62" y="568" width="269" height="22"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Your Must Have Meet Companion" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="k06-8J-12L">
+                                <rect key="frame" x="20" y="529" width="353" height="22"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="18"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -48,6 +50,11 @@
                             <constraint firstAttribute="bottom" secondItem="obG-Y5-kRd" secondAttribute="bottom" constant="20" id="Y44-ml-fuU"/>
                             <constraint firstItem="GJd-Yh-RWb" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="bottom" multiplier="1/3" constant="215.5" id="moa-c2-u7t"/>
                             <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" symbolic="YES" id="x7j-FC-K8j"/>
+                            <constraint firstItem="Xs4-du-A6s" firstAttribute="centerX" secondItem="Bcu-3y-fUS" secondAttribute="centerX" id="img-centerX"/>
+                            <constraint firstItem="Xs4-du-A6s" firstAttribute="bottom" secondItem="GJd-Yh-RWb" secondAttribute="top" constant="-54" id="img-bottom"/>
+                            <constraint firstItem="k06-8J-12L" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="20" id="subtitle-leading"/>
+                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="trailing" secondItem="k06-8J-12L" secondAttribute="trailing" constant="20" id="subtitle-trailing"/>
+                            <constraint firstItem="k06-8J-12L" firstAttribute="top" secondItem="GJd-Yh-RWb" secondAttribute="bottom" constant="8" id="subtitle-top"/>
                         </constraints>
                     </view>
                 </viewController>
