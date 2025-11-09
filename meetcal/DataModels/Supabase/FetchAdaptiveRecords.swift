@@ -179,7 +179,7 @@ class AdaptiveRecordsModel: ObservableObject {
                 .from("lifting_results")
                 .select()
                 .eq("adaptive", value: true)
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .like("age", pattern: "%\(gender)%")
                 .order("total", ascending: false)
                 .execute()

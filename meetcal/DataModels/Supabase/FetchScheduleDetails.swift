@@ -326,7 +326,7 @@ class ScheduleDetailsModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .in("name", values: athleteNames)
                 .execute()
             
@@ -348,7 +348,7 @@ class ScheduleDetailsModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .order("name")
                 .execute()
 
@@ -371,7 +371,7 @@ class ScheduleDetailsModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select("name")
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .ilike("name", pattern: "%\(query)%")
                 .limit(30)
                 .execute()
@@ -442,7 +442,6 @@ class ScheduleDetailsModel: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("federation", value: "USAW")
                 .eq("name", value: name)
                 .order("date", ascending: false)
                 .execute()

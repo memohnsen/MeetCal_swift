@@ -39,7 +39,7 @@ struct CompDataView: View {
                 
                 Section("National") {
                     NavigationLink(destination: AllMeetResultsView()) {
-                        Text("All USAW Meet Results")
+                        Text("All Meet Results")
                     }
                     
                     if customerManager.hasProAccess {

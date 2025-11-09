@@ -37,7 +37,7 @@ struct AllMeetResultsView: View {
                     VStack {
                         Text("Error loading athletes")
                             .font(.headline)
-                        Text(error.localizedDescription)
+                        Text("Try searching again")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .padding()

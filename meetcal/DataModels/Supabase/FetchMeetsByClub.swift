@@ -111,7 +111,7 @@ class FetchMeetsByClub: ObservableObject {
             let response = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .eq("name", value: name)
                 .execute()
 
@@ -189,7 +189,7 @@ class FetchMeetsByClub: ObservableObject {
             let historicalResponse = try await supabase
                 .from("lifting_results")
                 .select()
-                .eq("federation", value: "USAW")
+                .neq("federation", value: "BWL")
                 .in("name", values: athleteNames)
                 .lt("date", value: results.first?.date ?? "")
                 .execute()
