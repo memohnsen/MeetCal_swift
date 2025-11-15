@@ -33,7 +33,7 @@ struct AllMeetResultsView: View {
                     }
                 } else if isLoading {
                     ProgressView("Searching...")
-                } else if let error = viewModel.error {
+                } else if viewModel.error != nil {
                     VStack {
                         Text("Error loading athletes")
                             .font(.headline)

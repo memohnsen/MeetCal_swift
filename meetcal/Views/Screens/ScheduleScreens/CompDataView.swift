@@ -18,13 +18,23 @@ struct CompDataView: View {
         NavigationStack{
             List {
                 NavigationLink("Event Info", destination: EventInfoView())
-                
+                    .simultaneousGesture(TapGesture().onEnded {
+                        AnalyticsManager.shared.trackFeatureAccessed(featureName: "Event Info", source: "Competition Data")
+                    })
+
                 NavigationLink("Weightlifting Wrapped", destination: WLWrapped())
-                
+                    .simultaneousGesture(TapGesture().onEnded {
+                        AnalyticsManager.shared.trackFeatureAccessed(featureName: "Weightlifting Wrapped", source: "Competition Data")
+                    })
+
                 if customerManager.hasProAccess {
                     NavigationLink("Shareable Meet Results By Club", destination: ShareMeetResultsByClub())
+                        .simultaneousGesture(TapGesture().onEnded {
+                            AnalyticsManager.shared.trackFeatureAccessed(featureName: "Shareable Meet Results By Club", source: "Competition Data")
+                        })
                 } else {
                     Button {
+                        AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "Shareable Meet Results By Club")
                         navigateToPaywall = true
                     } label: {
                         HStack {
@@ -41,13 +51,20 @@ struct CompDataView: View {
                     NavigationLink(destination: AllMeetResultsView()) {
                         Text("All Meet Results")
                     }
-                    
+                    .simultaneousGesture(TapGesture().onEnded {
+                        AnalyticsManager.shared.trackFeatureAccessed(featureName: "All Meet Results", source: "Competition Data")
+                    })
+
                     if customerManager.hasProAccess {
                         NavigationLink(destination: QualifyingTotalsView()) {
                             Text("Qualifying Totals")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            AnalyticsManager.shared.trackFeatureAccessed(featureName: "Qualifying Totals", source: "Competition Data")
+                        })
                     } else {
                         Button {
+                            AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "Qualifying Totals")
                             navigateToPaywall = true
                         } label: {
                             HStack {
@@ -59,13 +76,17 @@ struct CompDataView: View {
                             }
                         }
                     }
-                    
+
                     if customerManager.hasProAccess {
                         NavigationLink(destination: NationalRankingsView()) {
                             Text("National Rankings")
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            AnalyticsManager.shared.trackFeatureAccessed(featureName: "National Rankings", source: "Competition Data")
+                        })
                     } else {
                         Button {
+                            AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "National Rankings")
                             navigateToPaywall = true
                         } label: {
                             HStack {
@@ -196,10 +217,16 @@ struct CompDataView: View {
             .toolbar(.hidden, for: .tabBar)
             .padding(.top, -10)
             .task {
+                AnalyticsManager.shared.trackScreenView("Competition Data")
                 await customerManager.fetchCustomerInfo()
             }
             .sheet(isPresented: $navigateToPaywall) {
                 PaywallView()
+            }
+            .onChange(of: navigateToPaywall) { oldValue, newValue in
+                if newValue {
+                    AnalyticsManager.shared.trackPaywallViewed(triggerLocation: "Competition Data")
+                }
             }
             
         }

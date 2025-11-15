@@ -62,19 +62,19 @@ struct SavedView: View {
                         if failCount == 0 {
                             alertTitle = "Success"
                             alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s") to your calendar"
-
-                            // Track calendar additions
-                            for session in saved {
-                                AnalyticsManager.shared.trackMeetAddedToCalendar(
-                                    meetId: selectedMeet,
-                                    meetName: selectedMeet,
-                                    sessionType: "Session \(session.session_number) - \(session.platform)"
-                                )
-                            }
                         } else {
                             alertTitle = "Partial Success"
                             alertMessage = "Added \(successCount) session\(successCount == 1 ? "" : "s"). Failed to add \(failCount) session\(failCount == 1 ? "" : "s")."
                         }
+
+                        // Track bulk calendar addition
+                        AnalyticsManager.shared.trackBulkCalendarAdded(
+                            meetName: selectedMeet,
+                            sessionCount: saved.count,
+                            successCount: successCount,
+                            failCount: failCount
+                        )
+
                         alertShowing = true
                     } else {
                         alertTitle = "Calendar Access Denied"
@@ -297,20 +297,27 @@ struct SavedView: View {
                         ToolbarSpacer()
                         ToolbarItem(placement: .topBarTrailing) {
                             Button {
+                                let sessionCount = saved.count
                                 Task {
                                     await viewModel.deleteAllSessions(meet: selectedMeet)
                                     await viewModel.loadSaved(meet: selectedMeet)
-                                    
+
                                     let center = UNUserNotificationCenter.current()
                                     let requests = await center.pendingNotificationRequests()
                                     let identifiersToRemove = requests
                                         .map { $0.identifier }
                                         .filter { $0.hasPrefix(selectedMeet) }
-                                    
+
                                     center.removePendingNotificationRequests(withIdentifiers: identifiersToRemove)
                                     #if DEBUG
                                     print(identifiersToRemove)
                                     #endif
+
+                                    // Track bulk deletion
+                                    AnalyticsManager.shared.trackBulkSessionsDeleted(
+                                        meetName: selectedMeet,
+                                        sessionCount: sessionCount
+                                    )
                                 }
                                 alertShowing = true
                                 alertTitle = "Sessions Deleted"
@@ -325,6 +332,7 @@ struct SavedView: View {
                 .navigationTitle("Saved")
                 .navigationBarTitleDisplayMode(.inline)
                 .refreshable{
+                    AnalyticsManager.shared.trackContentRefreshed(screenName: "Saved")
                     await meetViewModel.loadMeetDetails(meetName: selectedMeet)
                     await viewModel.loadSaved(meet: selectedMeet)
                 }

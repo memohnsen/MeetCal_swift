@@ -45,46 +45,40 @@ class AnalyticsManager {
     }
 
     // MARK: - Meet Engagement
-    func trackMeetViewed(meetId: String, meetName: String, meetDate: String) {
+    func trackMeetViewed(meetName: String, meetDate: String) {
         PostHogSDK.shared.capture("meet_viewed", properties: [
-            "meet_id": meetId,
             "meet_name": meetName,
             "meet_date": meetDate
         ])
     }
 
-    func trackMeetSaved(meetId: String, meetName: String) {
+    func trackMeetSaved(meetName: String) {
         PostHogSDK.shared.capture("meet_saved", properties: [
-            "meet_id": meetId,
             "meet_name": meetName
         ])
     }
 
-    func trackMeetUnsaved(meetId: String, meetName: String) {
+    func trackMeetUnsaved(meetName: String) {
         PostHogSDK.shared.capture("meet_unsaved", properties: [
-            "meet_id": meetId,
             "meet_name": meetName
         ])
     }
 
-    func trackMeetAddedToCalendar(meetId: String, meetName: String, sessionType: String) {
+    func trackMeetAddedToCalendar(meetName: String, sessionType: String) {
         PostHogSDK.shared.capture("meet_added_to_calendar", properties: [
-            "meet_id": meetId,
             "meet_name": meetName,
             "session_type": sessionType
         ])
     }
 
-    func trackMeetDetailsViewed(meetId: String, meetName: String) {
+    func trackMeetDetailsViewed(meetName: String) {
         PostHogSDK.shared.capture("meet_details_viewed", properties: [
-            "meet_id": meetId,
             "meet_name": meetName
         ])
     }
 
-    func trackMeetResultsViewed(meetId: String, meetName: String) {
+    func trackMeetResultsViewed(meetName: String) {
         PostHogSDK.shared.capture("meet_results_viewed", properties: [
-            "meet_id": meetId,
             "meet_name": meetName
         ])
     }
@@ -92,6 +86,55 @@ class AnalyticsManager {
     func trackMeetSelected(meetName: String) {
         PostHogSDK.shared.capture("meet_selected", properties: [
             "meet_name": meetName
+        ])
+    }
+
+    func trackScheduleImageGenerated(meetName: String, club: String) {
+        PostHogSDK.shared.capture("schedule_image_generated", properties: [
+            "meet_name": meetName,
+            "club": club
+        ])
+    }
+
+    func trackSessionViewed(meetName: String, sessionNumber: Int, platform: String, weightClass: String) {
+        PostHogSDK.shared.capture("session_viewed", properties: [
+            "meet_name": meetName,
+            "session_number": sessionNumber,
+            "platform": platform,
+            "weight_class": weightClass
+        ])
+    }
+
+    func trackSessionSaved(meetName: String, sessionNumber: Int, platform: String, athleteCount: Int) {
+        PostHogSDK.shared.capture("session_saved", properties: [
+            "meet_name": meetName,
+            "session_number": sessionNumber,
+            "platform": platform,
+            "athlete_count": athleteCount
+        ])
+    }
+
+    func trackSessionUnsaved(meetName: String, sessionNumber: Int, platform: String) {
+        PostHogSDK.shared.capture("session_unsaved", properties: [
+            "meet_name": meetName,
+            "session_number": sessionNumber,
+            "platform": platform
+        ])
+    }
+
+    func trackBulkSessionsDeleted(meetName: String, sessionCount: Int) {
+        PostHogSDK.shared.capture("bulk_sessions_deleted", properties: [
+            "meet_name": meetName,
+            "session_count": sessionCount
+        ])
+    }
+
+    func trackBulkCalendarAdded(meetName: String, sessionCount: Int, successCount: Int, failCount: Int) {
+        PostHogSDK.shared.capture("bulk_calendar_added", properties: [
+            "meet_name": meetName,
+            "session_count": sessionCount,
+            "success_count": successCount,
+            "fail_count": failCount
         ])
     }
 
@@ -172,6 +215,32 @@ class AnalyticsManager {
         PostHogSDK.shared.capture("athlete_history_viewed", properties: [
             "athlete_name": athleteName
         ])
+    }
+
+    // MARK: - Feature Navigation
+    func trackFeatureAccessed(featureName: String, source: String) {
+        PostHogSDK.shared.capture("feature_accessed", properties: [
+            "feature_name": featureName,
+            "source": source
+        ])
+    }
+
+    func trackScheduleDayChanged(meetName: String, dayIndex: Int, totalDays: Int) {
+        PostHogSDK.shared.capture("schedule_day_changed", properties: [
+            "meet_name": meetName,
+            "day_index": dayIndex,
+            "total_days": totalDays
+        ])
+    }
+
+    func trackContentRefreshed(screenName: String) {
+        PostHogSDK.shared.capture("content_refreshed", properties: [
+            "screen_name": screenName
+        ])
+    }
+
+    func trackMeetOverlayOpened() {
+        PostHogSDK.shared.capture("meet_overlay_opened")
     }
 
     // MARK: - Monetization

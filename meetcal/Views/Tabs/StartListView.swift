@@ -243,7 +243,6 @@ struct StartListView: View {
 
                     // Track meet saved
                     AnalyticsManager.shared.trackMeetSaved(
-                        meetId: selectedMeet,
                         meetName: selectedMeet
                     )
                 } catch {
@@ -328,7 +327,6 @@ struct StartListView: View {
                     // Track calendar additions
                     for session in sessions {
                         AnalyticsManager.shared.trackMeetAddedToCalendar(
-                            meetId: self.selectedMeet,
                             meetName: self.selectedMeet,
                             sessionType: "Session \(session.session_id) - \(session.platform)"
                         )
@@ -548,6 +546,11 @@ struct StartListView: View {
 
         generatedImage = image
         showImagePreview = true
+
+        AnalyticsManager.shared.trackScheduleImageGenerated(
+            meetName: selectedMeet,
+            club: selectedClub
+        )
     }
     
     var body: some View {

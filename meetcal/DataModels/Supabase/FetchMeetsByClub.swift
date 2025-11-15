@@ -225,7 +225,7 @@ class FetchMeetsByClub: ObservableObject {
 
             // Calculate medals - check snatch, c&j, and total separately by weight class
             for clubAthlete in clubAthletes {
-                guard let athleteResult = results.first(where: { $0.name == clubAthlete.name }) else { continue }
+                guard results.first(where: { $0.name == clubAthlete.name }) != nil else { continue }
 
                 // Get all results in this athlete's weight class
                 let athletesInWeightClass = allMeetAthletes.filter { $0.weight_class == clubAthlete.weight_class }

@@ -102,16 +102,6 @@
 			path = meetcal;
 			sourceTree = "<group>";
 		};
-		7111C8532E663F700023BA6F /* meetcalTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = meetcalTests;
-			sourceTree = "<group>";
-		};
-		7111C85D2E663F700023BA6F /* meetcalUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = meetcalUITests;
-			sourceTree = "<group>";
-		};
 		7123D1BC2E933150000373C2 /* SavedWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -177,8 +167,6 @@
 				7123D1D02E946250000373C2 /* SavedWidgetExtension.entitlements */,
 				71B59F622E90885800B3F65B /* Config.xcconfig */,
 				7111C8412E663F6F0023BA6F /* meetcal */,
-				7111C8532E663F700023BA6F /* meetcalTests */,
-				7111C85D2E663F700023BA6F /* meetcalUITests */,
 				7123D1BC2E933150000373C2 /* SavedWidget */,
 				7123D1B72E933150000373C2 /* Frameworks */,
 				7111C8402E663F6F0023BA6F /* Products */,
@@ -260,9 +248,6 @@
 			dependencies = (
 				7111C8522E663F700023BA6F /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				7111C8532E663F700023BA6F /* meetcalTests */,
-			);
 			name = meetcalTests;
 			packageProductDependencies = (
 			);
@@ -282,9 +267,6 @@
 			);
 			dependencies = (
 				7111C85C2E663F700023BA6F /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				7111C85D2E663F700023BA6F /* meetcalUITests */,
 			);
 			name = meetcalUITests;
 			packageProductDependencies = (
@@ -461,7 +443,7 @@
 				CODE_SIGN_ENTITLEMENTS = meetcal/meetcal.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -483,7 +465,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 5.2.1;
+				MARKETING_VERSION = 5.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.meetcal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -510,7 +492,7 @@
 				CODE_SIGN_ENTITLEMENTS = meetcal/meetcal.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -532,7 +514,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 5.2.1;
+				MARKETING_VERSION = 5.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.meetcal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -783,7 +765,7 @@
 				CODE_SIGN_ENTITLEMENTS = SavedWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SavedWidget/Info.plist;
@@ -794,7 +776,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 5.2.1;
+				MARKETING_VERSION = 5.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.meetcal.SavedWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -819,7 +801,7 @@
 				CODE_SIGN_ENTITLEMENTS = SavedWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SavedWidget/Info.plist;
@@ -830,7 +812,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 5.2.1;
+				MARKETING_VERSION = 5.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.meetcal.SavedWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

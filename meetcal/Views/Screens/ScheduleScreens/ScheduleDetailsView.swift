@@ -56,6 +56,14 @@ struct ScheduleDetailsView: View {
             await viewModel2.loadMeetDetails(meetName: selectedMeet)
             await viewModel.loadAthletes(meet: meet, sessionID: sessionNum, platform: platformColor)
             await viewModel.loadAllResults()
+
+            // Track session view
+            AnalyticsManager.shared.trackSessionViewed(
+                meetName: selectedMeet,
+                sessionNumber: sessionNum,
+                platform: platformColor,
+                weightClass: weightClass
+            )
         }
     }
 }
@@ -359,6 +367,14 @@ struct TopView: View {
                                 alertMessage = "Session \(sessionNum) \(platformColor) has been saved successfully!"
                                 alertShowing = true
 
+                                // Track session save
+                                AnalyticsManager.shared.trackSessionSaved(
+                                    meetName: selectedMeet,
+                                    sessionNumber: sessionNum,
+                                    platform: platformColor,
+                                    athleteCount: athletes.count
+                                )
+
                                 await customerManager.fetchCustomerInfo()
 
                                 if customerManager.hasProAccess {
@@ -419,6 +435,13 @@ struct TopView: View {
                             let center = UNUserNotificationCenter.current()
                             center.removePendingNotificationRequests(withIdentifiers: [identifier])
                             notificationIdentifier = nil
+
+                            // Track session unsave
+                            AnalyticsManager.shared.trackSessionUnsaved(
+                                meetName: selectedMeet,
+                                sessionNumber: sessionNum,
+                                platform: platformColor
+                            )
 
                             alertTitle = "Session Unsaved"
                             alertMessage = "Session \(sessionNum) \(platformColor) has been unsaved"

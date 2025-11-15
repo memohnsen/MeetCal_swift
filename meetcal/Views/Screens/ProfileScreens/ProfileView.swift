@@ -31,10 +31,13 @@ struct ProfileView: View {
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        AnalyticsManager.shared.trackFeatureAccessed(featureName: "Manage Profile", source: "Profile")
+                    })
                     .cardStyling()
                     .foregroundStyle(colorScheme == .light ? .black : .white)
                     .padding(.bottom, 8)
-                    
+
                     if customerManager.hasProAccess {
                         HStack {
                             NavigationLink(destination: OfflineModeView()) {
@@ -42,12 +45,16 @@ struct ProfileView: View {
                                 Spacer()
                                 Image(systemName: "chevron.right")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                AnalyticsManager.shared.trackFeatureAccessed(featureName: "Downloaded Data", source: "Profile")
+                            })
                             .cardStyling()
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                             .padding(.bottom, 8)
                         }
                     } else {
                         Button {
+                            AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "Downloaded Data")
                             navigateToPaywall = true
                         } label: {
                             HStack {
@@ -64,6 +71,7 @@ struct ProfileView: View {
                     VStack {
                         HStack {
                             Button{
+                                AnalyticsManager.shared.trackFeatureAccessed(featureName: "Customer Support", source: "Profile")
                                 self.isCustomerCenterPresented = true
                             } label: {
                                 Text("Customer Support")
@@ -72,22 +80,25 @@ struct ProfileView: View {
                             }
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
-                        
+
                         Divider()
                             .padding(.vertical, 8)
-                        
+
                         HStack {
                             NavigationLink(destination: FeedbackView()) {
                                 Text("Submit Feedback")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                             }
+                            .simultaneousGesture(TapGesture().onEnded {
+                                AnalyticsManager.shared.trackFeatureAccessed(featureName: "Submit Feedback", source: "Profile")
+                            })
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
-                        
+
                         Divider()
                             .padding(.vertical, 8)
-                        
+
                         Link(destination: URL(string: "https://apps.apple.com/us/app/meetcal/id6741133286")!) {
                             HStack {
                                 Text("Leave A Review")
@@ -96,6 +107,9 @@ struct ProfileView: View {
                               }
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                         }
+                        .simultaneousGesture(TapGesture().onEnded {
+                            AnalyticsManager.shared.trackFeatureAccessed(featureName: "Leave Review", source: "Profile")
+                        })
                     }
                     .cardStyling()
                     

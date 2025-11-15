@@ -62,6 +62,7 @@ struct ScheduleView: View {
                         .cornerRadius(12)
                         .padding(.horizontal)
                         .onTapGesture {
+                            AnalyticsManager.shared.trackMeetOverlayOpened()
                             showingMeetsOverlay = true
                         }
                         .frame(height: 100)
@@ -120,6 +121,15 @@ struct ScheduleView: View {
                                         selectedTabIndex = todayIndex
                                     } else {
                                         selectedTabIndex = 0
+                                    }
+                                }
+                                .onChange(of: selectedTabIndex) { oldValue, newValue in
+                                    if oldValue != newValue {
+                                        AnalyticsManager.shared.trackScheduleDayChanged(
+                                            meetName: selectedMeet,
+                                            dayIndex: newValue,
+                                            totalDays: uniqueDays.count
+                                        )
                                     }
                                 }
                             }
@@ -202,6 +212,7 @@ struct ScheduleView: View {
             WidgetCenter.shared.reloadAllTimelines()
         }
         .refreshable {
+            AnalyticsManager.shared.trackContentRefreshed(screenName: "Schedule")
             viewModel.schedule.removeAll()
             viewModel.meetDetails.removeAll()
             await viewModel.loadMeetSchedule(meet: selectedMeet)
