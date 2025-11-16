@@ -83,6 +83,9 @@ struct StartListView: View {
     @State private var showShareSheet: Bool = false
     @State private var navigateToPaywall: Bool = false
     
+    @State private var sortBy: String = "name"
+    @State private var asc: Bool = true
+    
     var athleteList: [AthleteRow] { viewModel.athletes }
     var scheduleList: [ScheduleRow] { viewModel.schedule }
     var weightClass: [String] { viewModel.weightClass }
@@ -92,8 +95,23 @@ struct StartListView: View {
     var meetDetails: [MeetDetailsRow] { viewModel2.meetDetails }
     
     var filteredAthletes: [AthleteRow] {
-        guard !searchText.isEmpty else { return athleteList }
-        return athleteList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        let filtered: [AthleteRow]
+        if !searchText.isEmpty {
+            filtered = athleteList.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        } else {
+            filtered = athleteList
+        }
+
+        return filtered.sorted { athlete1, athlete2 in
+            switch sortBy {
+            case "name":
+                return asc ? athlete1.name.lowercased() < athlete2.name.lowercased() : athlete1.name.lowercased() > athlete2.name.lowercased()
+            case "entry_total":
+                return asc ? athlete1.entry_total < athlete2.entry_total : athlete1.entry_total > athlete2.entry_total
+            default:
+                return athlete1.name.lowercased() < athlete2.name.lowercased()
+            }
+        }
     }
     
     var filteredClubs: [String] {
@@ -588,7 +606,7 @@ struct StartListView: View {
             .navigationTitle("Start List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar{
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Image(systemName: "square.and.arrow.down")
                         .onTapGesture {
                             Task {
@@ -597,7 +615,37 @@ struct StartListView: View {
                             saveButtonClicked = true
                         }
                 }
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem{
+                    Menu{
+                        Button{
+                            sortBy = "name"
+                            asc = true
+                        } label: {
+                            Text("Name: A-Z")
+                        }
+                        Button{
+                            sortBy = "name"
+                            asc = false
+                        } label: {
+                            Text("Name: Z-A")
+                        }
+                        Button{
+                            sortBy = "entry_total"
+                            asc = true
+                        } label: {
+                            Text("Entry Total: Low-High")
+                        }
+                        Button{
+                            sortBy = "entry_total"
+                            asc = false
+                        } label: {
+                            Text("Entry Total: High-Low")
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                    }
+                }
+                ToolbarItem{
                     Image(systemName: "line.3.horizontal.decrease")
                         .onTapGesture {
                             filterClicked = true

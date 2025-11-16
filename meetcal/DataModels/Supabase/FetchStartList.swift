@@ -188,7 +188,7 @@ class StartListModel: ObservableObject {
         ) {
             do {
                 let offlineStartList = try loadStartListFromSwiftData(meet: meet)
-                self.athletes.append(contentsOf: offlineStartList)
+                self.athletes = offlineStartList
                 self.updateFilterArrays(from: self.athletes)
                 self.isUsingOfflineData = true
             } catch {
@@ -208,14 +208,14 @@ class StartListModel: ObservableObject {
 
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
 
-            self.athletes.append(contentsOf: row)
+            self.athletes = row
             self.updateFilterArrays(from: self.athletes)
             self.isUsingOfflineData = false
         } catch {
             if hasOffline {
                 do {
                     let offlineStartList = try loadStartListFromSwiftData(meet: meet)
-                    self.athletes.append(contentsOf: offlineStartList)
+                    self.athletes = offlineStartList
                     self.updateFilterArrays(from: self.athletes)
                     self.isUsingOfflineData = true
                 } catch {
