@@ -19,6 +19,10 @@ struct ProfileView: View {
     @State private var isCustomerCenterPresented: Bool = false
     @State private var navigateToPaywall: Bool = false
     
+    var appVersion: String? {
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -113,12 +117,18 @@ struct ProfileView: View {
                     }
                     .cardStyling()
                     
-                    HStack {
-                        Link("Privacy Policy", destination: URL(string: "https://www.meetcal.app/privacy")!)
-                        Text("•")
-                        Link("Terms of Use", destination: URL(string: "https://www.meetcal.app/terms")!)
-                        Text("•")
-                        Link("User Agreement", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                    VStack {
+                        HStack {
+                            Link("Privacy Policy", destination: URL(string: "https://www.meetcal.app/privacy")!)
+                            Text("•")
+                            Link("Terms of Use", destination: URL(string: "https://www.meetcal.app/terms")!)
+                            Text("•")
+                            Link("User Agreement", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                        }
+                        
+                        Text("MeetCal Version: \(appVersion ?? "5")")
+                            .secondaryText()
+                            .padding(.top)
                     }
                     .font(.system(size: 14))
                     .padding(.top)
