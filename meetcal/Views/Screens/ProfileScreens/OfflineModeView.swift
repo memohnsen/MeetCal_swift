@@ -800,8 +800,9 @@ struct OfflineModeView: View {
 
         qtModel.totals.removeAll()
 
-        let meets: [String] = ["Nationals", "Virus Series", "Virus Finals", "Master's Pan Ams", "IMWA Worlds"]
-        
+        await qtModel.loadMeets()
+        let meets = qtModel.meets
+
         for meet in meets {
             await qtModel.loadAgeGroup(for: "Men", event_name: meet)
             await qtModel.loadAgeGroup(for: "Women", event_name: meet)

@@ -31,9 +31,8 @@ struct QualifyingTotalsView: View {
     @State private var loadTask: Task<Void, Never>?
 
     let genders: [String] = ["Men", "Women"]
-    // age group will change based on meet query
     var ageGroups: [String] { viewModel.ageGroups }
-    let meets: [String] = ["Nationals", "Virus Series", "Virus Finals", "Master's Pan Ams", "IMWA Worlds"]
+    var meets: [String] { viewModel.meets }
     
     var body: some View {
         NavigationStack {
@@ -124,6 +123,7 @@ struct QualifyingTotalsView: View {
             viewModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Qualifying Totals")
             AnalyticsManager.shared.trackQualifyingTotalsViewed()
+            await viewModel.loadMeets()
             await viewModel.loadAgeGroup(for: appliedGender, event_name: appliedMeet)
             viewModel.totals.removeAll()
             await viewModel.loadTotals(gender: appliedGender, age_category: appliedAge, event_name: appliedMeet)

@@ -30,47 +30,60 @@ struct ProfileView: View {
                     .ignoresSafeArea()
             
                 ScrollView {
-                    NavigationLink(destination: UserProfileView()) {
-                        Text("Manage Your Profile")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        AnalyticsManager.shared.trackFeatureAccessed(featureName: "Manage Profile", source: "Profile")
-                    })
-                    .cardStyling()
-                    .foregroundStyle(colorScheme == .light ? .black : .white)
-                    .padding(.bottom, 8)
-
-                    if customerManager.hasProAccess {
+                    VStack {
                         HStack {
-                            NavigationLink(destination: OfflineModeView()) {
-                                Text("Downloaded Data")
+                            NavigationLink(destination: UserProfileView()) {
+                                Text("Manage Your Profile")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                             }
                             .simultaneousGesture(TapGesture().onEnded {
-                                AnalyticsManager.shared.trackFeatureAccessed(featureName: "Downloaded Data", source: "Profile")
+                                AnalyticsManager.shared.trackFeatureAccessed(featureName: "Manage Profile", source: "Profile")
                             })
-                            .cardStyling()
                             .foregroundStyle(colorScheme == .light ? .black : .white)
-                            .padding(.bottom, 8)
                         }
-                    } else {
-                        Button {
-                            AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "Downloaded Data")
-                            navigateToPaywall = true
-                        } label: {
+
+                        Divider()
+                            .padding(.vertical, 8)
+
+                        if customerManager.hasProAccess {
                             HStack {
-                                Text("Downloaded Data")
-                                Spacer()
-                                Image(systemName: "chevron.right")
+                                NavigationLink(destination: OfflineModeView()) {
+                                    Text("Offline Data")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    AnalyticsManager.shared.trackFeatureAccessed(featureName: "Downloaded Data", source: "Profile")
+                                })
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
                             }
-                            .cardStyling()
-                            .foregroundStyle(colorScheme == .light ? .black : .white)
-                            .padding(.bottom, 8)
+                        } else {
+                            Button {
+                                AnalyticsManager.shared.trackProFeatureAttemptedWithoutAccess(featureName: "Downloaded Data")
+                                navigateToPaywall = true
+                            } label: {
+                                HStack {
+                                    Text("Downloaded Data")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                            }
                         }
+
+                        Divider()
+                            .padding(.vertical, 8)
+
+                        Link(destination: URL(string: "https://github.com/memohnsen/MeetCal_swift")!) {
+                            Text("Open Source Code on GitHub")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
                     }
+                    .cardStyling()
+                    .padding(.bottom, 8)
                     
                     VStack {
                         HStack {

@@ -32,12 +32,17 @@ private struct AgeRow: Decodable {
     let age_category: String
 }
 
+private struct EventRow: Decodable {
+    let event_name: String
+}
+
 @MainActor
 class QualifyingTotalModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     @Published var totals: [QualifyingTotal] = []
     @Published var ageGroups: [String] = []
+    @Published var meets: [String] = []
     @Published var isUsingOfflineData = false
 
     private var modelContext: ModelContext?
@@ -289,5 +294,57 @@ class QualifyingTotalModel: ObservableObject {
 
             return $0 < $1
         }
+    }
+
+    func loadMeets() async {
+        isLoading = true
+        error = nil
+
+        let hasOffline = hasOfflineTotals()
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            if let meets = try? loadMeetsFromSwiftData(), !meets.isEmpty {
+                self.meets = meets
+            }
+            isLoading = false
+            return
+        }
+
+        do {
+            let response = try await supabase
+                .from("qualifying_totals")
+                .select("event_name")
+                .execute()
+
+            let rows = try JSONDecoder().decode([EventRow].self, from: response.data)
+            let unique = Array(Set(rows.map { $0.event_name }))
+            self.meets = unique.sorted()
+        } catch {
+            if hasOffline {
+                if let meets = try? loadMeetsFromSwiftData(), !meets.isEmpty {
+                    self.meets = meets
+                } else {
+                    self.error = error
+                }
+            } else {
+                self.error = OfflineManager.FetchError.noOfflineDataAvailable
+            }
+        }
+        isLoading = false
+    }
+
+    private func loadMeetsFromSwiftData() throws -> [String] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Qualifying Totals", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<QTEntity>()
+        let entities = try context.fetch(descriptor)
+        let unique = Array(Set(entities.map { $0.event_name }))
+        return unique.sorted()
     }
 }
