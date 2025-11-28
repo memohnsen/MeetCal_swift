@@ -96,6 +96,13 @@ class AnalyticsManager {
         ])
     }
 
+    func trackScheduleCSVExported(meetName: String, club: String) {
+        PostHogSDK.shared.capture("schedule_csv_exported", properties: [
+            "meet_name": meetName,
+            "club": club
+        ])
+    }
+
     func trackSessionViewed(meetName: String, sessionNumber: Int, platform: String, weightClass: String) {
         PostHogSDK.shared.capture("session_viewed", properties: [
             "meet_name": meetName,

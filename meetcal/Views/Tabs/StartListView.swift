@@ -571,6 +571,110 @@ struct StartListView: View {
         )
     }
     
+    @MainActor
+    private func exportCSV() async {
+        guard selectedClub != "All Clubs" else {
+            alertTitle = "Select a Club"
+            alertMessage = "Please select a specific club from the filters to export a schedule."
+            alertShowing = true
+            return
+        }
+
+        guard !filteredAthletes.isEmpty else {
+            alertTitle = "Nothing to Export"
+            alertMessage = "No athletes were found for the current filters."
+            alertShowing = true
+            return
+        }
+
+        do {
+            let csvData = try await fetchCSVFromSupabase()
+            
+            // Create a temporary file URL
+            let tempDirectory = FileManager.default.temporaryDirectory
+            let fileName = "\(selectedClub)-\(selectedMeet)-Schedule.csv"
+            let fileURL = tempDirectory.appendingPathComponent(fileName)
+            
+            // Write CSV data to file
+            try csvData.write(to: fileURL, atomically: true, encoding: .utf8)
+            
+            // Present share sheet with the CSV file
+            let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+            
+            // Get the root view controller to present the share sheet
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootVC = window.rootViewController {
+                activityVC.popoverPresentationController?.sourceView = window
+                rootVC.present(activityVC, animated: true)
+            }
+            
+            AnalyticsManager.shared.trackScheduleCSVExported(
+                meetName: selectedMeet,
+                club: selectedClub
+            )
+        } catch {
+            alertTitle = "Export Failed"
+            alertMessage = "Failed to export CSV: \(error.localizedDescription)"
+            alertShowing = true
+        }
+    }
+    
+    private func fetchCSVFromSupabase() async throws -> String {
+        let adapParam: Bool? = adaptiveFlag(from: selectedAdap)
+        let clubParam: String? = (selectedClub == "All Clubs") ? nil : selectedClub
+        let weightParam: String? = (selectedWeight == "All Weight Classes") ? nil : selectedWeight
+        let genderParam: String? = (selectedGender == "All Genders") ? nil : selectedGender
+        
+        var components = URLComponents(string: "\(supabaseURL)/rest/v1/athletes")!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "select", value: "name,weight_class,session_number,session_platform,club,age,gender,entry_total"),
+            URLQueryItem(name: "meet", value: "eq.\(selectedMeet)"),
+            URLQueryItem(name: "order", value: "name.asc")
+        ]
+        
+        if let range = selectedAgeBand.range {
+            queryItems.append(URLQueryItem(name: "age", value: "gte.\(range.lowerBound)"))
+            queryItems.append(URLQueryItem(name: "age", value: "lte.\(range.upperBound)"))
+        }
+        if let gender = genderParam {
+            queryItems.append(URLQueryItem(name: "gender", value: "eq.\(gender)"))
+        }
+        if let weight = weightParam {
+            queryItems.append(URLQueryItem(name: "weight_class", value: "eq.\(weight)"))
+        }
+        if let club = clubParam {
+            queryItems.append(URLQueryItem(name: "club", value: "eq.\(club)"))
+        }
+        if let adap = adapParam {
+            queryItems.append(URLQueryItem(name: "adaptive", value: "eq.\(adap)"))
+        }
+        
+        components.queryItems = queryItems
+        
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("text/csv", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(supabaseKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(supabaseKey, forHTTPHeaderField: "apikey")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        guard let csvString = String(data: data, encoding: .utf8) else {
+            throw NSError(domain: "CSV", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert data to CSV string"])
+        }
+        
+        return csvString
+    }
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -733,6 +837,48 @@ struct StartListView: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             HStack{
                                                 Text("Create Shareable Schedule")
+                                                Image(systemName: "lock.fill")
+                                                    .resizable()
+                                                    .frame(width: 10, height: 15)
+                                            }
+                                            Text("This is a MeetCal Pro Feature Only.")
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                    }
+                                    .secondaryText()
+                                }
+                            }
+                            
+                            Divider()
+
+                            if customerManager.hasProAccess {
+                                Button {
+                                    Task {
+                                        await exportCSV()
+                                    }
+                                    saveButtonClicked = false
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Download Shareable Schedule As CSV")
+                                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                                            Text("Export \(filteredAthletes.count) athlete\(filteredAthletes.count == 1 ? "" : "s") from \(uniqueFilteredSessions.count) session\(uniqueFilteredSessions.count == 1 ? "" : "s")")
+                                                .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    }
+                                }
+                            } else {
+                                Button {
+                                    navigateToPaywall = true
+                                } label: {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            HStack{
+                                                Text("Download Shareable Schedule as CSV")
                                                 Image(systemName: "lock.fill")
                                                     .resizable()
                                                     .frame(width: 10, height: 15)
