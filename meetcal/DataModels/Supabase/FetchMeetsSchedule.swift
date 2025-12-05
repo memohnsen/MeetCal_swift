@@ -319,7 +319,7 @@ class MeetsScheduleModel: ObservableObject {
                 .from("meets")
                 .select("name")
                 .neq("status", value: "completed")
-                .gte("start_date", value: todayString)
+                .gte("end_date", value: todayString)
                 .lte("start_date", value: threeWeeksString)
                 .order("start_date", ascending: true)
                 .execute()

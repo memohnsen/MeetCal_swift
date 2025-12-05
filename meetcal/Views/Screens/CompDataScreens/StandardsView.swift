@@ -97,12 +97,6 @@ struct StandardsView: View {
                 onApply: {
                     appliedGender = draftGender
                     appliedAge = draftAge
-                    Task {
-                        await viewModel.loadAgeGroups(for: appliedGender)
-
-                        viewModel.standards.removeAll()
-                        await viewModel.loadStandards(gender: appliedGender, ageCategory: appliedAge)
-                    }
                     isModalShowing = false
                 }
         ))

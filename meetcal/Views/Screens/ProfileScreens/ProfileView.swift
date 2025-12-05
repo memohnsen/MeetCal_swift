@@ -64,7 +64,7 @@ struct ProfileView: View {
                                 navigateToPaywall = true
                             } label: {
                                 HStack {
-                                    Text("Downloaded Data")
+                                    Text("Offline Data")
                                     Spacer()
                                     Image(systemName: "chevron.right")
                                 }
