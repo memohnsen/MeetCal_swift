@@ -571,7 +571,7 @@ struct OfflineModeView: View {
 
         var allRecords: [Records] = []
 
-        let ages = ["u13", "u15", "u17", "junior", "university", "senior",
+        let ages = ["u13", "u15", "u17", "youth", "junior", "university", "senior",
                     "masters 30", "masters 35", "masters 40", "masters 45", "masters 50",
                     "masters 55", "masters 60", "masters 65", "masters 70", "masters 75",
                     "masters 80", "masters 85",
@@ -579,18 +579,16 @@ struct OfflineModeView: View {
                     "masters 55-59", "masters 60-64", "masters 65-69", "masters 70-74",
                     "masters 75-79", "masters 80-84", "masters 85-89", "masters +90"]
 
-        for age in ages {
-            await recordsModel.loadRecords(gender: "men", ageCategory: age, record_type: "USAW")
-            allRecords.append(contentsOf: recordsModel.records)
+        let federations = ["USAW", "USAMW", "IWF", "UMWF"]
 
-            await recordsModel.loadRecords(gender: "women", ageCategory: age, record_type: "USAW")
-            allRecords.append(contentsOf: recordsModel.records)
+        for federation in federations {
+            for age in ages {
+                await recordsModel.loadRecords(gender: "men", ageCategory: age, record_type: federation)
+                allRecords.append(contentsOf: recordsModel.records)
 
-            await recordsModel.loadRecords(gender: "men", ageCategory: age, record_type: "USAMW")
-            allRecords.append(contentsOf: recordsModel.records)
-
-            await recordsModel.loadRecords(gender: "women", ageCategory: age, record_type: "USAMW")
-            allRecords.append(contentsOf: recordsModel.records)
+                await recordsModel.loadRecords(gender: "women", ageCategory: age, record_type: federation)
+                allRecords.append(contentsOf: recordsModel.records)
+            }
         }
 
         recordsModel.records = allRecords
@@ -598,7 +596,7 @@ struct OfflineModeView: View {
         do {
             try recordsModel.saveAmRecordsToSwiftData()
             alertTitle = "Saved Successfully"
-            alertMessage = "American Records have been saved to your device."
+            alertMessage = "National & World Records have been saved to your device."
             alertShowing = true
             refreshID = UUID()
         } catch {
@@ -618,7 +616,7 @@ struct OfflineModeView: View {
         refreshID = UUID()
 
         alertTitle = "Deleted Successfully"
-        alertMessage = "American Records have been deleted from your device."
+        alertMessage = "National & World Records have been deleted from your device."
         alertShowing = true
     }
 
@@ -1115,7 +1113,7 @@ struct OfflineModeView: View {
 
                     ListButtonComponent(
                         colorScheme: colorScheme,
-                        title: "American Records",
+                        title: "National & World Records",
                         isDownloaded: isItemDownloaded("American Records"),
                         isDownloading: downloadingItems.contains("American Records"),
                         downloadAction: {
@@ -1191,22 +1189,6 @@ struct OfflineModeView: View {
                             deleteWSO()
                         },
                         lastSyncedDate: getLastSyncedDate(for: "WSO Records")
-                    )
-
-                    ListButtonComponent(
-                        colorScheme: colorScheme,
-                        title: "IWF World Records",
-                        isDownloaded: isItemDownloaded("IWF World Records"),
-                        isDownloading: downloadingItems.contains("IWF World Records"),
-                        downloadAction: {
-                            Task {
-                                await downloadWorldRecords()
-                            }
-                        },
-                        deleteAction: {
-                            deleteWorldRecords()
-                        },
-                        lastSyncedDate: getLastSyncedDate(for: "IWF World Records")
                     )
                 }
             }

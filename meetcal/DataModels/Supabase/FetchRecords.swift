@@ -299,7 +299,7 @@ class RecordsViewModel: ObservableObject {
         let unique = Array(Set(entities.map { $0.age_category }))
 
         let order: [String] = [
-            "u13", "u15", "u17", "junior", "university", "senior",
+            "u13", "u15", "u17", "youth", "junior", "university", "senior",
             "masters 30", "masters 35", "masters 40", "masters 45", "masters 50",
             "masters 55", "masters 60", "masters 65", "masters 70", "masters 75",
             "masters 80", "masters 85",
