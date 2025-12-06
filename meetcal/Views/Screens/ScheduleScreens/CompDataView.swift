@@ -101,14 +101,14 @@ struct CompDataView: View {
 
                     if customerManager.hasProAccess {
                         NavigationLink(destination: AmericanRecordsView()) {
-                            Text("American Records")
+                            Text("National & World Records")
                         }
                     } else {
                         Button {
                             navigateToPaywall = true
                         } label: {
                             HStack {
-                                Text("American Records")
+                                Text("National & World Records")
                                     .foregroundStyle(colorScheme == .light ? .black : .white)
                                 Spacer()
                                 Image(systemName: "chevron.right")
@@ -157,24 +157,6 @@ struct CompDataView: View {
                     
                 
                 Section("International") {
-                    if customerManager.hasProAccess {
-                        NavigationLink(destination: WorldRecordsView()) {
-                            Text("IWF World Records")
-                        }
-                    } else {
-                        Button {
-                            navigateToPaywall = true
-                        } label: {
-                            HStack {
-                                Text("IWF World Records")
-                                    .foregroundStyle(colorScheme == .light ? .black : .white)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(.gray.opacity(0.5))
-                            }
-                        }
-                    }
-                    
                     if customerManager.hasProAccess {
                         NavigationLink(destination: StandardsView()) {
                             Text("A/B Standards")

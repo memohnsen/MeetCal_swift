@@ -29,7 +29,7 @@ struct AmericanRecordsView: View {
     @State var draftFederation: String = "USAW"
     
     var ageGroups: [String] {viewModel.ageGroups}
-    let meets: [String] = ["USAW", "USAMW"]
+    let meets: [String] = ["USAW", "USAMW", "IWF", "UMWF"]
     
     var body: some View {
         NavigationStack {
@@ -102,7 +102,7 @@ struct AmericanRecordsView: View {
                     }
                 }
             }
-            .navigationTitle("American Records")
+            .navigationTitle("Records")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
         }
@@ -129,8 +129,8 @@ struct AmericanRecordsView: View {
                 ))
         .task {
             viewModel.setModelContext(modelContext)
-            AnalyticsManager.shared.trackScreenView("American Records")
-            AnalyticsManager.shared.trackRecordsViewed(type: "american")
+            AnalyticsManager.shared.trackScreenView("Records")
+            AnalyticsManager.shared.trackRecordsViewed(type: "records")
             viewModel.records.removeAll()
             await viewModel.loadRecords(gender: appliedGender, ageCategory: appliedAge, record_type: appliedFederation)
             await customerManager.fetchCustomerInfo()
