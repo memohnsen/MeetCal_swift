@@ -63,10 +63,8 @@ struct AllMeetResultsView: View {
             .searchable(text: $searchText, placement: .automatic, prompt: "Search for an athlete")
             .onChange(of: searchText) { oldValue, newValue in
                 Task {
-                    // Debounce: wait a bit before searching
-                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                    try? await Task.sleep(nanoseconds: 500_000_000) 
 
-                    // Check if search text hasn't changed during the delay
                     if searchText == newValue && newValue.count >= 3 {
                         await performSearch(query: newValue)
                     } else if newValue.isEmpty || newValue.count < 3 {

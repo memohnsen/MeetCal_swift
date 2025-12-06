@@ -79,8 +79,10 @@ struct StartListView: View {
     @State private var alertMessage: String = ""
 
     @State private var showImagePreview: Bool = false
-    @State private var generatedImage: UIImage?
+    @State private var generatedImageWhite: UIImage?
+    @State private var generatedImageTransparent: UIImage?
     @State private var showShareSheet: Bool = false
+    @State private var selectedImageIndex: Int = 0
     @State private var navigateToPaywall: Bool = false
     
     @State private var sortBy: String = "name"
@@ -542,27 +544,51 @@ struct StartListView: View {
             return
         }
 
-        let view = ShareSessionView(
+        // Generate white background image
+        let whiteView = ShareSessionView(
             filteredAthletes: filteredAthletes,
             sessions: sessions,
             meetDetails: meetDetails,
             selectedMeet: selectedMeet,
-            selectedClub: selectedClub
+            selectedClub: selectedClub,
+            transparentBackground: false
         )
 
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = UIScreen.main.scale
-        // Set opaque background to avoid alpha channel issues
-        renderer.isOpaque = true
+        let whiteRenderer = ImageRenderer(content: whiteView)
+        whiteRenderer.scale = UIScreen.main.scale
+        whiteRenderer.isOpaque = true
 
-        guard let image = renderer.uiImage else {
+        guard let whiteImage = whiteRenderer.uiImage else {
             alertTitle = "Error"
             alertMessage = "Failed to generate image"
             alertShowing = true
             return
         }
 
-        generatedImage = image
+        // Generate transparent background image
+        let transparentView = ShareSessionView(
+            filteredAthletes: filteredAthletes,
+            sessions: sessions,
+            meetDetails: meetDetails,
+            selectedMeet: selectedMeet,
+            selectedClub: selectedClub,
+            transparentBackground: true
+        )
+
+        let transparentRenderer = ImageRenderer(content: transparentView)
+        transparentRenderer.scale = UIScreen.main.scale
+        transparentRenderer.isOpaque = false
+
+        guard let transparentImage = transparentRenderer.uiImage else {
+            alertTitle = "Error"
+            alertMessage = "Failed to generate transparent image"
+            alertShowing = true
+            return
+        }
+
+        generatedImageWhite = whiteImage
+        generatedImageTransparent = transparentImage
+        selectedImageIndex = 0
         showImagePreview = true
 
         AnalyticsManager.shared.trackScheduleImageGenerated(
@@ -983,15 +1009,21 @@ struct StartListView: View {
         }
         .sheet(isPresented: $showImagePreview) {
             ImagePreviewSheet(
-                image: generatedImage,
+                whiteImage: generatedImageWhite,
+                transparentImage: generatedImageTransparent,
                 isPresented: $showImagePreview,
                 showShareSheet: $showShareSheet,
+                selectedIndex: $selectedImageIndex,
                 colorScheme: colorScheme
             )
         }
         .sheet(isPresented: $showShareSheet) {
-            if let image = generatedImage {
+            if selectedImageIndex == 0, let image = generatedImageWhite {
                 ShareSessionSheet(items: [image])
+            } else if selectedImageIndex == 1, let image = generatedImageTransparent,
+                      let pngData = image.pngData() {
+                // Share as PNG to preserve transparency
+                ShareSessionSheet(items: [PNGImageItem(pngData: pngData)])
             }
         }
         .sheet(isPresented: $navigateToPaywall) {
@@ -1672,9 +1704,11 @@ private struct FilterModal: View {
 }
 
 private struct ImagePreviewSheet: View {
-    let image: UIImage?
+    let whiteImage: UIImage?
+    let transparentImage: UIImage?
     @Binding var isPresented: Bool
     @Binding var showShareSheet: Bool
+    @Binding var selectedIndex: Int
     let colorScheme: ColorScheme
 
     var body: some View {
@@ -1683,35 +1717,72 @@ private struct ImagePreviewSheet: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                if let image = image {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFit()
-                                .cornerRadius(12)
-                                .shadow(radius: 5)
-                                .padding()
+                if whiteImage != nil || transparentImage != nil {
+                    VStack(spacing: 16) {
+                        TabView(selection: $selectedIndex) {
+                            if let whiteImage = whiteImage {
+                                ScrollView {
+                                    VStack(spacing: 12) {
+                                        Text("White Background")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
 
-                            Button {
-                                isPresented = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    showShareSheet = true
+                                        Image(uiImage: whiteImage)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .cornerRadius(12)
+                                            .shadow(radius: 5)
+                                    }
+                                    .padding()
                                 }
-                            } label: {
-                                HStack {
-                                    Image(systemName: "square.and.arrow.up")
-                                    Text("Share Schedule")
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .foregroundStyle(.white)
-                                .background(.blue)
-                                .cornerRadius(12)
+                                .tag(0)
                             }
-                            .padding(.horizontal)
+
+                            if let transparentImage = transparentImage {
+                                ScrollView {
+                                    VStack(spacing: 12) {
+                                        Text("Transparent Background")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        ZStack {
+                                            // Checkerboard pattern to show transparency
+                                            CheckerboardBackground()
+                                                .cornerRadius(12)
+
+                                            Image(uiImage: transparentImage)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .cornerRadius(12)
+                                        }
+                                        .shadow(radius: 5)
+                                    }
+                                    .padding()
+                                }
+                                .tag(1)
+                            }
                         }
-                        .padding(.top)
+                        .tabViewStyle(.page(indexDisplayMode: .always))
+                        .indexViewStyle(.page(backgroundDisplayMode: .always))
+
+                        Button {
+                            isPresented = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showShareSheet = true
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Share \(selectedIndex == 0 ? "White" : "Transparent") Background")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundStyle(.white)
+                            .background(.blue)
+                            .cornerRadius(12)
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom)
                     }
                 } else {
                     Text("No image available")
@@ -1731,12 +1802,42 @@ private struct ImagePreviewSheet: View {
     }
 }
 
+private struct CheckerboardBackground: View {
+    let squareSize: CGFloat = 10
+
+    var body: some View {
+        GeometryReader { geometry in
+            let columns = Int(ceil(geometry.size.width / squareSize))
+            let rows = Int(ceil(geometry.size.height / squareSize))
+
+            Canvas { context, size in
+                for row in 0..<rows {
+                    for col in 0..<columns {
+                        let isLight = (row + col) % 2 == 0
+                        let rect = CGRect(
+                            x: CGFloat(col) * squareSize,
+                            y: CGFloat(row) * squareSize,
+                            width: squareSize,
+                            height: squareSize
+                        )
+                        context.fill(
+                            Path(rect),
+                            with: .color(isLight ? Color.white : Color.gray.opacity(0.3))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct ShareSessionView: View {
     let filteredAthletes: [AthleteRow]
     let sessions: [ScheduleRow]
     let meetDetails: [MeetDetailsRow]
     let selectedMeet: String
     let selectedClub: String
+    var transparentBackground: Bool = false
 
     private func displayDateTime(for row: ScheduleRow) -> (date: String, time: String) {
         let dateText = row.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
@@ -1891,7 +1992,7 @@ struct ShareSessionView: View {
             .padding(.vertical, 20)
         }
         .frame(width: 850)
-        .background(Color.white)
+        .background(transparentBackground ? Color.clear : Color.white)
     }
 }
 
@@ -1911,6 +2012,31 @@ struct ShareSessionSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// Custom item provider to share PNG data with transparency preserved
+final class PNGImageItem: NSObject, UIActivityItemSource {
+    let pngData: Data
+
+    init(pngData: Data) {
+        self.pngData = pngData
+        super.init()
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        return UIImage(data: pngData) ?? UIImage()
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        // Return the PNG data as a file URL for better compatibility
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("schedule.png")
+        try? pngData.write(to: tempURL)
+        return tempURL
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {
+        return "public.png"
+    }
 }
 
 #Preview {
