@@ -64,6 +64,11 @@ class WSOViewModel: ObservableObject {
                 $0.age_category == ageCategory &&
                 $0.wso == wso
             }
+        } else if let gender = gender, let wso = wso {
+            descriptor.predicate = #Predicate<WSOEntity> {
+                $0.gender == gender &&
+                $0.wso == wso
+            }
         }
 
         descriptor.fetchLimit = 1

@@ -73,6 +73,7 @@ struct TopView: View {
     @AppStorage("has_seen_review") var hasSeenReview = false
 
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: MeetsScheduleModel
     @StateObject private var saveModel = SavedViewModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -534,6 +535,7 @@ struct TopView: View {
             Text(alertMessage)
         }
         .task(id: selectedMeet) {
+            saveModel.setModelContext(modelContext)
             await saveModel.loadSaved(meet: selectedMeet)
         }
         .sheet(isPresented: $navigateToPaywall) {

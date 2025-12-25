@@ -847,18 +847,33 @@ struct OfflineModeView: View {
         wsoModel.wsoRecords.removeAll()
 
         await wsoModel.loadWSO()
-        let wso = wsoModel.wso
+        let wsoList = wsoModel.wso
 
-        for WSO in wso {
-            await wsoModel.loadAgeGroups(gender: "Men", wso: WSO)
-            await wsoModel.loadAgeGroups(gender: "Women", wso: WSO)
-            let ages = wsoModel.ageGroups
+        var allRecords: [WSORecords] = []
 
-            for age in ages {
-                await wsoModel.loadRecords(gender: "Men", ageCategory: age, wso: WSO)
-                await wsoModel.loadRecords(gender: "Women", ageCategory: age, wso: WSO)
+        for wso in wsoList {
+            // Get Men's age groups
+            await wsoModel.loadAgeGroups(gender: "Men", wso: wso)
+            let menAges = wsoModel.ageGroups
+
+            // Get Women's age groups
+            await wsoModel.loadAgeGroups(gender: "Women", wso: wso)
+            let womenAges = wsoModel.ageGroups
+
+            // Load Men's records for all their age groups
+            for age in menAges {
+                await wsoModel.loadRecords(gender: "Men", ageCategory: age, wso: wso)
+                allRecords.append(contentsOf: wsoModel.wsoRecords)
+            }
+
+            // Load Women's records for all their age groups
+            for age in womenAges {
+                await wsoModel.loadRecords(gender: "Women", ageCategory: age, wso: wso)
+                allRecords.append(contentsOf: wsoModel.wsoRecords)
             }
         }
+
+        wsoModel.wsoRecords = allRecords
 
         do {
             try wsoModel.saveWSOToSwiftData()

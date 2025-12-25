@@ -80,7 +80,9 @@ class IntlRankingsViewModel: ObservableObject {
             throw NSError(domain: "International Rankings", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
         }
 
-        var descriptor = FetchDescriptor<RankingsEntity>()
+        var descriptor = FetchDescriptor<RankingsEntity>(
+            sortBy: [SortDescriptor(\.percent_a, order: .reverse)]
+        )
 
         if let gender = gender, let ageCategory = ageCategory, let meet = meet {
             descriptor.predicate = #Predicate<RankingsEntity> {
@@ -317,7 +319,7 @@ class IntlRankingsViewModel: ObservableObject {
         let entities = try context.fetch(descriptor)
         let unique = Array(Set(entities.map { $0.age_category }))
 
-        let order: [String] = ["U15", "U17", "Junior", "Senior"]
+        let order: [String] = ["u15", "u17", "junior", "senior"]
         let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
 
         return unique.sorted {

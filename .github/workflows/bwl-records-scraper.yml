@@ -1,0 +1,36 @@
+# name: BWL Records Scraper
+
+# on:
+#   schedule:
+#     # Run every Monday at 3:15 AM UTC (once a week since records don't change often)
+#     - cron: '15 3 * * 1'
+#   workflow_dispatch: # Allow manual trigger
+
+# jobs:
+#   scrape-records:
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+      
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.11'
+      
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r records_scraper/requirements.txt
+      
+#       - name: Run BWL Records Scraper
+#         env:
+#           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+#           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+#           SLACK_RECORDS_WEBHOOK_URL: ${{ secrets.SLACK_BWL_RECORDS_WEBHOOK_URL }}
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         run: |
+#           cd records_scraper
+#           python scrape_bwl_records.py
+

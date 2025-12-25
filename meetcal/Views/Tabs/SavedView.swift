@@ -15,6 +15,7 @@ import WidgetKit
 struct SavedView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = SavedViewModel()
     @StateObject private var meetViewModel = MeetsScheduleModel()
     @StateObject private var customerManager = CustomerInfoManager()
@@ -343,6 +344,8 @@ struct SavedView: View {
                 }
             }
             .task {
+                viewModel.setModelContext(modelContext)
+                meetViewModel.setModelContext(modelContext)
                 AnalyticsManager.shared.trackScreenView("Saved")
                 await viewModel.loadSaved(meet: selectedMeet)
             }

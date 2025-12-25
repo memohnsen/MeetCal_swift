@@ -239,6 +239,32 @@ class StartListModel: ObservableObject {
         isLoading = true
         error = nil
 
+        let hasOffline = hasOfflineStartList(meet: meet)
+        let lastSynced = getOfflineStartListLastSynced(meet: meet)
+
+        // Use offline filtering if we should use offline data
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let filteredAthletes = try loadFilteredStartListFromSwiftData(
+                    meet: meet,
+                    ageRange: ageRange,
+                    gender: gender,
+                    weight_class: weight_class,
+                    club: club,
+                    adaptive: adaptive
+                )
+                self.athletes.append(contentsOf: filteredAthletes)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
             var query = supabase
                 .from("athletes")
@@ -270,11 +296,95 @@ class StartListModel: ObservableObject {
             let row = try JSONDecoder().decode([AthleteRow].self, from: response.data)
 
             self.athletes.append(contentsOf: row)
+            self.isUsingOfflineData = false
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            // Fallback to offline data if network request fails
+            if hasOffline {
+                do {
+                    let filteredAthletes = try loadFilteredStartListFromSwiftData(
+                        meet: meet,
+                        ageRange: ageRange,
+                        gender: gender,
+                        weight_class: weight_class,
+                        club: club,
+                        adaptive: adaptive
+                    )
+                    self.athletes.append(contentsOf: filteredAthletes)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                print("Error: \(error)")
+                self.error = error
+            }
         }
         isLoading = false
+    }
+
+    private func loadFilteredStartListFromSwiftData(
+        meet: String,
+        ageRange: ClosedRange<Int>? = nil,
+        gender: String? = nil,
+        weight_class: String? = nil,
+        club: String? = nil,
+        adaptive: Bool? = nil
+    ) throws -> [AthleteRow] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Start List", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        // Fetch all athletes for the meet first, then filter in memory
+        // SwiftData predicates don't support optional comparisons well
+        let descriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate<StartListEntity> {
+                $0.meet == meet
+            },
+            sortBy: [SortDescriptor(\.name, order: .forward)]
+        )
+
+        let entities = try context.fetch(descriptor)
+
+        // Filter in memory for optional parameters
+        let filtered = entities.filter { entity in
+            // Age range filter
+            if let range = ageRange {
+                guard range.contains(entity.age) else { return false }
+            }
+            // Gender filter
+            if let gender = gender {
+                guard entity.gender == gender else { return false }
+            }
+            // Weight class filter
+            if let weight_class = weight_class {
+                guard entity.weight_class == weight_class else { return false }
+            }
+            // Club filter
+            if let club = club {
+                guard entity.club == club else { return false }
+            }
+            // Adaptive filter
+            if let adaptive = adaptive {
+                guard entity.adaptive == adaptive else { return false }
+            }
+            return true
+        }
+
+        return filtered.map { entity in
+            AthleteRow(
+                member_id: entity.member_id,
+                name: entity.name,
+                age: entity.age,
+                club: entity.club,
+                gender: entity.gender,
+                weight_class: entity.weight_class,
+                entry_total: entity.entry_total,
+                session_number: entity.session_number,
+                session_platform: entity.session_platform,
+                meet: entity.meet,
+                adaptive: entity.adaptive
+            )
+        }
     }
     
     func loadMeetSchedule(meet: String) async {
@@ -310,6 +420,19 @@ class StartListModel: ObservableObject {
         gender: String? = nil
     ) async {
         error = nil
+
+        let hasOffline = hasOfflineStartList(meet: meet)
+        let lastSynced = getOfflineStartListLastSynced(meet: meet)
+
+        // Use offline data if appropriate
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            loadWeightClassesFromSwiftData(meet: meet, ageRange: ageRange, gender: gender)
+            return
+        }
+
         do {
             var query = supabase
                 .from("athletes")
@@ -329,24 +452,62 @@ class StartListModel: ObservableObject {
             let rows = try JSONDecoder().decode([WeightOnlyRow].self, from: response.data)
             let weightsSet = Set(rows.map { $0.weight_class })
 
-            self.weightClass = weightsSet.sorted { (a: String, b: String) -> Bool in
-                let aPlus = a.contains("+")
-                let bPlus = b.contains("+")
-                if aPlus != bPlus {
-                    return aPlus == false
-                }
-                let aDigits = a.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
-                let bDigits = b.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
-                let aNum = Int(String(String.UnicodeScalarView(aDigits))) ?? 0
-                let bNum = Int(String(String.UnicodeScalarView(bDigits))) ?? 0
-                if aNum != bNum {
-                    return aNum < bNum
-                }
-                return a < b
-            }
+            self.weightClass = sortWeightClasses(Array(weightsSet))
         } catch {
-            print("Error: \(error)")
-            self.error = error
+            // Fallback to offline data
+            if hasOffline {
+                loadWeightClassesFromSwiftData(meet: meet, ageRange: ageRange, gender: gender)
+            } else {
+                print("Error: \(error)")
+                self.error = error
+            }
+        }
+    }
+
+    private func loadWeightClassesFromSwiftData(
+        meet: String,
+        ageRange: ClosedRange<Int>? = nil,
+        gender: String? = nil
+    ) {
+        guard let context = modelContext else { return }
+
+        let descriptor = FetchDescriptor<StartListEntity>(
+            predicate: #Predicate<StartListEntity> {
+                $0.meet == meet
+            }
+        )
+
+        guard let entities = try? context.fetch(descriptor) else { return }
+
+        let filtered = entities.filter { entity in
+            if let range = ageRange {
+                guard range.contains(entity.age) else { return false }
+            }
+            if let gender = gender, !gender.isEmpty {
+                guard entity.gender == gender else { return false }
+            }
+            return true
+        }
+
+        let weightsSet = Set(filtered.map { $0.weight_class })
+        self.weightClass = sortWeightClasses(Array(weightsSet))
+    }
+
+    private func sortWeightClasses(_ weights: [String]) -> [String] {
+        weights.sorted { (a: String, b: String) -> Bool in
+            let aPlus = a.contains("+")
+            let bPlus = b.contains("+")
+            if aPlus != bPlus {
+                return aPlus == false
+            }
+            let aDigits = a.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+            let bDigits = b.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }
+            let aNum = Int(String(String.UnicodeScalarView(aDigits))) ?? 0
+            let bNum = Int(String(String.UnicodeScalarView(bDigits))) ?? 0
+            if aNum != bNum {
+                return aNum < bNum
+            }
+            return a < b
         }
     }
     

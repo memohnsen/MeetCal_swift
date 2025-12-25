@@ -968,6 +968,7 @@ struct StartListView: View {
         .task{
             viewModel.setModelContext(modelContext)
             viewModel2.setModelContext(modelContext)
+            saveModel.setModelContext(modelContext)
             AnalyticsManager.shared.trackScreenView("Start List")
             viewModel.athletes.removeAll()
             viewModel.schedule.removeAll()

@@ -286,12 +286,17 @@ class ScheduleDetailsModel: ObservableObject {
         }
 
         do {
-            let response = try await supabase
+            var query = supabase
                 .from("athletes")
                 .select()
                 .eq("meet", value: meet)
                 .eq("session_number", value: sessionID)
-                .eq("session_platform", value: platform)
+
+            if platform != "ALL" {
+                query = query.eq("session_platform", value: platform)
+            }
+
+            let response = try await query
                 .order("entry_total", ascending: false)
                 .execute()
 
@@ -315,27 +320,95 @@ class ScheduleDetailsModel: ObservableObject {
     }
     
     func loadAllResults() async {
-        guard !athletes.isEmpty else { 
+        guard !athletes.isEmpty else {
             return
         }
-        
+
         isLoading = true
         error = nil
+        isUsingOfflineData = false
+
+        let athleteNames = athletes.map { $0.name }
+        let hasOffline = hasOfflineResults()
+        let lastSynced = getOfflineLastSynced()
+
+        if OfflineManager.shared.shouldUseOfflineData(
+            hasOfflineData: hasOffline,
+            lastSynced: lastSynced
+        ) {
+            do {
+                let offlineResults = try loadAllResultsFromSwiftData(names: athleteNames)
+                self.athleteResults.append(contentsOf: offlineResults)
+                self.isUsingOfflineData = true
+            } catch {
+                self.error = error
+            }
+            isLoading = false
+            return
+        }
+
         do {
-            let athleteNames = athletes.map { $0.name }
             let response = try await supabase
                 .from("lifting_results")
                 .select()
                 .neq("federation", value: "BWL")
                 .in("name", values: athleteNames)
                 .execute()
-            
+
             let rows = try JSONDecoder().decode([AthleteResults].self, from: response.data)
             self.athleteResults.append(contentsOf: rows)
+            self.isUsingOfflineData = false
         } catch {
-            self.error = error
+            // Fallback to offline data
+            if hasOffline {
+                do {
+                    let offlineResults = try loadAllResultsFromSwiftData(names: athleteNames)
+                    self.athleteResults.append(contentsOf: offlineResults)
+                    self.isUsingOfflineData = true
+                } catch {
+                    self.error = error
+                }
+            } else {
+                self.error = error
+            }
         }
         isLoading = false
+    }
+
+    private func loadAllResultsFromSwiftData(names: [String]) throws -> [AthleteResults] {
+        guard let context = modelContext else {
+            throw NSError(domain: "Results", code: 1, userInfo: [NSLocalizedDescriptionKey: "ModelContext not set"])
+        }
+
+        let descriptor = FetchDescriptor<ResultsEntity>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+
+        let allEntities = try context.fetch(descriptor)
+
+        // Filter to only include athletes we're looking for
+        let filteredEntities = allEntities.filter { names.contains($0.name) }
+
+        return filteredEntities.map { entity in
+            AthleteResults(
+                id: entity.id,
+                meet: entity.meet,
+                date: entity.date,
+                name: entity.name,
+                age: entity.age,
+                body_weight: entity.body_weight,
+                total: entity.total,
+                snatch1: entity.snatch1,
+                snatch2: entity.snatch2,
+                snatch3: entity.snatch3,
+                snatch_best: entity.snatch_best,
+                cj1: entity.cj1,
+                cj2: entity.cj2,
+                cj3: entity.cj3,
+                cj_best: entity.cj_best,
+                federation: entity.federation
+            )
+        }
     }
     
     func loadAllAthleteResults() async {
