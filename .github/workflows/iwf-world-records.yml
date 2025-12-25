@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./world-records
+        working-directory: ./scrapers/iwf/world-records
     
     steps:
     - name: Checkout repository

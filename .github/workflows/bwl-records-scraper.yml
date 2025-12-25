@@ -22,7 +22,7 @@
 #       - name: Install dependencies
 #         run: |
 #           python -m pip install --upgrade pip
-#           pip install -r records_scraper/requirements.txt
+#           pip install -r scrapers/bwl/records_scraper/requirements.txt
       
 #       - name: Run BWL Records Scraper
 #         env:
@@ -31,6 +31,6 @@
 #           SLACK_RECORDS_WEBHOOK_URL: ${{ secrets.SLACK_BWL_RECORDS_WEBHOOK_URL }}
 #           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 #         run: |
-#           cd records_scraper
+#           cd scrapers/bwl/records_scraper
 #           python scrape_bwl_records.py
 
