@@ -1,0 +1,159 @@
+member_id,name,age,club,gender,weight_class,entry_total,session_number,session_platform,meet,adaptive
+,Robert SOUTHERLAN,87,Fort Nash,Male,71,70,,,2025 Howard Cohen American Masters,false
+,David LOVELACE,80,East Coast Gold,Male,79,90,,,2025 Howard Cohen American Masters,false
+,Richard SIPOS,83,East Coast Gold,Male,102,109,,,2025 Howard Cohen American Masters,false
+,Jerome MILLER,76,Unaffiliated,Male,60,105,,,2025 Howard Cohen American Masters,false
+,Mitchell SEROTA,75,RAWW BARBELL,Male,65,83,,,2025 Howard Cohen American Masters,false
+,Gerard DUNNE,78,Lost Battalion Hall,Male,65,95,1,A,2025 Howard Cohen American Masters,false
+,Michael PODKOWA,76,Unaffiliated,Male,71,85,1,A,2025 Howard Cohen American Masters,false
+,Art DONAHOE,75,Lost Battalion Hall,Male,79,40,1,A,2025 Howard Cohen American Masters,false
+,Albert DUNLAP,79,Paramount Barbell Club,Male,94,70,1,A,2025 Howard Cohen American Masters,false
+,Sara CONTENTE,73,Unaffiliated,Female,69,54,1,A,2025 Howard Cohen American Masters,false
+,Renee FERGUSON,67,Team Savannah,Female,48,62,1,A,2025 Howard Cohen American Masters,false
+,Luanne ORMSBEE,66,Unaffiliated,Female,58,45,1,A,2025 Howard Cohen American Masters,false
+,Lynn PASKIEWICZ,69,Unaffiliated,Female,58,88,2,A,2025 Howard Cohen American Masters,false
+,Monica STUPKE,67,Team Savannah,Female,58,68,2,A,2025 Howard Cohen American Masters,false
+,Heather KUUSELA,66,Performance One Weightlifting,Female,58,75,2,A,2025 Howard Cohen American Masters,false
+,Jaime GALE,66,Performance One Weightlifting,Female,86,75,2,A,2025 Howard Cohen American Masters,false
+,Robert BONDIMAN,74,Sayre Park WLC,Male,79,130,2,A,2025 Howard Cohen American Masters,false
+,David MELTZER,73,Performance One Weightlifting,Male,88,127,3,A,2025 Howard Cohen American Masters,false
+,Randy REID,71,Spoon Barbell,Male,94,155,3,A,2025 Howard Cohen American Masters,false
+,Johnny HUDSON,72,Sayre Park WLC,Male,94,104,3,A,2025 Howard Cohen American Masters,false
+,Walter WARREN,70,Missouri Valley Masters,Male,94,127,3,A,2025 Howard Cohen American Masters,false
+,Lisa RIGGS,63,Eclipse Barbell Club,Female,53,86,3,A,2025 Howard Cohen American Masters,false
+,Amy PRICE,63,RAWW BARBELL,Female,53,70,3,A,2025 Howard Cohen American Masters,false
+,Laura FERRARA,61,Outlaw Barbell,Female,53,90,3,A,2025 Howard Cohen American Masters,false
+,Kathleen MUNSEY,62,Team Savannah,Female,69,69,4,A,2025 Howard Cohen American Masters,false
+,Eleanor MALLOW,63,Unaffiliated,Female,77,73,4,A,2025 Howard Cohen American Masters,false
+,Maria BARNABE,60,West Coast Weightlifting,Female,86,82,4,A,2025 Howard Cohen American Masters,false
+,Michelle GALLOWAY,61,Boise Barbell,Female,86+,110,4,A,2025 Howard Cohen American Masters,false
+,Barry MYERS,66,Athletic Lab,Male,71,132,4,A,2025 Howard Cohen American Masters,false
+,Hank BERGER,68,PWR Fitness,Male,71,140,4,A,2025 Howard Cohen American Masters,false
+,George PJURA,69,TriState,Male,79,145,4,A,2025 Howard Cohen American Masters,false
+,Mark SCHMIDTBAUER,65,Unaffiliated,Male,79,130,4,A,2025 Howard Cohen American Masters,false
+,Leslie SIMONTON,67,East Alabama Weightlifting,Male,88,149,5,A,2025 Howard Cohen American Masters,false
+,Stephen POWELL,65,Unaffiliated,Male,88,175,5,A,2025 Howard Cohen American Masters,false
+,Kevin ROGERS,66,Unaffiliated,Male,94,140,5,A,2025 Howard Cohen American Masters,false
+,George FLUTER,68,Missouri Valley Masters,Male,110+,70,5,A,2025 Howard Cohen American Masters,false
+,Terri GARTENBERG,57,Philadelphia Barbell Club,Female,48,82,5,A,2025 Howard Cohen American Masters,false
+,Katrina DONAHUE,55,Dirty Durham Barbell Club,Female,58,80,5,A,2025 Howard Cohen American Masters,false
+,Patti KRAISSER,58,Unaffiliated,Female,77,101,5,A,2025 Howard Cohen American Masters,false
+,Jennifer PERRIER,56,JP Weightlifting,Female,77,80,5,A,2025 Howard Cohen American Masters,false
+,Michelle PICKING,56,Team Saw,Female,77,130,6,A,2025 Howard Cohen American Masters,false
+,Pam BROOKS,58,Providence Barbell Club,Female,77,110,6,A,2025 Howard Cohen American Masters,false
+,Deborah HANSCOM,57,Boise Barbell,Female,86+,140,6,A,2025 Howard Cohen American Masters,false
+,Sheryl COHEN,52,Team Savannah,Female,53,78,6,A,2025 Howard Cohen American Masters,false
+,Ananda WILSON,50,Unaffiliated,Female,53,100,6,A,2025 Howard Cohen American Masters,false
+,Steven MEIS,64,Berkshire Iron,Male,60,124,6,A,2025 Howard Cohen American Masters,false
+,Mark HUMMEL,61,Missouri Valley Masters,Male,65,140,6,A,2025 Howard Cohen American Masters,false
+,Richard SIAS,64,Unaffiliated,Male,71,110,6,A,2025 Howard Cohen American Masters,false
+,Andrew KRAMER,61,Unaffiliated,Male,79,130,6,A,2025 Howard Cohen American Masters,false
+,Alan BROWN,60,FXT Barbell,Male,79,140,6,A,2025 Howard Cohen American Masters,false
+,Martin NEHER,64,East Coast Gold,Male,79,110,6,A,2025 Howard Cohen American Masters,false
+,Eric KUPPERSTEIN,59,Unaffiliated,Male,60,100,7,A,2025 Howard Cohen American Masters,false
+,Sean CLAPSHAW,57,Unaffiliated,Male,60,171,7,A,2025 Howard Cohen American Masters,false
+,Rudy CHANG,56,Unaffiliated,Male,110,210,7,A,2025 Howard Cohen American Masters,false
+,Kent PERRIER,56,JP Weightlifting,Male,110+,120,7,A,2025 Howard Cohen American Masters,false
+,Denise ABDOO,52,Parkhill Weightlifting,Male,110+,91,7,A,2025 Howard Cohen American Masters,false
+,Jenny CLOUSE,50,Performance One Weightlifting,Female,63,150,7,A,2025 Howard Cohen American Masters,false
+,Moira FAUTH,50,Power and Grace Performance,Female,63,110,7,A,2025 Howard Cohen American Masters,false
+,Anjanette BEARD,52,Bridger Barbell,Female,63,126,7,A,2025 Howard Cohen American Masters,false
+,Katherine BROWN,50,Unaffiliated,Female,63,155,7,A,2025 Howard Cohen American Masters,false
+,Lori FOX,54,Paramount Barbell Club,Female,77,99,7,A,2025 Howard Cohen American Masters,false
+,Shelley GAST,51,Unaffiliated,Female,77,120,7,A,2025 Howard Cohen American Masters,false
+,Abigail MANNING,52,Philadelphia Barbell Club,Female,77,120,8,A,2025 Howard Cohen American Masters,false
+,Pamela MATTHEWS,50,Ong Weightlifting,Female,86,80,8,A,2025 Howard Cohen American Masters,false
+,Heather O'DANIEL,53,Heroic Barbell Club,Female,86,140,8,A,2025 Howard Cohen American Masters,false
+,Michelle BAIER,53,Unaffiliated,Female,86,110,8,A,2025 Howard Cohen American Masters,false
+,Angie LOWER,54,Unaffiliated,Female,86,65,8,A,2025 Howard Cohen American Masters,false
+,Kristina TEEL,54,The Strength Shack,Female,86,135,8,A,2025 Howard Cohen American Masters,false
+,Reginald MAYS,52,Atlanta Performance,Female,86,185,8,A,2025 Howard Cohen American Masters,false
+,Scott TAGAWA,54,Parkhill Weightlifting,Female,71,148,8,A,2025 Howard Cohen American Masters,false
+,Eric EBUEN,53,Category 5 Athletics,Female,71,171,8,A,2025 Howard Cohen American Masters,false
+,Andrew HATCHETT,51,Team Savannah,Female,88,180,8,A,2025 Howard Cohen American Masters,false
+,James RUTTER,53,Philadelphia Barbell Club,Male,102,200,9,A,2025 Howard Cohen American Masters,false
+,Kurt ROEKLE,53,Unaffiliated,Male,102,180,9,A,2025 Howard Cohen American Masters,false
+,Travis PARTINGTON,53,Unaffiliated,Male,110+,201,9,A,2025 Howard Cohen American Masters,false
+,Brandon ECKER,45,Unaffiliated,Male,110+,205,9,A,2025 Howard Cohen American Masters,false
+,James HARMON,47,New York Weightlifting Academy,Male,110+,160,9,A,2025 Howard Cohen American Masters,false
+,Frederick MACARAEG,48,12 Labours Barbell,Male,110+,200,9,A,2025 Howard Cohen American Masters,false
+,Ray MARTINEZ,49,Ong Weightlifting,Male,110+,180,9,A,2025 Howard Cohen American Masters,false
+,Jason EARSLEY,46,Unaffiliated,Male,110+,140,10,A,2025 Howard Cohen American Masters,false
+,Raja AUDI,46,East Coast Gold,Male,110+,230,10,A,2025 Howard Cohen American Masters,false
+,Jermaine GESTIEHR,47,Unaffiliated,Male,110+,190,10,A,2025 Howard Cohen American Masters,false
+,Yulia KOSTOGOROVA-BELLER,49,Unaffiliated,Female,48,74,10,A,2025 Howard Cohen American Masters,false
+,Lauren STORCK,47,Atlanta Performance,Female,53,105,10,A,2025 Howard Cohen American Masters,false
+,Jamie HOLLAND,49,Ong Weightlifting,Female,58,70,10,A,2025 Howard Cohen American Masters,false
+,Melissa KNOUREK,47,Spoon Barbell,Female,58,130,10,A,2025 Howard Cohen American Masters,false
+,Erin MARTIN,45,Unaffiliated,Female,63,130,10,A,2025 Howard Cohen American Masters,false
+,Jane SHIN,47,Philadelphia Barbell Club,Female,63,125,10,A,2025 Howard Cohen American Masters,false
+,Alecia COTCHALEOVITCH,47,Team Savannah,Female,69,118,11,A,2025 Howard Cohen American Masters,false
+,Shana MILLSPAUGH,47,ONG weightlifting,Female,77,145,11,A,2025 Howard Cohen American Masters,false
+,Emily STUDY,45,ong Weightlifting,Female,77,118,11,A,2025 Howard Cohen American Masters,false
+,Nicole SHIPOS,46,East Coast Gold,Female,77,150,11,A,2025 Howard Cohen American Masters,false
+,Valerie WEEKS,45,JP Weightlifting,Female,86+,50,11,A,2025 Howard Cohen American Masters,false
+,Heidi WHITE,47,Unaffiliated,Female,86+,125,11,A,2025 Howard Cohen American Masters,false
+,Jessica CUMMINGS,43,Providence Barbell Club,Female,86+,145,11,A,2025 Howard Cohen American Masters,false
+,Megan HOUK,41,Ong Weightlifting,Female,86+,97,11,A,2025 Howard Cohen American Masters,false
+,Melissa MCCAMLEY,42,Labours Barbell,Female,63,125,11,A,2025 Howard Cohen American Masters,false
+,Megan BROOKS,41,Rising Tide Weightlifting,Female,63,130,11,A,2025 Howard Cohen American Masters,false
+,Allison HALL,42,Unaffiliated,Female,63,114,11,A,2025 Howard Cohen American Masters,false
+,Kathryn MENTZ,44,Dirty Durham Barbell Club,Female,69,120,11,A,2025 Howard Cohen American Masters,false
+,Jaquelin ONG,40,Ong Weightlifting,Female,69,155,11,A,2025 Howard Cohen American Masters,false
+,Stormy WEATHER,41,Feel Strong Fitness,Female,69,122,12,A,2025 Howard Cohen American Masters,false
+,Tereka CLARK,40,12 Labours Barbell,Female,69,150,12,A,2025 Howard Cohen American Masters,false
+,Alicia HANSON,41,Unaffiliated,Female,77,100,12,A,2025 Howard Cohen American Masters,false
+,Kristin SCOTT,44,Dirty Durham Barbell Club,Female,77,125,12,A,2025 Howard Cohen American Masters,false
+,Alicia MACGLAUGHLIN,43,Philadelphia Barbell Club,Female,77,130,12,A,2025 Howard Cohen American Masters,false
+,Karen BUSTAMANTE,43,Tipton Lakes Athletics Club,Female,77,115,12,A,2025 Howard Cohen American Masters,false
+,Amy DROUHARD,43,Unaffiliated,Female,77,65,12,A,2025 Howard Cohen American Masters,false
+,Natalie FREY,40,Unaffiliated,Female,77,140,12,A,2025 Howard Cohen American Masters,false
+,Melissa ALDERMAN,42,Unaffiliated,Female,77,108,12,A,2025 Howard Cohen American Masters,false
+,Brandy BASEY,44,Maximum Effort,Female,77,120,12,A,2025 Howard Cohen American Masters,false
+,Marjorie GOTTIER,42,Riding Tide,Female,77,150,12,A,2025 Howard Cohen American Masters,false
+,Sian GRIFFITHS,43,West Coast Weightlifting,Female,77,100,12,A,2025 Howard Cohen American Masters,false
+,Sara SAUCEDO,38,Unaffiliated,Female,48,110,12,A,2025 Howard Cohen American Masters,false
+,Holly NOLL,39,Team Resilient,Female,53,110,12,A,2025 Howard Cohen American Masters,false
+,Jacqueline HARRELL,37,Unaffiliated,Female,53,112,13,A,2025 Howard Cohen American Masters,false
+,Whitney EVANS,35,Paramount Barbell Club,Female,53,111,13,A,2025 Howard Cohen American Masters,false
+,Samantha LOVE,36,Rising Tide Weightlifting,Female,63,145,13,A,2025 Howard Cohen American Masters,false
+,Jerry BANZET,43,ONG Weightlifting,Female,63,200,13,A,2025 Howard Cohen American Masters,false
+,Christopher DOUGLAS,44,Paramount Barbell Club,Male,79,250,13,A,2025 Howard Cohen American Masters,false
+,Justin GOONAN,43,Unaffiliated,Male,79,200,13,A,2025 Howard Cohen American Masters,false
+,Jonathan HALBREICH,43,Category 5 Athletics,Male,79,210,13,A,2025 Howard Cohen American Masters,false
+,Clayton POLK,40,Bexar Barbell,Male,88,220,13,A,2025 Howard Cohen American Masters,false
+,Kyle RUTH,40,Unaffiliated,Male,88,270,13,A,2025 Howard Cohen American Masters,false
+,Daniel HERWEG,44,Unaffiliated,Male,110,220,13,A,2025 Howard Cohen American Masters,false
+,Justin SINGLETON,41,JP Weightlifting,Male,110+,194,14,A,2025 Howard Cohen American Masters,false
+,Andy NAM,37,Unaffiliated,Male,110+,160,14,A,2025 Howard Cohen American Masters,false
+,Christopher OAK,35,Dirty Durham Barbell Club,Male,110+,205,14,A,2025 Howard Cohen American Masters,false
+,Logan WARLICK,37,Unaffiliated,Male,79,200,14,A,2025 Howard Cohen American Masters,false
+,John BELL,39,FXT Barbell,Male,79,185,14,A,2025 Howard Cohen American Masters,false
+,Olban CALIX,35,Rising Tide Weightlifting,Male,88,260,14,A,2025 Howard Cohen American Masters,false
+,Tyler HENSHALL,37,Unaffiliated,Male,88,200,14,A,2025 Howard Cohen American Masters,false
+,Sara DONIS,36,Vehement Masters Athletics,Male,88,149,14,A,2025 Howard Cohen American Masters,false
+,Brandie MALONE,37,Appalachian Barbell Club,Male,88,105,14,A,2025 Howard Cohen American Masters,false
+,Erica SCHLANK,37,Unaffiliated,Male,69,145,14,A,2025 Howard Cohen American Masters,false
+,Emma SCHREIBER,39,Missouri Valley Masters,Male,69,130,14,A,2025 Howard Cohen American Masters,false
+,Nadine STEINGER,38,Ong Weightlifting,Male,69,140,14,A,2025 Howard Cohen American Masters,false
+,Abigail DUNNER,39,Trident Weightlifting,Male,69,110,15,A,2025 Howard Cohen American Masters,false
+,Ashley EDWARDS,35,FXT BB,Male,69,122,15,A,2025 Howard Cohen American Masters,false
+,Amber STEPHAN,36,Vehement Masters Athletics,Male,69,70,15,A,2025 Howard Cohen American Masters,false
+,Jake FIELDS,39,Paramount Barbell Club,Male,69,200,15,A,2025 Howard Cohen American Masters,false
+,Paul HENRIKSEN,37,Rising Tide Weightlifting,Male,94,260,15,A,2025 Howard Cohen American Masters,false
+,Brian WILBUR,39,Team Resilient,Male,94,215,15,A,2025 Howard Cohen American Masters,false
+,Ryan FLOOD,37,Iron Wolf Weightlifting,Male,102,250,15,A,2025 Howard Cohen American Masters,false
+,Joshua ARCONA,35,12 Labours Barbell,Male,102,260,15,A,2025 Howard Cohen American Masters,false
+,Daniel RUSSELL,38,Rising Tide Weightlifting,Male,110,300,15,A,2025 Howard Cohen American Masters,false
+,Trevor BERGAN,31,Rising Tide Weightlifting,Male,88,270,16,A,2025 Howard Cohen American Masters,false
+,Helms MATTHEW,30,Team Savannah,Male,94,210,16,A,2025 Howard Cohen American Masters,false
+,Sharif LOCKETT,33,Team Savannah,Male,102,195,16,A,2025 Howard Cohen American Masters,false
+,Nathaniel GRESBACH,31,Ong Weightlifting,Male,102,200,16,A,2025 Howard Cohen American Masters,false
+,Jacob MATTRELLA,34,AllSouth Barbell,Male,102,330,16,A,2025 Howard Cohen American Masters,false
+,Dimitri ALBURY,34,Rising Tide Weightlifting,Male,110+,330,16,A,2025 Howard Cohen American Masters,false
+,Alexandra BEHREND,36,Boise Barbell,Male,110+,140,16,A,2025 Howard Cohen American Masters,false
+,Carolina DIMSDALE,39,Dirty Durham Barbell Club,Male,110+,132,16,A,2025 Howard Cohen American Masters,false
+,Lindsay WATSON,37,Power and Grace Performance,Male,110+,120,16,A,2025 Howard Cohen American Masters,false
+,Cadie BERGAN,30,Rising Tide Weightlifting,Female,53,75,17,A,2025 Howard Cohen American Masters,false
+,Norelle JUSTICE,32,Unaffiliated,Female,58,150,17,A,2025 Howard Cohen American Masters,false
+,Carissa BRADY,34,Philadelphia Barbell Club,Female,86+,133,17,A,2025 Howard Cohen American Masters,false

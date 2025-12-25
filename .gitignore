@@ -1,2 +1,71 @@
 /venv/
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Google Service Account
+service-account.json
+*-credentials.json
+
+# Test data files
+test_*.json
+
+# Project-specific files
+# final_start_scraper
+final_start_scraper/start_list_data.json
+
+# owlcms_schedule_scraper
+owlcms_schedule_scraper/csv.csv
+owlcms_schedule_scraper/table.sql
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
