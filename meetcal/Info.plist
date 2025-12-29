@@ -29,5 +29,28 @@
 		<string>instagram</string>
 		<string>instagram-stories</string>
 	</array>
+	<key></key>
+	<string></string>
+    <key>INAlternativeAppNames</key>
+    <array>
+        <dict>
+            <key>INAlternativeAppName</key>
+            <string>Lifting</string>
+            <key>INAlternativeAppNamePronunciationHint</key>
+            <string>Lifting</string>
+        </dict>
+        <dict>
+            <key>INAlternativeAppName</key>
+            <string>Weightlifting</string>
+            <key>INAlternativeAppNamePronunciationHint</key>
+            <string>Weightlifting</string>
+        </dict>
+        <dict>
+            <key>INAlternativeAppName</key>
+            <string>Calendar</string>
+            <key>INAlternativeAppNamePronunciationHint</key>
+            <string>Calendar</string>
+        </dict>
+    </array>
 </dict>
 </plist>
