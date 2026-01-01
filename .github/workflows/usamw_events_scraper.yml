@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./scrapers/usamw
+        working-directory: ./scrapers/usamw/meets
     
     steps:
       - name: Checkout code
