@@ -259,7 +259,6 @@ class MeetsScheduleModel: ObservableObject {
                 let response = try await supabase
                     .from("meets")
                     .select("name")
-                    .eq("federation", value: "USAW")
                     .neq("status", value: "completed")
                     .order("start_date", ascending: true)
                     .execute()
