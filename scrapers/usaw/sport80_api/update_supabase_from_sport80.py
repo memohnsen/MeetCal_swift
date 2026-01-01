@@ -15,7 +15,7 @@ from sport80 import SportEighty # Adjust if your structure differs
 # --- Configuration ---
 # Supabase Configuration
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 SUPABASE_TABLE_NAME = "lifting_results" # Your table name
 # Column in Supabase that stores the unique meet name
 SUPABASE_MEET_NAME_COLUMN = "meet"
@@ -279,7 +279,7 @@ def main():
     logging.info("Starting Sport80 to Supabase sync process...")
 
     if not SUPABASE_URL or not SUPABASE_KEY:
-        logging.critical("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set. Exiting.")
+        logging.critical("SUPABASE_URL and SUPABASE_KEY must be set. Exiting.")
         return
 
     sport80_api = SportEighty(subdomain=USAW_DOMAIN, return_dict=True, debug=logging.WARNING)
