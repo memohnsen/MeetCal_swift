@@ -71,16 +71,6 @@ struct ProfileView: View {
                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                             }
                         }
-
-                        Divider()
-                            .padding(.vertical, 8)
-
-                        Link(destination: URL(string: "https://github.com/memohnsen/MeetCal_swift")!) {
-                            Text("Open Source Code on GitHub")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .foregroundStyle(colorScheme == .light ? .black : .white)
                     }
                     .cardStyling()
                     .padding(.bottom, 8)

@@ -961,6 +961,19 @@ struct StartListView: View {
                             applyFilters()
                         }
                         filterClicked = false
+                    },
+                    resetFilters: {
+                        selectedAgeBand = .all
+                        selectedWeight = "All Weight Classes"
+                        selectedGender = "All Genders"
+                        selectedClub = "All Clubs"
+                        selectedAdap =  "All Athletes"
+                        draftAgeBand = .all
+                        draftWeight = "All Weight Classes"
+                        draftGender = "All Genders"
+                        draftClub = "All Clubs"
+                        draftAdap = "All Athletes"
+                        filterClicked = false
                     }
                 )
             }
@@ -1196,6 +1209,7 @@ private struct FilterModal: View {
     var weightClass: [String]
     var adaptiveBool: [Bool]
     var onApply: () -> Void
+    var resetFilters: () -> Void
     
     var filteredClubs: [String] {
         guard !clubSearchText.isEmpty else { return club }
@@ -1678,20 +1692,37 @@ private struct FilterModal: View {
                                         
                     Divider()
                     
-                    HStack {
-                        Text("Apply")
-                            .bold()
-                            .frame(maxWidth: .infinity)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .foregroundStyle(.white)
-                    .background(.blue)
-                    .cornerRadius(12)
-                    .padding()
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onApply()
+                    
+                    HStack{
+                        Button{
+                            onApply()
+                        } label: {
+                            Text("Apply")
+                                .bold()
+                                .frame(maxWidth: .infinity)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .background(.blue)
+                                .cornerRadius(12)
+                                .padding([.vertical, .leading])
+                                .contentShape(Rectangle())
+                        }
+                        
+                        Button{
+                            resetFilters()
+                        } label: {
+                            Text("Reset")
+                                .bold()
+                                .frame(maxWidth: .infinity)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .background(.red)
+                                .cornerRadius(12)
+                                .padding([.vertical, .trailing])
+                                .contentShape(Rectangle())
+                        }
                     }
                 }
                 .frame(maxWidth: 350)
@@ -1747,7 +1778,6 @@ private struct ImagePreviewSheet: View {
                                             .foregroundStyle(.secondary)
 
                                         ZStack {
-                                            // Checkerboard pattern to show transparency
                                             CheckerboardBackground()
                                                 .cornerRadius(12)
 
