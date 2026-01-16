@@ -8,6 +8,7 @@
 import SwiftUI
 import Supabase
 import Clerk
+import RevenueCat
 
 struct FeedbackView: View {
     @Environment(\.clerk) private var clerk
@@ -126,7 +127,7 @@ struct FeedbackView: View {
                 name: "\(clerk.user?.firstName ?? "Unknown") \(clerk.user?.lastName ?? "Unknown")",
                 email: clerk.user?.emailAddresses.first?.emailAddress ?? "Unknown",
                 role: "user",
-                description: feedbackText
+                description: "My User ID is: \(clerk.user?.id ?? "No ID").\n\nMy Purchase ID is: \(Purchases.shared.appUserID)\n\nMy device and iOS version are: \(UIDevice.current.name) \(UIDevice.current.model) \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)." + feedbackText
             )
             
             try await supabase.functions

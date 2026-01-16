@@ -11,6 +11,7 @@ import UserNotifications
 import Clerk
 import RevenueCat
 import RevenueCatUI
+import StoreKit
 
 private struct AgeBand: Identifiable, Hashable {
     let id = UUID()
@@ -45,6 +46,8 @@ struct StartListView: View {
     @AppStorage("selectedMeet", store: .appGroup) private var selectedMeet = ""
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.requestReview) var requestReview
+    @State private var filterCountForReview: Int = 0
     @StateObject private var viewModel = StartListModel()
     @StateObject private var viewModel2 = MeetsScheduleModel()
     @StateObject private var saveModel = SavedViewModel()
@@ -961,6 +964,10 @@ struct StartListView: View {
                             applyFilters()
                         }
                         filterClicked = false
+                        filterCountForReview += 1
+                        if filterCountForReview == 10 || filterCountForReview == 50 || filterCountForReview == 100 {
+                            requestReview()
+                        }
                     },
                     resetFilters: {
                         selectedAgeBand = .all
