@@ -74,14 +74,10 @@ struct ScheduleView: View {
                         
                         VStack {
                             if viewModel.isLoading {
-                                VStack {
-                                    Spacer()
-                                    ProgressView("Loading...")
-                                    Spacer()
-                                }
-                                .padding(.top, -10)
-                                .navigationTitle("Loading...")
-                                .navigationBarTitleDisplayMode(.inline)
+                                ScheduleLoadingView()
+                                    .padding(.top, -10)
+                                    .navigationTitle("Loading...")
+                                    .navigationBarTitleDisplayMode(.inline)
                             } else if uniqueDays.count == 0 {
                                 VStack {
                                     Spacer()

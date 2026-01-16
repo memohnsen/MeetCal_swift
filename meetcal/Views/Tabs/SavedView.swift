@@ -224,67 +224,13 @@ struct SavedView: View {
                 
                 ScrollView {
                     VStack {
-                        ForEach(dataSorted) { session in
-                            NavigationLink(destination:
-                                            ScheduleDetailsView(
-                                                meet: selectedMeet,
-                                                date: session.dateAsDate,
-                                                sessionNum: session.session_number,
-                                                platformColor: session.platform,
-                                                weightClass: session.weight_class,
-                                                startTime: session.start_time)) {
-                                                    HStack{
-                                                        VStack(alignment: .leading) {
-                                                            Text("Session \(String(session.session_number)) • \(session.formattedDate)")
-                                                                .padding(.bottom, 6)
-                                                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                                                                .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : (UIScreen.main.bounds.width < 431 ? 16 : 18), weight: .bold))
-                                                                .lineLimit(2)
-                                                                .minimumScaleFactor(0.8)
-                                                            
-                                                            HStack {
-                                                                Text("Weigh-In: \(session.weighInTime) • Start: \(session.formattedStartTime)")
-                                                            }
-                                                            .padding(.bottom, 6)
-                                                            .font(.system(size: 14))
-                                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                                            
-                                                            HStack {
-                                                                Platform(text: session.platform)
-                                                                
-                                                                Text(session.weight_class)
-                                                                    .padding(.leading, 8)
-                                                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                                            }
-                                                            .padding(.bottom, 6)
-                                                            
-                                                            if let athleteNames = session.athlete_names, !athleteNames.isEmpty {
-                                                                Divider()
-                                                                
-                                                                Text("Athlete:")
-                                                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
-                                                                    .padding(.vertical, 6)
-                                                                
-                                                                ForEach(athleteNames, id: \.self) { name in
-                                                                    Text(name)
-                                                                        .bold()
-                                                                        .foregroundStyle(colorScheme == .light ? .black : .white)
-                                                                        .padding(.bottom, 6)
-                                                                }
-                                                            }
-                                                        }
-                                                        Spacer()
-                                                    }
-                                                    .padding(.horizontal)
-                            }
-                            .padding(.vertical)
+                        if viewModel.isLoading {
+                            SavedLoadingView()
+                        } else if !dataSorted.isEmpty {
+                            SavedCard(dataSorted: dataSorted, colorScheme: colorScheme, selectedMeet: selectedMeet)
+                        } else {
+                            ContentUnavailableView("No Saved Sessions", systemImage: "calendar", description: Text("Head to the Schedule page to save sessions to for easy access"))
                         }
-                        .frame(maxWidth: .infinity)
-                        .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
-                        .cornerRadius(32)
-                        .padding(.horizontal)
-                        .padding(.vertical, 6)
-                        .foregroundStyle(.black)
                     }
                     .padding(.top, 8)
                     .toolbar{
@@ -357,6 +303,76 @@ struct SavedView: View {
                 WidgetCenter.shared.reloadAllTimelines()
             }
         }
+    }
+}
+
+struct SavedCard: View {
+    var dataSorted: [SessionsRow]
+    var colorScheme: ColorScheme
+    var selectedMeet: String
+    
+    var body: some View {
+        ForEach(dataSorted) { session in
+            NavigationLink(destination:
+                            ScheduleDetailsView(
+                                meet: selectedMeet,
+                                date: session.dateAsDate,
+                                sessionNum: session.session_number,
+                                platformColor: session.platform,
+                                weightClass: session.weight_class,
+                                startTime: session.start_time)) {
+                                    HStack{
+                                        VStack(alignment: .leading) {
+                                            Text("Session \(String(session.session_number)) • \(session.formattedDate)")
+                                                .padding(.bottom, 6)
+                                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                                                .font(.system(size: UIScreen.main.bounds.width < 415 ? 15 : (UIScreen.main.bounds.width < 431 ? 16 : 18), weight: .bold))
+                                                .lineLimit(2)
+                                                .minimumScaleFactor(0.8)
+                                            
+                                            HStack {
+                                                Text("Weigh-In: \(session.weighInTime) • Start: \(session.formattedStartTime)")
+                                            }
+                                            .padding(.bottom, 6)
+                                            .font(.system(size: 14))
+                                            .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                            
+                                            HStack {
+                                                Platform(text: session.platform)
+                                                
+                                                Text(session.weight_class)
+                                                    .padding(.leading, 8)
+                                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                            }
+                                            .padding(.bottom, 6)
+                                            
+                                            if let athleteNames = session.athlete_names, !athleteNames.isEmpty {
+                                                Divider()
+                                                
+                                                Text("Athlete:")
+                                                    .foregroundStyle(colorScheme == .light ? Color(red: 102/255, green: 102/255, blue: 102/255) : .white)
+                                                    .padding(.vertical, 6)
+                                                
+                                                ForEach(athleteNames, id: \.self) { name in
+                                                    Text(name)
+                                                        .bold()
+                                                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                                                        .padding(.bottom, 6)
+                                                }
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal)
+                                }
+                                .padding(.vertical)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .background(colorScheme == .light ? .white : Color(.secondarySystemGroupedBackground))
+                            .cornerRadius(32)
+                            .padding(.horizontal)
+                            .padding(.vertical, 6)
+                            .foregroundStyle(.black)
     }
 }
 
