@@ -31,7 +31,7 @@ jobs:
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        SLACK_IWF_RECORDS_WEBHOOK_URL: ${{ secrets.SLACK_IWF_RECORDS_WEBHOOK_URL }}
+        SLACK_IWF_RECORDS_WEBHOOK_URL: ${{ secrets.SLACK_RECORDS_WEBHOOK_URL }}
       run: |
         python scraper.py
     
