@@ -33,28 +33,73 @@ class NotionMeetManager:
         self.client = Client(auth=api_key)
         self.database_id = database_id
 
+    def _generate_email_body(self, meet_data: dict) -> str:
+        """Generate personalized email body for meet organizer"""
+        organizer_name = meet_data.get("organizer_name", "")
+        meet_name = meet_data.get("meet_name", "")
+        meet_date = meet_data.get("meet_date", "")
+
+        # Format date to be more readable (remove year for brevity)
+        formatted_date = ""
+        if meet_date:
+            try:
+                date_obj = datetime.strptime(meet_date, "%Y-%m-%d")
+                formatted_date = date_obj.strftime("%B %-d")  # e.g., "January 31"
+            except:
+                formatted_date = meet_date
+
+        # Use first name if available
+        first_name = organizer_name.split()[0] if organizer_name else ""
+
+        email_body = f"""{first_name if first_name else organizer_name},
+
+My name is Maddisen Mohnsen, I am a coach with Power & Grace Performance and Owner of MeetCal.
+
+MeetCal is an app that puts the start list, meet schedule, and all data such as records, standards, and athlete meet results into a simple app. The goal of the app is to help coaches and athletes perform at their best, while making the sport more accessible.
+
+I saw you have {meet_name} coming up on {formatted_date} and I would love to host your meet on the app and offer a discount code to all competitors, coaches, and attendees for the app.
+
+Let me know if that's something that interests you!
+
+-Maddisen Mohnsen, MBA, CSCS, USAW National Coach
+Owner - MeetCal LLC"""
+
+        return email_body
+
     def get_existing_meet_names(self):
         """Fetch all existing meet names from Notion to avoid duplicates"""
         existing_meets = set()
 
         try:
+            # First, retrieve the database to get the data source ID
+            database = self.client.request(
+                method="GET",
+                path=f"databases/{self.database_id}"
+            )
+
+            # Get the first data source ID from the database
+            data_sources = database.get("data_sources", [])
+            if not data_sources:
+                logging.warning("No data sources found in database")
+                return set()
+
+            data_source_id = data_sources[0]["id"]
+            logging.info(f"Using data source ID: {data_source_id}")
+
             has_more = True
             start_cursor = None
 
             while has_more:
-                # Format database ID with hyphens if needed
-                db_id = self.database_id
-                if len(db_id) == 32 and '-' not in db_id:
-                    db_id = f"{db_id[0:8]}-{db_id[8:12]}-{db_id[12:16]}-{db_id[16:20]}-{db_id[20:32]}"
-
-                payload = {"page_size": 100}
+                # Query the data source
+                url = f"data_sources/{data_source_id}/query"
+                body = {"page_size": 100}
                 if start_cursor:
-                    payload["start_cursor"] = start_cursor
+                    body["start_cursor"] = start_cursor
 
                 response = self.client.request(
                     method="POST",
-                    path=f"databases/{db_id}/query",
-                    body=payload
+                    path=url,
+                    body=body
                 )
 
                 for page in response.get("results", []):
@@ -72,6 +117,8 @@ class NotionMeetManager:
 
         except Exception as e:
             logging.warning(f"Could not fetch existing meets from Notion: {e}")
+            import traceback
+            logging.warning(traceback.format_exc())
             return set()
 
     def add_meet_to_notion(self, meet_data: dict):
@@ -124,6 +171,19 @@ class NotionMeetManager:
                     "name": "No"
                 }
             }
+
+            # Generate email body
+            email_body = self._generate_email_body(meet_data)
+            if email_body:
+                properties["Email Body"] = {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": email_body
+                            }
+                        }
+                    ]
+                }
 
             self.client.pages.create(
                 parent={"database_id": self.database_id},
@@ -203,10 +263,15 @@ def scrape_meets_with_playwright():
                     # First line is usually the meet name
                     meet_name = lines[0].strip() if lines else ""
 
-                    # Filter out invalid meet names
+                    # Filter out invalid meet names and online qualifiers
                     invalid_names = ['select filters', 'filters', '1', '2', '3', 'login', 'enter now']
                     if not meet_name or meet_name.lower() in invalid_names or len(meet_name) < 5:
                         logging.info(f"Skipping invalid meet name: {meet_name}")
+                        continue
+
+                    # Skip online qualifiers
+                    if 'online qualifier' in meet_name.lower():
+                        logging.info(f"Skipping online qualifier: {meet_name}")
                         continue
 
                     # Extract date - usually in next few lines
