@@ -62,7 +62,8 @@ I saw you have {meet_name} coming up on {formatted_date} and I would love to hos
 Let me know if that's something that interests you!
 
 -Maddisen Mohnsen, MBA, CSCS, USAW National Coach
-Owner - MeetCal LLC"""
+Owner - MeetCal LLC
+Instagram: @coachmohnsen | @meetcalapp"""
 
         return email_body
 
@@ -172,18 +173,19 @@ Owner - MeetCal LLC"""
                 }
             }
 
-            # Generate email body
-            email_body = self._generate_email_body(meet_data)
-            if email_body:
-                properties["Email Body"] = {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": email_body
+            # Generate email body only if we have organizer name
+            if meet_data.get("organizer_name"):
+                email_body = self._generate_email_body(meet_data)
+                if email_body:
+                    properties["Email Body"] = {
+                        "rich_text": [
+                            {
+                                "text": {
+                                    "content": email_body
+                                }
                             }
-                        }
-                    ]
-                }
+                        ]
+                    }
 
             self.client.pages.create(
                 parent={"database_id": self.database_id},
@@ -213,12 +215,12 @@ def scrape_meets_with_playwright():
         page = context.new_page()
 
         try:
-            # Calculate date range (today to 2 months from now)
+            # Calculate date range (today to 3 months from now)
             today = datetime.now(timezone.utc)
-            two_months = today + timedelta(days=60)
+            three_months = today + timedelta(days=30)
 
             from_date = today.strftime("%Y-%m-%d")
-            to_date = two_months.strftime("%Y-%m-%d")
+            to_date = three_months.strftime("%Y-%m-%d")
 
             # Build filter JSON and encode it properly
             filter_dict = {"event_from_date": from_date, "event_to_date": to_date}
@@ -235,43 +237,103 @@ def scrape_meets_with_playwright():
             # Wait for Vue app to render and load data
             page.wait_for_timeout(8000)
 
-            # Look for Enter Now buttons by finding spans with "Enter Now" text, then get parent button
-            all_spans = page.query_selector_all('span')
+            # Collect meets from all pages (handle pagination)
+            all_text_blocks = []
+            current_page = 1
+            max_pages = 10  # Safety limit to prevent infinite loops
 
-            enter_buttons = []
-            for span in all_spans:
+            while current_page <= max_pages:
+                logging.info(f"Scraping page {current_page}...")
+
+                # Find all meet cards/listings on current page
+                page_blocks = page.evaluate('''() => {
+                    const results = [];
+                    // Find all elements that might contain meet info
+                    const cards = document.querySelectorAll('.v-card, [class*="card"], [class*="row"]');
+
+                    cards.forEach(card => {
+                        const text = card.innerText;
+                        // Check if this looks like a meet listing (has a date pattern)
+                        if (text.match(/\\d{1,2}\\/\\d{1,2}\\/\\d{4}/)) {
+                            results.push({
+                                text: text,
+                                html: card.outerHTML.substring(0, 500)
+                            });
+                        }
+                    });
+                    return results;
+                }''')
+
+                all_text_blocks.extend(page_blocks)
+                logging.info(f"Found {len(page_blocks)} meets on page {current_page}")
+
+                # Try to find and click next page button
                 try:
-                    span_text = span.inner_text().strip()
-                    if span_text == 'Enter Now':
-                        # Get the parent button
-                        button = span.evaluate_handle('el => el.closest("button")')
-                        if button:
-                            enter_buttons.append(button.as_element())
-                except:
-                    continue
+                    # Look for Next button with aria-label (similar to manual scraper)
+                    next_button = page.query_selector('button[aria-label="Next page"]:not([disabled])')
 
-            logging.info(f"Found {len(enter_buttons)} 'Enter Now' buttons on the page")
+                    # If not found, try looking for a button with "Next" text or chevron icon
+                    if not next_button:
+                        next_button = page.query_selector('button:has-text("Next"):not([disabled])')
 
-            # First, collect basic meet info without navigating
+                    # If still not found, try numbered button
+                    if not next_button:
+                        next_page_num = current_page + 1
+                        next_button = page.query_selector(f'button:has-text("{next_page_num}"):not([disabled])')
+
+                    if next_button and next_button.is_visible():
+                        logging.info(f"Found next button, clicking to go to page {current_page + 1}...")
+
+                        next_button.click()
+
+                        # Wait for page transition (similar to manual scraper)
+                        page.wait_for_timeout(2000)
+
+                        # Wait for cards to be present (ensures content is loaded)
+                        try:
+                            page.wait_for_selector('.v-card, [class*="card"], [class*="row"]', timeout=10000)
+                            logging.info(f"Successfully navigated to page {current_page + 1}")
+                            current_page += 1
+                        except:
+                            logging.warning(f"Timed out waiting for content on page {current_page + 1}, stopping pagination")
+                            break
+                    else:
+                        logging.info("No more pages found (next button not visible or not found)")
+                        break
+                except Exception as e:
+                    logging.info(f"Pagination ended: {e}")
+                    break
+
+            logging.info(f"Found {len(all_text_blocks)} total potential meet listings across all pages")
+
+            # Parse each text block to extract meet info
             meets_basic_info = []
-            for i, enter_button in enumerate(enter_buttons):
+            for i, block in enumerate(all_text_blocks):
                 try:
-                    # Extract meet name and date from the parent container
-                    parent_text = enter_button.evaluate('el => el.parentElement.parentElement.innerText')
-                    lines = parent_text.split('\n')
+                    text = block['text']
+                    lines = text.split('\n')
 
                     # First line is usually the meet name
                     meet_name = lines[0].strip() if lines else ""
 
                     # Filter out invalid meet names and online qualifiers
-                    invalid_names = ['select filters', 'filters', '1', '2', '3', 'login', 'enter now']
+                    invalid_names = ['select filters', 'filters', '1', '2', '3', 'login', 'enter now', 'search', 'location']
                     if not meet_name or meet_name.lower() in invalid_names or len(meet_name) < 5:
-                        logging.info(f"Skipping invalid meet name: {meet_name}")
                         continue
 
                     # Skip online qualifiers
                     if 'online qualifier' in meet_name.lower():
                         logging.info(f"Skipping online qualifier: {meet_name}")
+                        continue
+
+                    # Skip adaptive athletes meets
+                    if 'adaptive athletes' in meet_name.lower():
+                        logging.info(f"Skipping adaptive athletes meet: {meet_name}")
+                        continue
+
+                    # Skip Rogue Fitness sponsored meets
+                    if 'powered by rogue fitness' in meet_name.lower():
+                        logging.info(f"Skipping Rogue Fitness meet: {meet_name}")
                         continue
 
                     # Extract date - usually in next few lines
@@ -286,6 +348,16 @@ def scrape_meets_with_playwright():
                             except:
                                 pass
 
+                    # Skip meets that have already started (before today)
+                    if meet_date:
+                        try:
+                            meet_date_obj = datetime.strptime(meet_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                            if meet_date_obj < today:
+                                logging.info(f"Skipping past meet: {meet_name} ({meet_date})")
+                                continue
+                        except:
+                            pass
+
                     meets_basic_info.append({
                         "meet_name": meet_name,
                         "meet_date": meet_date
@@ -293,32 +365,10 @@ def scrape_meets_with_playwright():
                     logging.info(f"Found: {meet_name} ({meet_date or 'No date'})")
 
                 except Exception as e:
-                    logging.error(f"Error scraping meet {i}: {e}")
+                    logging.error(f"Error parsing meet block {i}: {e}")
                     continue
 
             logging.info(f"Collected {len(meets_basic_info)} meets. Scraping organizer info...")
-
-            # Try to get event IDs from the page data
-            # Sport80 stores event data in JavaScript variables or data attributes
-            event_data = page.evaluate('''() => {
-                // Try to find event data in Vue app state or window object
-                if (window.__NUXT__) return window.__NUXT__;
-                if (window.__INITIAL_STATE__) return window.__INITIAL_STATE__;
-
-                // Try to extract event IDs from the DOM
-                const events = [];
-                document.querySelectorAll('button.s80-btn').forEach(btn => {
-                    const parent = btn.closest('[data-event-id]') || btn.closest('div');
-                    const text = parent?.innerText || '';
-                    events.push({
-                        text: text.split('\\n')[0],
-                        html: parent?.outerHTML?.substring(0, 500) || ''
-                    });
-                });
-                return events;
-            }''')
-
-            logging.info(f"Event data from page: {json.dumps(event_data, indent=2)[:1000]}")
 
             # Now scrape organizer info by visiting each meet detail page
             for idx, basic_info in enumerate(meets_basic_info):
@@ -332,10 +382,13 @@ def scrape_meets_with_playwright():
                 try:
                     # Re-query for the button (in case page changed)
                     buttons = page.query_selector_all('button.s80-btn')
+                    button_found = False
+
                     for btn in buttons:
                         try:
                             btn_parent_text = btn.evaluate('el => el.parentElement.parentElement.innerText')
                             if meet_name in btn_parent_text:
+                                button_found = True
                                 logging.info(f"Clicking button for: {meet_name}")
 
                                 # Click and wait for navigation
@@ -377,9 +430,13 @@ def scrape_meets_with_playwright():
                         except:
                             continue
 
+                    if not button_found:
+                        logging.warning(f"No 'Enter Now' button found for: {meet_name} - adding with null organizer info")
+
                 except Exception as e:
                     logging.warning(f"Error getting organizer for {meet_name}: {e}")
 
+                # Add meet regardless of whether we found organizer info
                 meets.append({
                     "meet_name": meet_name,
                     "meet_date": meet_date,
