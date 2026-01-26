@@ -14,6 +14,12 @@ struct ContentView: View {
     @State private var search = ""
     @State private var selectedTab: String = "Schedule"
     @StateObject private var customerManager = CustomerInfoManager()
+    @State private var showReleaseNotes = false
+
+    private let releaseNotesVersionKey = "meetcal.releaseNotes.lastSeenVersion"
+    private var currentVersion: String {
+        Bundle.main.appVersionString
+    }
 
     var body: some View {
         TabView(selection: $selectedTab){
@@ -39,6 +45,7 @@ struct ContentView: View {
             }
         }
         .onAppear{
+            handleReleaseNotesIfNeeded()
             if customerManager.hasProAccess {
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
                     if success {
@@ -49,6 +56,23 @@ struct ContentView: View {
                 }
             }
         }
+        .sheet(isPresented: $showReleaseNotes, onDismiss: markReleaseNotesAsSeen) {
+            ReleaseNotesSheet(
+                version: currentVersion,
+                entry: ReleaseNotesCatalog.entry(for: currentVersion)
+            )
+        }
+    }
+
+    private func handleReleaseNotesIfNeeded() {
+        let lastSeenVersion = UserDefaults.standard.string(forKey: releaseNotesVersionKey)
+        if lastSeenVersion != currentVersion {
+            showReleaseNotes = true
+        }
+    }
+
+    private func markReleaseNotesAsSeen() {
+        UserDefaults.standard.set(currentVersion, forKey: releaseNotesVersionKey)
     }
 }
 
