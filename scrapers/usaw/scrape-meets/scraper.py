@@ -57,7 +57,11 @@ My name is Maddisen Mohnsen, I am a coach with Power & Grace Performance and Own
 
 MeetCal is an app that puts the start list, meet schedule, and all data such as records, standards, and athlete meet results into a simple app. The goal of the app is to help coaches and athletes perform at their best, while making the sport more accessible.
 
-I saw you have {meet_name} coming up on {formatted_date} and I would love to host your meet on the app and offer a discount code to all competitors, coaches, and attendees for the app.
+I saw you have the {meet_name} coming up on {formatted_date} and I would love to put your meet on the app and offer a discount code to all competitors, coaches, and attendees for the app.
+
+You can check out how the app works by searching on iOS or Android or by clicking these links if you want to check it out first.
+https://apps.apple.com/us/app/meetcal/id6741133286
+https://play.google.com/store/apps/details?id=com.memohnsen.meetcal
 
 Let me know if that's something that interests you!
 
