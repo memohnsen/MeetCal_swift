@@ -150,6 +150,36 @@ class USAMWMastersRecordsScraper:
         
         current_gender = None
         current_age_group = None
+
+        age_categories_by_page_sets = {
+            12: [
+                "Masters 35",
+                "Masters 40",
+                "Masters 45",
+                "Masters 50",
+                "Masters 55",
+                "Masters 60",
+                "Masters 65",
+                "Masters 70",
+                "Masters 75",
+                "Masters 80",
+                "Masters 85",
+                "Masters 90",
+            ],
+            11: [
+                "Masters 35",
+                "Masters 40",
+                "Masters 45",
+                "Masters 50",
+                "Masters 55",
+                "Masters 60",
+                "Masters 65",
+                "Masters 70",
+                "Masters 75",
+                "Masters 80",
+                "Masters 85",
+            ],
+        }
         
         with pdfplumber.open(pdf_content) as pdf:
             for page_num, page in enumerate(pdf.pages, 1):
@@ -160,6 +190,7 @@ class USAMWMastersRecordsScraper:
                 lines = text.split('\n') if text else []
                 
                 # Look for section headers like "USA National Masters Men M 35-39"
+                page_age_group = None
                 for line in lines[:10]:  # Check first 10 lines of each page
                     gender = self.normalize_gender(line)
                     if gender:
@@ -167,10 +198,76 @@ class USAMWMastersRecordsScraper:
                     
                     age_cat = self.normalize_age_category(line, current_gender or "")
                     if age_cat:
-                        current_age_group = age_cat
-                        print(f"    Found section: {current_age_group} {current_gender}")
-                
-                # Extract tables with specific settings to handle the layout
+                        page_age_group = age_cat
+                        print(f"    Found section: {page_age_group} {current_gender}")
+
+                page_age_categories = age_categories_by_page_sets.get(len(pdf.pages))
+                if not page_age_group and page_age_categories:
+                    page_age_group = page_age_categories[page_num - 1]
+                    print(f"    Using page-based age category: {page_age_group} {current_gender}")
+
+                if page_age_group:
+                    current_age_group = page_age_group
+
+                # Parse rows from text lines (new format)
+                line_records_found = 0
+                for line in lines:
+                    if not line:
+                        continue
+                    if line.startswith("USA National Masters"):
+                        continue
+                    if line.startswith("December"):
+                        continue
+                    if line.startswith("Cat Lift Record"):
+                        continue
+
+                    match = re.match(
+                        r'^(?P<cat>\d+\+?)\s+(?P<lift>SNA|SNATCH|CnJ|C&J|TOT|TOTAL)\s+(?P<record>\d+)\b',
+                        line,
+                        re.IGNORECASE
+                    )
+                    if not match:
+                        continue
+
+                    weight_class = self.format_weight_class(match.group('cat'))
+                    if not weight_class:
+                        continue
+
+                    # Must have current gender and age group
+                    if not current_gender or not current_age_group:
+                        continue
+
+                    try:
+                        record_weight = int(float(match.group('record')))
+                    except (ValueError, TypeError):
+                        continue
+
+                    key = (current_age_group, current_gender, weight_class)
+                    if key not in records_dict:
+                        records_dict[key] = {
+                            'record_type': 'USAMW',
+                            'age_category': current_age_group,
+                            'gender': current_gender,
+                            'weight_class': weight_class,
+                            'snatch_record': 0,
+                            'cj_record': 0,
+                            'total_record': 0
+                        }
+
+                    lift_upper = match.group('lift').upper()
+                    if 'SNA' in lift_upper or 'SNATCH' in lift_upper:
+                        records_dict[key]['snatch_record'] = record_weight
+                    elif 'CNJ' in lift_upper or 'C&J' in lift_upper or 'CLEAN' in lift_upper:
+                        records_dict[key]['cj_record'] = record_weight
+                    elif 'TOT' in lift_upper or 'TOTAL' in lift_upper:
+                        records_dict[key]['total_record'] = record_weight
+
+                    line_records_found += 1
+
+                if line_records_found > 0:
+                    continue
+
+                # Fallback to table extraction (old format)
                 tables = page.extract_tables(table_settings={
                     'vertical_strategy': 'text',
                     'horizontal_strategy': 'text',
@@ -556,7 +653,7 @@ def main():
     parser.add_argument(
         '--pdf-url',
         type=str,
-        default="https://storage.googleapis.com/production-ipower-v1-0-4/354/1018354/vixoE8Rk/629aae2cf3d54249b822178978280954?fileName=NM20250915-WOMEN.pdf",
+        default="https://storage.googleapis.com/production-ipower-v1-0-4/354/1018354/vixoE8Rk/f65c21bd9e714f2489f72387176e8f79?fileName=NM20251214-WOMEN.pdf",
         help='URL of the USAMW Masters Records PDF'
     )
     
