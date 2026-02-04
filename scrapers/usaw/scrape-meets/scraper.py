@@ -59,6 +59,8 @@ MeetCal is an app that puts the start list, meet schedule, and all data such as 
 
 I saw you have the {meet_name} coming up on {formatted_date} and I would love to put your meet on the app and offer a discount code to all competitors, coaches, and attendees for the app.
 
+Putting the meet on our app is completely free and all we need is the final schedule and final start list.
+
 You can check out how the app works by searching on iOS or Android or by clicking these links if you want to check it out first.
 https://apps.apple.com/us/app/meetcal/id6741133286
 https://play.google.com/store/apps/details?id=com.memohnsen.meetcal
@@ -219,9 +221,9 @@ def scrape_meets_with_playwright():
         page = context.new_page()
 
         try:
-            # Calculate date range (today to 3 months from now)
+            # Calculate date range (today to 3 weeks from now)
             today = datetime.now(timezone.utc)
-            three_months = today + timedelta(days=30)
+            three_months = today + timedelta(days=21)
 
             from_date = today.strftime("%Y-%m-%d")
             to_date = three_months.strftime("%Y-%m-%d")
@@ -381,6 +383,7 @@ def scrape_meets_with_playwright():
 
                 organizer_name = None
                 organizer_email = None
+                navigated_to_detail = False
 
                 # Try to navigate to the detail page using the button
                 try:
@@ -397,6 +400,7 @@ def scrape_meets_with_playwright():
 
                                 # Click and wait for navigation
                                 btn.click()
+                                navigated_to_detail = True
                                 page.wait_for_load_state('domcontentloaded', timeout=10000)
                                 page.wait_for_timeout(3000)
 
@@ -426,21 +430,34 @@ def scrape_meets_with_playwright():
                                         if organizer_name:
                                             break
 
-                                # Go back to the list page
-                                page.go_back()
-                                page.wait_for_load_state('domcontentloaded', timeout=10000)
-                                page.wait_for_timeout(2000)
                                 break
                         except:
                             continue
 
                     if not button_found:
-                        logging.warning(f"No 'Enter Now' button found for: {meet_name} - adding with null organizer info")
+                        logging.warning(f"No 'Enter Now' button found for: {meet_name} - skipping this meet")
+                        continue
 
+                except PlaywrightTimeout as e:
+                    logging.warning(f"Playwright timeout getting organizer for {meet_name}: {e} - adding meet with null organizer info")
                 except Exception as e:
-                    logging.warning(f"Error getting organizer for {meet_name}: {e}")
+                    # Only catch Playwright-specific errors; re-raise others
+                    if 'playwright' in type(e).__module__.lower():
+                        logging.warning(f"Playwright error getting organizer for {meet_name}: {e} - adding meet with null organizer info")
+                    else:
+                        raise
+                finally:
+                    # Always go back to list page if we navigated to detail page
+                    if navigated_to_detail:
+                        try:
+                            page.go_back()
+                            page.wait_for_load_state('domcontentloaded', timeout=10000)
+                            page.wait_for_timeout(2000)
+                            logging.info(f"Navigated back to list page after {meet_name}")
+                        except Exception as e:
+                            logging.error(f"Error navigating back to list page: {e}")
 
-                # Add meet regardless of whether we found organizer info
+                # Add meet (with or without organizer info depending on whether button was found)
                 meets.append({
                     "meet_name": meet_name,
                     "meet_date": meet_date,
