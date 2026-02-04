@@ -59,6 +59,8 @@ MeetCal is an app that puts the start list, meet schedule, and all data such as 
 
 I saw you have the {meet_name} coming up on {formatted_date} and I would love to put your meet on the app and offer a discount code to all competitors, coaches, and attendees for the app.
 
+Putting the meet on our app is completely free and all we need is the final schedule and final start list.
+
 You can check out how the app works by searching on iOS or Android or by clicking these links if you want to check it out first.
 https://apps.apple.com/us/app/meetcal/id6741133286
 https://play.google.com/store/apps/details?id=com.memohnsen.meetcal
@@ -219,9 +221,9 @@ def scrape_meets_with_playwright():
         page = context.new_page()
 
         try:
-            # Calculate date range (today to 3 months from now)
+            # Calculate date range (today to 3 weeks from now)
             today = datetime.now(timezone.utc)
-            three_months = today + timedelta(days=30)
+            three_months = today + timedelta(days=21)
 
             from_date = today.strftime("%Y-%m-%d")
             to_date = three_months.strftime("%Y-%m-%d")
