@@ -383,6 +383,7 @@ def scrape_meets_with_playwright():
 
                 organizer_name = None
                 organizer_email = None
+                navigated_to_detail = False
 
                 # Try to navigate to the detail page using the button
                 try:
@@ -399,6 +400,7 @@ def scrape_meets_with_playwright():
 
                                 # Click and wait for navigation
                                 btn.click()
+                                navigated_to_detail = True
                                 page.wait_for_load_state('domcontentloaded', timeout=10000)
                                 page.wait_for_timeout(3000)
 
@@ -428,10 +430,6 @@ def scrape_meets_with_playwright():
                                         if organizer_name:
                                             break
 
-                                # Go back to the list page
-                                page.go_back()
-                                page.wait_for_load_state('domcontentloaded', timeout=10000)
-                                page.wait_for_timeout(2000)
                                 break
                         except:
                             continue
@@ -440,8 +438,24 @@ def scrape_meets_with_playwright():
                         logging.warning(f"No 'Enter Now' button found for: {meet_name} - skipping this meet")
                         continue
 
+                except PlaywrightTimeout as e:
+                    logging.warning(f"Playwright timeout getting organizer for {meet_name}: {e} - adding meet with null organizer info")
                 except Exception as e:
-                    logging.warning(f"Error getting organizer for {meet_name}: {e} - adding meet with null organizer info")
+                    # Only catch Playwright-specific errors; re-raise others
+                    if 'playwright' in type(e).__module__.lower():
+                        logging.warning(f"Playwright error getting organizer for {meet_name}: {e} - adding meet with null organizer info")
+                    else:
+                        raise
+                finally:
+                    # Always go back to list page if we navigated to detail page
+                    if navigated_to_detail:
+                        try:
+                            page.go_back()
+                            page.wait_for_load_state('domcontentloaded', timeout=10000)
+                            page.wait_for_timeout(2000)
+                            logging.info(f"Navigated back to list page after {meet_name}")
+                        except Exception as e:
+                            logging.error(f"Error navigating back to list page: {e}")
 
                 # Add meet (with or without organizer info depending on whether button was found)
                 meets.append({
