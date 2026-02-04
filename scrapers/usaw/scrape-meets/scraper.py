@@ -441,10 +441,9 @@ def scrape_meets_with_playwright():
                         continue
 
                 except Exception as e:
-                    logging.warning(f"Error getting organizer for {meet_name}: {e}")
-                    continue
+                    logging.warning(f"Error getting organizer for {meet_name}: {e} - adding meet with null organizer info")
 
-                # Only add meet if we successfully found the Enter Now button
+                # Add meet (with or without organizer info depending on whether button was found)
                 meets.append({
                     "meet_name": meet_name,
                     "meet_date": meet_date,
