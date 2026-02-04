@@ -437,12 +437,14 @@ def scrape_meets_with_playwright():
                             continue
 
                     if not button_found:
-                        logging.warning(f"No 'Enter Now' button found for: {meet_name} - adding with null organizer info")
+                        logging.warning(f"No 'Enter Now' button found for: {meet_name} - skipping this meet")
+                        continue
 
                 except Exception as e:
                     logging.warning(f"Error getting organizer for {meet_name}: {e}")
+                    continue
 
-                # Add meet regardless of whether we found organizer info
+                # Only add meet if we successfully found the Enter Now button
                 meets.append({
                     "meet_name": meet_name,
                     "meet_date": meet_date,
