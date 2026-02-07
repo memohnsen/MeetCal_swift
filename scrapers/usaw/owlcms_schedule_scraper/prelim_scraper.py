@@ -33,8 +33,10 @@ load_dotenv()
 # ============================================================================
 # CONFIGURATION - Set your meet details here
 # ============================================================================
-DEFAULT_PDF_URL = "https://assets.contentstack.io/v3/assets/blteb7d012fc7ebef7f/blt53beae3c9788c017/690f8e96358d8e430a4c98b8/2025_-_VWF_UMWF_-_Preliminary_Schedule.pdf"
-DEFAULT_MEET_NAME = "2025 Virus Weightlifting Finals, Powered by Rogue Fitness"
+DEFAULT_PDF_URL = "https://assets.contentstack.io/v3/assets/blteb7d012fc7ebef7f/blt79f72e0801fb072f/6987896bb7bf25825f6df479/2026_-_VWS1_-_Preliminary_Schedule.pdf"
+DEFAULT_MEET_NAME = "2026 VIRUS Weightlifting Series 1"
+DEFAULT_CSV_START_ID = 123
+DEFAULT_CSV_ID_INCREMENT = 1
 # ============================================================================
 
 
@@ -502,8 +504,8 @@ class ScheduleScraper:
         if not start_time or not weigh_time:
             return None
         
-        # Clean up weight class (remove group letter like A, B, C, etc)
-        weight_class = re.sub(r'\s+[A-E]$', '', weight_class).strip()
+        # Preserve trailing flight/session letters (e.g. "69kg & 63+kg E")
+        weight_class = weight_class.strip()
         
         return {
             'date': current_date,
@@ -771,7 +773,7 @@ class ScheduleScraper:
         print(f"Successfully upserted {len(deduplicated)} entries")
         return response
     
-    def export_to_csv(self, entries: List[Dict], output_file: str):
+    def export_to_csv(self, entries: List[Dict], output_file: str, start_id: int = DEFAULT_CSV_START_ID, id_increment: int = DEFAULT_CSV_ID_INCREMENT):
         """Export entries to CSV file"""
         import csv
         
@@ -779,7 +781,11 @@ class ScheduleScraper:
             print("No entries to export")
             return
         
+        if id_increment == 0:
+            raise ValueError("id_increment cannot be 0")
+        
         print(f"Exporting {len(entries)} entries to {output_file}...")
+        print(f"CSV IDs: start={start_id}, increment={id_increment}")
         
         with open(output_file, 'w', newline='') as csvfile:
             if self.all_columns:
@@ -804,8 +810,9 @@ class ScheduleScraper:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
                 
                 writer.writeheader()
-                for i, entry in enumerate(entries, 1):
-                    row = {'id': i, **entry}
+                for idx, entry in enumerate(entries):
+                    row_id = start_id + (idx * id_increment)
+                    row = {'id': row_id, **entry}
                     writer.writerow(row)
             else:
                 # Standard mode with fixed columns
@@ -813,8 +820,9 @@ class ScheduleScraper:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 
                 writer.writeheader()
-                for i, entry in enumerate(entries, 1):
-                    row = {'id': i, **entry}
+                for idx, entry in enumerate(entries):
+                    row_id = start_id + (idx * id_increment)
+                    row = {'id': row_id, **entry}
                     writer.writerow(row)
         
         print(f"✓ Successfully exported to {output_file}")
@@ -877,6 +885,12 @@ Examples:
   # Use defaults from configuration (at top of file)
   python prelim_scraper.py --csv output.csv
   
+  # Start CSV IDs at 1000 and increment by 1
+  python prelim_scraper.py --csv output.csv --start-id 1000
+  
+  # Start CSV IDs at 500 and increment by 5
+  python prelim_scraper.py --csv output.csv --start-id 500 --id-increment 5
+  
   # Override with custom URL and meet name
   python prelim_scraper.py "https://example.com/schedule.pdf" "My Meet 2025" --csv output.csv
   
@@ -889,6 +903,8 @@ Examples:
     parser.add_argument('--dry-run', action='store_true', help='Preview changes without actually upserting')
     parser.add_argument('--csv', help='Export to CSV file instead of database (provide filename)')
     parser.add_argument('--all-columns', action='store_true', help='Extract all columns from the PDF table')
+    parser.add_argument('--start-id', type=int, default=DEFAULT_CSV_START_ID, help=f'Starting ID for CSV export (default: {DEFAULT_CSV_START_ID})')
+    parser.add_argument('--id-increment', type=int, default=DEFAULT_CSV_ID_INCREMENT, help=f'ID increment step for CSV export (default: {DEFAULT_CSV_ID_INCREMENT})')
     
     args = parser.parse_args()
     
@@ -910,7 +926,12 @@ Examples:
         formatted_entries = scraper.format_for_database(raw_entries)
         
         if formatted_entries:
-            scraper.export_to_csv(formatted_entries, args.csv)
+            scraper.export_to_csv(
+                formatted_entries,
+                args.csv,
+                start_id=args.start_id,
+                id_increment=args.id_increment
+            )
             print("\n✓ CSV export completed successfully")
         else:
             print("\n✗ No data to export")
@@ -928,4 +949,3 @@ Examples:
 
 if __name__ == '__main__':
     main()
-

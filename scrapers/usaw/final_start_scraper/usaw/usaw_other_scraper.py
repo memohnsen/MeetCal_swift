@@ -321,8 +321,8 @@ def save_to_csv(data, output_path):
 
 def main():
     # File paths
-    pdf_path = "virus25.pdf"
-    output_path = "virus25.csv"
+    pdf_path = "ao1.pdf"
+    output_path = "ao1.csv"
     
     # Check if PDF exists
     if not Path(pdf_path).exists():

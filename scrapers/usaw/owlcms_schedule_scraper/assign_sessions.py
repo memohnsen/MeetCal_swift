@@ -5,7 +5,7 @@ SETUP:
   python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
 USAGE:
-  source venv/bin/activate && python assign_sessions.py --start-list vwf_umwf_start_list.csv --schedule full_output.csv --output assigned_athletes.csv
+  source venv/bin/activate && python assign_sessions.py --start-list ao1-athletes.csv --schedule full_output.csv --output assigned_athletes.csv
 """
 
 import csv
@@ -14,7 +14,7 @@ import re
 from typing import List, Dict, Optional, Tuple
 
 
-MEET_NAME = "2025 Virus Weightlifting Finals, Powered by Rogue Fitness"
+MEET_NAME = "2026 VIRUS Weightlifting Series 1"
 
 
 def parse_age_group(age_group_str: str) -> Tuple[Optional[str], Optional[int], Optional[int]]:
@@ -150,7 +150,7 @@ def parse_entry_total_range(total_str: str) -> Tuple[Optional[int], Optional[int
     return None, None
 
 
-def athlete_weight_matches(athlete_weight: str, session_weight_range: str) -> bool:
+def athlete_weight_matches(athlete_weight: str, session_weight_range: str, session_gender: Optional[str] = None) -> bool:
     """
     Check if athlete's weight class matches session weight range.
     
@@ -160,33 +160,51 @@ def athlete_weight_matches(athlete_weight: str, session_weight_range: str) -> bo
     if not athlete_weight or not session_weight_range:
         return False
     
-    # Normalize athlete weight class (e.g., "86" -> "86", "86+" -> "86+")
-    athlete_weight_clean = athlete_weight.strip()
+    def normalize_weight_token(weight_token: str) -> str:
+        """
+        Normalize weight tokens to a canonical form:
+        - "110", "110kg" -> "110"
+        - "+110", "110+", "+110kg", "110+kg" -> "110+"
+        """
+        token = str(weight_token or '').strip().lower().replace('kg', '').strip()
+        if not token:
+            return ''
+        number_match = re.search(r'(\d+)', token)
+        if not number_match:
+            return ''
+        number = number_match.group(1)
+        has_plus = '+' in token
+        return f"{number}+" if has_plus else number
+    
+    # Normalize athlete weight class (e.g., "+110" and "110+" both -> "110+")
+    athlete_weight_clean = normalize_weight_token(athlete_weight)
+    if not athlete_weight_clean:
+        return False
     
     # Remove age group prefix from session to get just the weight part
     # Handles: "W45 77kg", "M65 88kg - 110+kg", "M70, M75, M80 65kg - 110kg"
     session_weights_only = re.sub(r'^[WM]\d+(\s*-\s*[WM]\d+)?\s+', '', session_weight_range)
     session_weights_only = re.sub(r'^([WM]\d+,\s*)+', '', session_weights_only)
+    # Normalize en dash to standard hyphen for range detection
+    session_weights_only = session_weights_only.replace('–', '-')
     
     # Extract all weight classes from the session (handles "77kg & 69+kg" or "48kg - 53kg")
     # Look for patterns like "69+", "77kg", "86+kg"
     weight_classes_in_session = re.findall(r'(\d+\+?)(?:kg)?', session_weights_only)
+    weight_classes_in_session = [normalize_weight_token(w) for w in weight_classes_in_session]
+    weight_classes_in_session = [w for w in weight_classes_in_session if w]
     
     if not weight_classes_in_session:
         return False
     
     # Check if athlete's exact weight class is in the session's list
     for session_wc in weight_classes_in_session:
-        session_wc_clean = session_wc.strip()
+        session_wc_clean = normalize_weight_token(session_wc)
         
         # Exact match (e.g., "86" matches "86", "86+" matches "86+")
         if athlete_weight_clean == session_wc_clean:
             return True
         
-        # Also check without "kg" suffix
-        if athlete_weight_clean.replace('kg', '').strip() == session_wc_clean.replace('kg', '').strip():
-            return True
-    
     # If no exact match, check if it's a range like "48kg - 53kg" or "48kg - 86+kg"
     # Ranges like "48kg - 86+kg" mean: 48-86 (numeric range) + 86+ (explicit plus class)
     if '&' not in session_weights_only and '-' in session_weights_only:
@@ -203,6 +221,15 @@ def athlete_weight_matches(athlete_weight: str, session_weight_range: str) -> bo
             if len(numbers) >= 2:
                 min_w = min(numbers)
                 max_w = max(numbers)
+                
+                # Custom discrete classes for youth ranges per meet rules
+                # Men 32-52 => 32, 36, 40, 44, 48, 52
+                # Women 30-36 => 30, 33, 36
+                if not athlete_has_plus:
+                    if session_gender == 'M' and int(min_w) == 32 and int(max_w) == 52:
+                        return int(athlete_num) in {32, 36, 40, 44, 48, 52}
+                    if session_gender == 'F' and int(min_w) == 30 and int(max_w) == 36:
+                        return int(athlete_num) in {30, 33, 36}
                 
                 # For non-plus athletes, check if weight is in the numeric range
                 if not athlete_has_plus:
@@ -246,25 +273,31 @@ def find_matching_session(athlete: Dict, schedule: List[Dict]) -> Optional[Dict]
     if not athlete_total or athlete_total == 0:
         athlete_total = 0
     
-    # Determine if athlete is UMWF or Finals
+    # Determine event type from athlete meet name
     # "FINALS + UMWF" should be treated as UMWF
     is_umwf = 'UMWF' in athlete_meet
+    is_finals = 'FINALS' in athlete_meet
     
     # Convert gender to M/F
     gender_code = 'M' if athlete_gender == 'Male' else 'F'
     
     # Filter sessions by meet type
     candidate_sessions = []
+    weight_matched_sessions = []
     
     for session in schedule:
         session_meet = session.get('meet', '').upper()
         
-        # Match meet type
+        # Match meet type/name
         if is_umwf:
             if 'UMWF' not in session_meet:
                 continue
-        else:
+        elif is_finals:
             if 'FINALS' not in session_meet or 'UMWF' in session_meet:
+                continue
+        else:
+            # Standard non-finals/non-UMWF meets: match exact meet name
+            if athlete_meet and session_meet and athlete_meet != session_meet:
                 continue
         
         # Match gender
@@ -290,9 +323,12 @@ def find_matching_session(athlete: Dict, schedule: List[Dict]) -> Optional[Dict]
                     continue
         
         # Check weight class
-        weight_category = session.get('age_group_weight_category', '')
-        if not athlete_weight_matches(athlete_weight, weight_category):
+        weight_category = session.get('age_group_weight_category', '') or session.get('weight_category', '')
+        if not athlete_weight_matches(athlete_weight, weight_category, session_gender):
             continue
+        
+        # Keep all sessions that pass meet/gender/age/weight filters
+        weight_matched_sessions.append(session)
         
         # Check entry total range - must be within the stated range
         total_range_str = session.get('estimated_entry_totals_(min___max)', '')
@@ -330,6 +366,35 @@ def find_matching_session(athlete: Dict, schedule: List[Dict]) -> Optional[Dict]
         
         # Default to first match
         return candidate_sessions[0]
+    
+    # Fallback: if total is out of range for all weight-matched sessions,
+    # assign the session whose min/max band is closest to the athlete total.
+    if weight_matched_sessions and athlete_total > 0:
+        best_session = None
+        best_distance = float('inf')
+        
+        for session in weight_matched_sessions:
+            total_range_str = session.get('estimated_entry_totals_(min___max)', '')
+            min_total, max_total = parse_entry_total_range(total_range_str)
+            
+            # If no range exists, skip for closest-range scoring
+            if min_total is None or max_total is None:
+                continue
+            
+            if min_total <= athlete_total <= max_total:
+                distance = 0
+            else:
+                distance = min(abs(athlete_total - min_total), abs(athlete_total - max_total))
+            
+            if distance < best_distance:
+                best_distance = distance
+                best_session = session
+        
+        if best_session:
+            return best_session
+        
+        # If ranges are missing on all candidates, keep deterministic fallback
+        return weight_matched_sessions[0]
     
     return None
 
@@ -370,7 +435,7 @@ def assign_sessions(start_list_file: str, schedule_file: str, output_file: str):
     session_counts = {}
     
     # Auto-increment member_id starting from 1400
-    member_id = 1400
+    member_id = 3100
     
     for athlete in athletes:
         matching_session = find_matching_session(athlete, schedule)
@@ -445,4 +510,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
